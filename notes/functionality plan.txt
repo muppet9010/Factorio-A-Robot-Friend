@@ -1,0 +1,51 @@
+A job is what a player asks the robot to do. This will be top level wrapper around a given task and may give the player behaviour choices on how it is completed.
+
+When a robot is undertaking a task it will use multiple actions and sub tasks autonomously to complete the task. Tasks can take time and may include searches of the map in a time distributed fashion.
+
+Actions are things where the robot interacts directly with the world. They are done instantly and managed by a task. The master's name will be used as the player for all actions (ensures events are raised and so the correct player can be blamed).
+
+Actions are:
+    - Walking - LuaControl.walking_state
+    - Driving - LuaControl.riding_state
+    - Riding a train - give train a path and set off
+    - Crafting - LuaControl.begin_crafting
+    - Building - LuaSurface.create_entity (building from cursor is a LuaPlayer function)
+    - Mining - LuaControl.mine_entity (have to wait the mining time as this will appear instant)
+    - Upgrading - LuaSurface.create_entity (with fast_replace true)
+    - Move items between chest and robot - LuaInventory.insert and LuaInventory.remove
+    - Shooting - LuaControl.shooting_state (can target a position and then shoot nearest enemies or shoot at the ground)
+    - Repairing - LuaControl.repair_state
+    - Rotate entity - LuaEntity.rotate
+
+Behaviours are related to the job and may dictate the action chosen or the choices made during the task decision process.
+
+Tasks can contain other tasks. I.e. "build this blueprint" includes the tasks of obtaining a list of required materials, collecting or crafting them, moving there and placing the entities.
+
+Tasks can be interrupted and will need to have a persisted state. When resumed the task will need to re-validate itself and confirm its current progress in the task is still accurate. Possibly returning to previously completed sub tasks and repeating their investigations and checking steps.
+
+Tasks and Actions should register their calling function by name in to MOD.Interfaces. Then the Jobs/Tasks can store the name in their data to be save/load safe.
+
+Planned Lower Tasks list:
+    - Search chests for items
+    - Move to location (long and short distance will likely be approached differently)
+    - Scan area for ghosted items
+    - Craft required items (manage the actions)
+
+Planned Medium Tasks list:
+    - Collect items:
+        - Search chests for items
+        - Move to location
+        - Move items between chest and robot
+        - Craft required items
+    - Complete ghosts (includes build, mining, upgrading, rotating, etc):
+        - Scan area for ghosted items (if not passed in)
+        - Move to location
+        - Do action (build, mining, upgrading, rotating, etc)
+
+
+Planned Jobs Tasks list:
+    - Complete Blueprint:
+        - Scan area for ghosted items
+        - Collect items
+        - Move to location
+        - Complete ghosts
