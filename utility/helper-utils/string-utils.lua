@@ -116,8 +116,8 @@ end
 
 --- Display time in a string broken down to hour, minute and second. With the range of time units configurable.
 ---@param inputTicks int
----@param displayLargestTimeUnit 'auto'|'hour'|'minute'|'second'
----@param displaySmallestTimeUnit 'auto'|'hour'|'minute'|'second'
+---@param displayLargestTimeUnit "auto"|"hour"|"minute"|"second"
+---@param displaySmallestTimeUnit "auto"|"hour"|"minute"|"second"
 StringUtils.DisplayTimeOfTicks = function(inputTicks, displayLargestTimeUnit, displaySmallestTimeUnit)
     if inputTicks == nil then
         return ""

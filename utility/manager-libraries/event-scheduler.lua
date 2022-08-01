@@ -31,7 +31,7 @@ MOD.scheduledEventNames or
 
 ---@alias UtilityScheduledEvent_EventData table<any, any> # The event data that will be provided when the event triggers.
 
----@alias UtilityScheduledEvent_UintNegative1 uint|'-1' # Accepted when scheduling an event.
+---@alias UtilityScheduledEvent_UintNegative1 uint|"-1" # Accepted when scheduling an event.
 
 --------------------------------------------------------------------------------------------
 --                                    Setup Functions

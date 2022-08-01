@@ -96,7 +96,7 @@ end
 ---@param recipeIngredientHandlingTables table[]
 ---@return UtilityPrototypeUtils_IngredientLists
 PrototypeUtils.GetRecipeIngredientsAddedTogether = function(recipeIngredientHandlingTables)
-    ---@type table, table<'ingredients'|'normal'|'expensive', true>
+    ---@type table, table<"ingredients"|"normal"|"expensive", true>
     local ingredientsTable, ingredientTypes = {}, {}
     for _, recipeIngredientHandlingTable in pairs(recipeIngredientHandlingTables) do
         if recipeIngredientHandlingTable[1].normal ~= nil then
@@ -157,7 +157,7 @@ end
 --- Returns the value of the requested attributeName from the recipe for the recipeCodeType "cost" if available, otherwise the inline/ingredients value is returned.
 ---@param recipe Prototype.Recipe
 ---@param attributeName string
----@param recipeCostType? 'ingredients'|'normal'|'expensive' # Defaults to the 'ingredients' if not provided. The 'ingredients' option will return any inline value first, then the value from the ingredients field.
+---@param recipeCostType? "ingredients"|"normal"|"expensive" # Defaults to the `ingredients` if not provided. The `ingredients` option will return any inline value first, then the value from the ingredients field.
 ---@param defaultValue? any # The default value to return if nothing is found in the hierarchy of "costs" checked.
 ---@return any|nil value
 PrototypeUtils.GetRecipeAttribute = function(recipe, attributeName, recipeCostType, defaultValue)

@@ -223,7 +223,7 @@ end
 
 --- This doesn't guarantee correct on some of the edge cases, but is as close as possible assuming that 1/256 is the variance for the same number (Bilka, Dev on Discord)
 ---@param value1 double
----@param logic '='|'!='|'<'|'<='|'>'|'>='
+---@param logic "="|"!="|"<"|"<="|">"|">="
 ---@param value2 double
 ---@return boolean
 MathUtils.FuzzyCompareDoubles = function(value1, logic, value2)

@@ -70,7 +70,7 @@ GuiActionsOpened.RemoveEntityForGuiOpenedAction = function(entity, actionName)
 end
 
 -- Called to register a specific GUI type being opened to a named action.
----@param guiType defines.gui_type|'all' # the gui type to react to or `all` types.
+---@param guiType defines.gui_type|"all" # the gui type to react to or `all` types.
 ---@param actionName string # The actionName of the registered function to be called when the GUI element is opened.
 ---@param data? table # Any provided data will be passed through to the actionName's registered function upon the GUI element being opened.
 GuiActionsOpened.RegisterActionNameForGuiTypeOpened = function(guiType, actionName, data)
@@ -78,7 +78,7 @@ GuiActionsOpened.RegisterActionNameForGuiTypeOpened = function(guiType, actionNa
         error("GuiActions.RegisterActionNameForGuiTypeOpened called with missing arguments")
     end
     data = data or {}
-    global.UTILITYGUIACTIONSGUITYPEOPENED = global.UTILITYGUIACTIONSGUITYPEOPENED or {} ---@type table<defines.gui_type|'all', table<string, table|nil>>
+    global.UTILITYGUIACTIONSGUITYPEOPENED = global.UTILITYGUIACTIONSGUITYPEOPENED or {} ---@type table<defines.gui_type|"all", table<string, table|nil>>
     global.UTILITYGUIACTIONSGUITYPEOPENED[guiType] = global.UTILITYGUIACTIONSGUITYPEOPENED[guiType] or {}
     global.UTILITYGUIACTIONSGUITYPEOPENED[guiType][actionName] = data
 end
@@ -86,7 +86,7 @@ end
 -- Called when desired to remove a specific GUI type opening from triggering its action.
 ---
 --- Should be called to remove links for buttons when their elements are removed to stop global data lingering. But newly registered functions will overwrite them so not critical to remove.
----@param guiType defines.gui_type|'all' # Corresponds to the same argument name on GuiActionsOpened.RegisterActionNameForGuiTypeOpened().
+---@param guiType defines.gui_type|"all" # Corresponds to the same argument name on GuiActionsOpened.RegisterActionNameForGuiTypeOpened().
 ---@param actionName string # Corresponds to the same argument name on GuiActionsOpened.RegisterActionNameForGuiTypeOpened().
 GuiActionsOpened.RemoveActionNameForGuiTypeOpened = function(guiType, actionName)
     if guiType == nil or actionName == nil then
