@@ -17,7 +17,7 @@ local BiterSelection = {} ---@class Utility_BiterSelection
 
 ---@class UtilityBiterSelection_WormCacheEntry
 ---@field calculatedEvolution double
----@field name string|nil
+---@field name? string
 
 ---@class UtilityBiterSelection_UnitChanceEntry
 ---@field chance double

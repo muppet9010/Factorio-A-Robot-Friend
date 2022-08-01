@@ -26,7 +26,7 @@ MOD.eventFilters = MOD.eventFilters or {} ---@type table<int, table<string, Even
 ---@param eventName defines.events|string # Either Factorio event or a custom modded event name.
 ---@param handlerName string # Unique name of this event handler instance. Used to avoid duplicate handler registration and if removal is required.
 ---@param handlerFunction fun(eventData: EventData) # The function that is called when the event triggers. When the function is called it will receive the standard single Factorio event specific data table argument, which is at a minimum the EventData class.
----@param thisFilterData? EventFilter[]|nil # List of Factorio EventFilters the mod should receive this eventName occurrences for or nil for all occurrences. If an empty table (not nil) is passed in then nothing is registered for this handler (silently rejected). Filtered events have to expect to receive results outside of their own filters. As a Factorio event type can only be subscribed to one time with a combined Filter list of all desires across the mod.
+---@param thisFilterData? EventFilter[] # List of Factorio EventFilters the mod should receive this eventName occurrences for or nil for all occurrences. If an empty table (not nil) is passed in then nothing is registered for this handler (silently rejected). Filtered events have to expect to receive results outside of their own filters. As a Factorio event type can only be subscribed to one time with a combined Filter list of all desires across the mod.
 ---@return uint|nil registeredEventId? # The eventId raised for this handler (if one was). Useful for custom event names when you need to store the eventId to return via a remote interface call.
 Events.RegisterHandlerEvent = function(eventName, handlerName, handlerFunction, thisFilterData)
     if eventName == nil or handlerName == nil or handlerFunction == nil then
@@ -174,7 +174,7 @@ end
 --- Registers the function in to the mods event to function matrix. Handles merging filters between multiple functions on the same event.
 ---@param eventName defines.events|string # Either Factorio event or a custom modded event name.
 ---@param thisFilterName string # The handler name.
----@param thisFilterData? table|nil
+---@param thisFilterData? table
 ---@return uint|nil eventId
 Events._RegisterEvent = function(eventName, thisFilterName, thisFilterData)
     if eventName == nil then

@@ -9,9 +9,9 @@ MOD.guiOpenedActions = MOD.guiOpenedActions or {} ---@type table<string, functio
 ---@class UtilityGuiActionsOpened_ActionData # The response object passed to the callback function when the GUI element is opened. Registered with GuiActionsOpened.LinkGuiOpenedActionNameToFunction().
 ---@field actionName string # The action name registered to this GUI element being opened.
 ---@field playerIndex uint # The player_index of the player who opened the GUI.
----@field entity LuaEntity|nil # The entity that was clicked to open the GUI, if one was.
+---@field entity? LuaEntity # The entity that was clicked to open the GUI, if one was.
 ---@field data any # The data argument passed in when registering this function action name.
----@field eventData on_gui_opened # The raw Factorio event data for the on_gui_opened event.
+---@field eventData EventData.on_gui_opened # The raw Factorio event data for the on_gui_opened event.
 
 --------------------------------------------------------------------------------------------
 --                                    Public Functions
@@ -35,7 +35,7 @@ end
 -- Called to register a specific entities GUI being opened to a named action.
 ---@param entity LuaEntity # The entity to react to having a GUI opened on it.
 ---@param actionName string # The actionName of the registered function to be called when the GUI element is opened.
----@param data? table|nil # Any provided data will be passed through to the actionName's registered function upon the GUI element being opened.
+---@param data? table # Any provided data will be passed through to the actionName's registered function upon the GUI element being opened.
 GuiActionsOpened.RegisterEntityForGuiOpenedAction = function(entity, actionName, data)
     if entity == nil or actionName == nil then
         error("GuiActions.RegisterEntityForGuiOpenedAction called with missing arguments")
@@ -72,7 +72,7 @@ end
 -- Called to register a specific GUI type being opened to a named action.
 ---@param guiType defines.gui_type|'all' # the gui type to react to or `all` types.
 ---@param actionName string # The actionName of the registered function to be called when the GUI element is opened.
----@param data? table|nil # Any provided data will be passed through to the actionName's registered function upon the GUI element being opened.
+---@param data? table # Any provided data will be passed through to the actionName's registered function upon the GUI element being opened.
 GuiActionsOpened.RegisterActionNameForGuiTypeOpened = function(guiType, actionName, data)
     if guiType == nil or actionName == nil then
         error("GuiActions.RegisterActionNameForGuiTypeOpened called with missing arguments")
@@ -103,7 +103,7 @@ end
 --------------------------------------------------------------------------------------------
 
 --- Called when each on_gui_opened event occurs and identifies any registered actionName functions to trigger.
----@param rawFactorioEventData on_gui_opened
+---@param rawFactorioEventData EventData.on_gui_opened
 GuiActionsOpened._HandleGuiOpenedAction = function(rawFactorioEventData)
     local guiType, entityOpened = rawFactorioEventData.gui_type, rawFactorioEventData.entity
 

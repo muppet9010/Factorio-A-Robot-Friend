@@ -22,7 +22,7 @@ local math_ceil = math.ceil
 ---@field repeat_count uint
 
 --- Returns an empty rotated sprite prototype object. For use in data stage.
----@param repeat_count? int|nil # Defaults to 1 if not provided
+---@param repeat_count? int # Defaults to 1 if not provided
 ---@return EmptyRotatedSprite
 PrototypeUtils.MakeEmptyRotatedSpritePrototype_DataStage = function(repeat_count)
     return {
@@ -35,14 +35,14 @@ PrototypeUtils.MakeEmptyRotatedSpritePrototype_DataStage = function(repeat_count
 end
 
 ---@class UtilityPrototypeUtils_IngredientLists
----@field ingredients? table<string, string|double>|nil
----@field normal? table<string, string|double>|nil
----@field expensive? table<string, string|double>|nil
+---@field ingredients? table<string, string|double>
+---@field normal? table<string, string|double>
+---@field expensive? table<string, string|double>
 
 ---@class UtilityPrototypeUtils_EnergyLists
----@field ingredients? number|nil
----@field normal? number|nil
----@field expensive? number|nil
+---@field ingredients? number
+---@field normal? number
+---@field expensive? number
 
 --- Takes tables of the various recipe types (normal, expensive and ingredients) and makes the required recipe prototypes from them. Only makes the version if the ingredientsList includes the type. So supplying just energyLists types doesn't make new versions.
 ---@param recipeName string
@@ -157,7 +157,7 @@ end
 --- Returns the value of the requested attributeName from the recipe for the recipeCodeType "cost" if available, otherwise the inline/ingredients value is returned.
 ---@param recipe Prototype.Recipe
 ---@param attributeName string
----@param recipeCostType? 'ingredients'|'normal'|'expensive'|nil # Defaults to the 'ingredients' if not provided. The 'ingredients' option will return any inline value first, then the value from the ingredients field.
+---@param recipeCostType? 'ingredients'|'normal'|'expensive' # Defaults to the 'ingredients' if not provided. The 'ingredients' option will return any inline value first, then the value from the ingredients field.
 ---@param defaultValue? any # The default value to return if nothing is found in the hierarchy of "costs" checked.
 ---@return any|nil value
 PrototypeUtils.GetRecipeAttribute = function(recipe, attributeName, recipeCostType, defaultValue)

@@ -41,11 +41,11 @@ SettingsManager.ExpectedValueTypes = {
 ---@param factorioSettingName string # The name of the Factorio setting.
 ---@param expectedValueType UtilitySettingsManager_ExpectedValueType
 ---@param defaultSettingsContainer table # Just pass in a reference to an empty table (not nil) in factorio mod `global`. Same table can be used for all settings and container names.
----@param defaultValue boolean|number|string|nil # The default raw value to be passed in to the provided valueHandlingFunction.
+---@param defaultValue? boolean|number|string # The default raw value to be passed in to the provided valueHandlingFunction.
 ---@param globalGroupsContainer table # Just pass in a reference to an empty table (not nil) in factorio mod `global`. Same table can be used for all settings and container names.
 ---@param globalSettingContainerName 'settings'|string # A unique name for this group of settings. Not sure when you would want separate groups of settings as it would allow repeat instances of the same setting.
 ---@param globalSettingName string # The setting name that's used for storing and retrieving the value in this feature.
----@param valueHandlingFunction? fun(value: any):any|nil # A function that is run on the value of each occurrence of the setting to process the value before recording it.
+---@param valueHandlingFunction? fun(value: any):any # A function that is run on the value of each occurrence of the setting to process the value before recording it.
 SettingsManager.HandleSettingWithArrayOfValues = function(factorioSettingType, factorioSettingName, expectedValueType, defaultSettingsContainer, defaultValue, globalGroupsContainer, globalSettingContainerName, globalSettingName, valueHandlingFunction)
     if expectedValueType == nil or expectedValueType == "" then
         error("Setting '[" .. tostring(factorioSettingType) .. "][" .. tostring(factorioSettingName) .. "]' has no value type coded.")
@@ -155,7 +155,7 @@ SettingsManager._CreateGlobalGroupSettingsContainer = function(globalGroupsConta
 end
 
 -- Strips any % characters from a number value to avoid silly user entry issues. Soft converts the supplied value in to the expected type (not sure if wise?).
----@param value string|number|boolean|table|string[]|number[]|boolean[]|table[]|nil
+---@param value? string|number|boolean|table|string[]|number[]|boolean[]|table[]
 ---@param expectedType UtilitySettingsManager_ExpectedValueType
 ---@return boolean|number|string|nil|table
 SettingsManager._ValueToType = function(value, expectedType)

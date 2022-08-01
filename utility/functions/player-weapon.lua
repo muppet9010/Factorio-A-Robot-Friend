@@ -11,10 +11,10 @@ local PlayerWeapon = {} ---@class Utility_PlayerWeapon
 
 ---@class UtilityPlayerWeapon_RemovedWeaponToEnsureWeapon
 ---@field gunInventoryIndex uint # The index in the gun and ammo inventory where the weapon was removed.
----@field weaponItemName? string|nil # Nil if no weapon was in the slot.
----@field weaponFilterName? string|nil # Nil if no weapon filter was set on the slot.
----@field ammoItemName? string|nil # Nil if no ammo was in the slot.
----@field ammoFilterName? string|nil # Nil if no ammo filter was set on the slot.
+---@field weaponItemName? string # Nil if no weapon was in the slot.
+---@field weaponFilterName? string # Nil if no weapon filter was set on the slot.
+---@field ammoItemName? string # Nil if no ammo was in the slot.
+---@field ammoFilterName? string # Nil if no ammo filter was set on the slot.
 ---@field beforeSelectedWeaponGunIndex uint # The weapon slot that the player had selected before the weapon was removed.
 
 --- Ensure the player has the specified weapon, clearing any weapon filters if needed. Includes options to ensure compatibility with a specific ammo type, otherwise will ensure the ammo slot setup allows the gun to be placed even if the ammo filter is incompatible.
@@ -22,7 +22,7 @@ local PlayerWeapon = {} ---@class Utility_PlayerWeapon
 ---@param weaponName string
 ---@param forceWeaponToWeaponInventorySlot boolean # If the weapon should be forced to be equipped, otherwise it may end up in their inventory.
 ---@param selectWeapon boolean
----@param ammoTypePlanned? string|nil # The name of the ammo planned to be put in this weapon. Handles removing the ammo from the weapon slot and any filters if needed. Doesn't actually give any ammo.
+---@param ammoTypePlanned? string # The name of the ammo planned to be put in this weapon. Handles removing the ammo from the weapon slot and any filters if needed. Doesn't actually give any ammo.
 ---@return boolean|nil weaponGiven # If the weapon item had to be given to the player, compared to them already having it and it possibly just being moved between their inventories. Returns nil for invalid situations, i.e. called on a player with no gun inventory.
 ---@return UtilityPlayerWeapon_RemovedWeaponToEnsureWeapon|nil removedWeaponDetails # Details on the weapon that was removed to add the new weapon. Is nil if no active weapon was set/found, i.e. weapon was found/put in to the players main inventory and not as an equipped weapon.
 PlayerWeapon.EnsureHasWeapon = function(player, weaponName, forceWeaponToWeaponInventorySlot, selectWeapon, ammoTypePlanned)

@@ -1,10 +1,10 @@
 local Constants = require("constants")
-local ActionManager = require("scripts.managers.action-manager")
+local TaskManager = require("scripts.managers.task-manager")
 local TestingManager = require("scripts.testing.testing-manager")
 local RobotManager = require("scripts.managers.robot-manager")
 
 local function CreateGlobals()
-    ActionManager.CreateGlobals()
+    TaskManager.CreateGlobals()
 
     RobotManager.CreateGlobals()
 
@@ -12,7 +12,7 @@ local function CreateGlobals()
 end
 
 local function OnLoad()
-    ActionManager.OnLoad()
+    TaskManager.OnLoad()
 
     RobotManager.OnLoad()
 
@@ -45,12 +45,6 @@ MOD = MOD or {} ---@class MOD
 
 -- Mod wide function interface table creation. Means EmmyLua can support it.
 MOD.Interfaces = MOD.Interfaces or {} ---@class MOD_InternalInterfaces
---[[
-    Populate and use from within module's OnLoad() functions with simple table reference structures, i.e:
-        MOD.Interfaces.Tunnel = MOD.Interfaces.Tunnel or {} ---@class InternalInterfaces_XXXXXX
-        MOD.Interfaces.Tunnel.CompleteTunnel = Tunnel.CompleteTunnel
---]]
---
 
 -- So things can register their remote interface functions within their module during OnLoad() and then control can register them all in bulk.
 MOD.RemoteInterfaces = MOD.RemoteInterfaces or {} ---@type table<string, function>

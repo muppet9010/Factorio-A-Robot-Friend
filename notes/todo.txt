@@ -1,3 +1,7 @@
-flesh out a few more simple actions.
 flesh out a basic job and task structure that is save/load safe and stores very basic data.
 flesh out simple mod upgrade process to handle when the mod is upgraded and jobs need to be re-evaluated.
+
+
+Future things to cover:
+    - Forces being deleted and merged. We cache them in Robot.
+    - Robot entities dying, we need to update our cache of them and track their corpses.

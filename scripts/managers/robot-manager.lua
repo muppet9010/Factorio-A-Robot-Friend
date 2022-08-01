@@ -5,7 +5,8 @@ local RobotManager = {} ---@class RobotManager
 --- The global object for the robot.
 ---@class Robot
 ---@field id uint
----@field entity LuaEntity|nil
+---@field entity? LuaEntity
+---@field force LuaForce
 
 RobotManager.CreateGlobals = function()
     global.RobotManager = global.RobotManager or {} ---@class Global_RobotManager
@@ -33,6 +34,9 @@ RobotManager.CreateRobot = function(surface, position)
         error("failed to create robot entity")
     end
     robot.entity = entity
+
+    -- Temp hardcoded bits.
+    robot.force = game.forces["player"]
 
     -- Record the robot tot he globals.
     global.RobotManager.robots[robot.id] = robot

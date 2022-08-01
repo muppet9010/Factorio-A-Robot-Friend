@@ -40,7 +40,7 @@ end
 
 -- Returns the table as an x|y table rather than an [1]|[2] table.
 ---@param thing table
----@return MapPosition|nil position? # x,y keyed table or nil if not a valid MapPosition.
+---@return MapPosition|nil position # x,y keyed table or nil if not a valid MapPosition.
 PositionUtils.TableToProperPosition = function(thing)
     if thing.x ~= nil and thing.y ~= nil then
         if type(thing.x) == "number" and type(thing.y) == "number" then
@@ -382,7 +382,7 @@ end
 
 ---@param position MapPosition
 ---@param boundingBox BoundingBox
----@param safeTiling? boolean|nil # If enabled the BoundingBox can be tiled without risk of an entity on the border being in 2 result sets, i.e. for use on each chunk.
+---@param safeTiling? boolean # If enabled the BoundingBox can be tiled without risk of an entity on the border being in 2 result sets, i.e. for use on each chunk.
 ---@return boolean
 PositionUtils.IsPositionInBoundingBox = function(position, boundingBox, safeTiling)
     if safeTiling == nil or not safeTiling then
@@ -403,7 +403,7 @@ end
 --- Get a random location within a radius (circle) of a target.
 ---@param centerPos MapPosition
 ---@param maxRadius double
----@param minRadius? double|nil # Defaults to 0.
+---@param minRadius? double # Defaults to 0.
 ---@return MapPosition
 PositionUtils.RandomLocationInRadius = function(centerPos, maxRadius, minRadius)
     local angle = math_random(0, 360)

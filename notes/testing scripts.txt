@@ -1,15 +1,13 @@
 Make a robot at spawn:
 
-/c __a_robot_friend__ MOD.Interfaces.RobotManager.CreateRobot(game.surfaces[1], {0,0})
+/sc __a_robot_friend__ MOD.Interfaces.RobotManager.CreateRobot(game.surfaces[1], {0,0})
 
 
 
 
 
-Make the robot walk around:
+Make the robot walk from its current location to a target location:
 
-/c __a_robot_friend__ MOD.Interfaces.Actions.walking(global.RobotManager.robots[1].entity, defines.direction.east)
-
-/c __a_robot_friend__ MOD.Interfaces.Actions.walking(global.RobotManager.robots[1].entity, defines.direction.west)
-
-/c __a_robot_friend__ MOD.Interfaces.Actions.walking(global.RobotManager.robots[1].entity, nil)
+/sc
+local targetPosition = {}
+__a_robot_friend__ MOD.Interfaces.XXXXXX

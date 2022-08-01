@@ -2,7 +2,7 @@ A job is what a player asks the robot to do. This will be top level wrapper arou
 
 When a robot is undertaking a task it will use multiple actions and sub tasks autonomously to complete the task. Tasks can take time and may include searches of the map in a time distributed fashion.
 
-Actions are things where the robot interacts directly with the world. They are done instantly and managed by a task. The master's name will be used as the player for all actions (ensures events are raised and so the correct player can be blamed).
+Actions are things where the robot interacts directly with the world. They are done instantly and thus managed by a task as everything needs to have a duration to complete. The master's name will be used as the player for all actions (ensures events are raised and so the correct player can be blamed).
 
 Actions are:
     - Walking - LuaControl.walking_state
@@ -23,15 +23,19 @@ Tasks can contain other tasks. I.e. "build this blueprint" includes the tasks of
 
 Tasks can be interrupted and will need to have a persisted state. When resumed the task will need to re-validate itself and confirm its current progress in the task is still accurate. Possibly returning to previously completed sub tasks and repeating their investigations and checking steps.
 
-Tasks and Actions should register their calling function by name in to MOD.Interfaces. Then the Jobs/Tasks can store the name in their data to be save/load safe.
+Tasks should register their calling function by name in to MOD.Interfaces.Tasks and MOD.Interfaces.Jobs. Then the Jobs/Tasks can store the name in their global data to be save/load safe. The interfaces can be used to call from one task to another up/down the chain in a save/load safe manner.
 
-Planned Lower Tasks list:
+Planned Lower Tasks list (never directly called, but used by many other tasks in combinations):
+    - Walk a path
+    - Find walking path
     - Search chests for items
-    - Move to location (long and short distance will likely be approached differently)
     - Scan area for ghosted items
     - Craft required items (manage the actions)
 
-Planned Medium Tasks list:
+Planned Medium Tasks list (actually callable on their own in simple situations):
+    - Walk to location:
+        - Find walking path
+        - Walk a path
     - Collect items:
         - Search chests for items
         - Move to location
@@ -43,9 +47,14 @@ Planned Medium Tasks list:
         - Do action (build, mining, upgrading, rotating, etc)
 
 
-Planned Jobs Tasks list:
+Planned Jobs Tasks list (main tasks that masters will generally get their robots to do):
     - Complete Blueprint:
         - Scan area for ghosted items
         - Collect items
         - Move to location
         - Complete ghosts
+    - Move to location:
+        - After finding distance and players inputs on method then one of:
+            - Walk to location
+            - Drive to location
+            - Ride train to location

@@ -39,9 +39,9 @@ local LogTags = false -- @Enable with other logging options to include details a
 ---@field range string
 
 ---@class UtilityBiomeTrees_TileTemperatureCalculationSettings
----@field scaleMultiplier? double|nil
----@field min? double|nil
----@field max? double|nil
+---@field scaleMultiplier? double
+---@field min? double
+---@field max? double
 
 ---@alias UtilityBiomeTrees_TreesMetaData table<string, UtilityBiomeTrees_TreeMetaData> # Key'd by tree name.
 ---@class UtilityBiomeTrees_TreeMetaData
@@ -55,13 +55,13 @@ local LogTags = false -- @Enable with other logging options to include details a
 ---@field type UtilityBiomeTrees_TileType
 ---@field tempRanges UtilityBiomeTrees_valueRange[]
 ---@field moistureRanges UtilityBiomeTrees_valueRange[]
----@field tag string|nil
+---@field tag? string
 
 ---@class UtilityBiomeTrees_RawTileData
 ---@field [1] UtilityBiomeTrees_TileType
----@field [2] UtilityBiomeTrees_valueRange[]|nil # tempRanges
----@field [3] UtilityBiomeTrees_valueRange[]|nil # moistureRanges
----@field [4] string|nil # tag
+---@field [2]? UtilityBiomeTrees_valueRange[] # tempRanges
+---@field [3]? UtilityBiomeTrees_valueRange[] # moistureRanges
+---@field [4]? string # tag
 
 ---@class UtilityBiomeTrees_valueRange
 ---@field [1] double # Min in this range.
@@ -72,8 +72,8 @@ local LogTags = false -- @Enable with other logging options to include details a
 ---@field tempRange UtilityBiomeTrees_valueRange
 ---@field moistureRange UtilityBiomeTrees_valueRange
 ---@field probability double
----@field tags table<string, string>|nil # Tag color string as key and value.
----@field exclusivelyOnNamedTiles table<string, string>|nil # The names of tiles that the tree can only go on, tile name is the key and value in table.
+---@field tags? table<string, string> # Tag color string as key and value.
+---@field exclusivelyOnNamedTiles? table<string, string> # The names of tiles that the tree can only go on, tile name is the key and value in table.
 
 ---@class UtilityBiomeTrees_suitableTree
 ---@field chanceStart double
@@ -375,9 +375,9 @@ end
 ---@param tileDetails UtilityBiomeTrees_TilesDetails
 ---@param tileName string
 ---@param type UtilityBiomeTrees_TileType
----@param range1? UtilityBiomeTrees_valueRange[]|nil
----@param range2? UtilityBiomeTrees_valueRange[]|nil
----@param tag? string|nil
+---@param range1? UtilityBiomeTrees_valueRange[]
+---@param range2? UtilityBiomeTrees_valueRange[]
+---@param tag? string
 BiomeTrees._AddTileDetails = function(tileDetails, tileName, type, range1, range2, tag)
     local tempRanges = {}
     local moistureRanges = {}

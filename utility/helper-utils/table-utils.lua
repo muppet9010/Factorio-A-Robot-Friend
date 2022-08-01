@@ -207,8 +207,8 @@ end
 
 -- Stringify a table in to a JSON text string. Options to make it pretty printable.
 ---@param targetTable table
----@param name? string|nil # If provided will appear as a "name:JSONData" output.
----@param singleLineOutput? boolean|nil # If provided and true removes all lines and spacing from the output.
+---@param name? string # If provided will appear as a "name:JSONData" output.
+---@param singleLineOutput? boolean # If provided and true removes all lines and spacing from the output.
 ---@return string
 TableUtils.TableContentsToJSON = function(targetTable, name, singleLineOutput)
     singleLineOutput = singleLineOutput or false
@@ -219,7 +219,7 @@ end
 --- Searches a table of values for a specific value and returns the key(s) of that entry.
 ---@param theTable table<any,any>
 ---@param value string|number|string|number[] # Either a single value or an array of possible values.
----@param returnMultipleResults? boolean|nil # Can return a single result (returnMultipleResults = false/nil) or a list of results (returnMultipleResults = true)
+---@param returnMultipleResults? boolean # Can return a single result (returnMultipleResults = false/nil) or a list of results (returnMultipleResults = true)
 ---@return string|number[] # table of keys.
 TableUtils.GetTableKeyWithValue = function(theTable, value, returnMultipleResults)
     local keysFound = {}
@@ -249,7 +249,7 @@ end
 ---@param theTable table<any,any>
 ---@param innerKey string|number
 ---@param innerValue string|number|string|number[] # Either a single value or an array of possible values.
----@param returnMultipleResults? boolean|nil # Can return a single result (returnMultipleResults = false/nil) or a list of results (returnMultipleResults = true)
+---@param returnMultipleResults? boolean # Can return a single result (returnMultipleResults = false/nil) or a list of results (returnMultipleResults = true)
 ---@return string|number[] # table of keys.
 TableUtils.GetTableKeyWithInnerKeyValue = function(theTable, innerKey, innerValue, returnMultipleResults)
     local keysFound = {}
@@ -279,7 +279,7 @@ end
 ---@param theTable table<any,any>
 ---@param innerKey string|number
 ---@param innerValue string|number|string|number[] # Either a single value or an array of possible values.
----@param returnMultipleResults? boolean|nil # Can return a single result (returnMultipleResults = false/nil) or a list of results (returnMultipleResults = true)
+---@param returnMultipleResults? boolean # Can return a single result (returnMultipleResults = false/nil) or a list of results (returnMultipleResults = true)
 ---@return table[] # table of values, which must be a table to have an inner key/value.
 TableUtils.GetTableValueWithInnerKeyValue = function(theTable, innerKey, innerValue, returnMultipleResults)
     local valuesFound = {}
@@ -308,12 +308,9 @@ end
 --- Returns a copy of a table's values with each value also being the key. Doesn't clone any internal data structures, so use on tables of tables with care.
 ---
 --- Useful for converting a list in to dictionary of the list items.
----@param tableWithValues table<any,any>|nil
+---@param tableWithValues table<any,any>
 ---@return table|nil tableOfKeys # Returns nil when nil is passed in.
 TableUtils.TableValuesToKey = function(tableWithValues)
-    if tableWithValues == nil then
-        return nil
-    end
     local newTable = {} ---@type table<any, any>
     for _, value in pairs(tableWithValues) do
         newTable[value] = value
@@ -324,13 +321,10 @@ end
 --- Returns a copy of a table's values with each value's named inner key's (innerValueAttributeName) value also being the key. Doesn't clone any internal data structures, so use on tables of tables with care.
 ---
 --- Useful for converting a list of objects in to dictionary of the list items's with a specific inner field being the new dictionary key.
----@param refTable table<any,any>|nil
+---@param refTable table<any,any>
 ---@param innerValueAttributeName any
 ---@return table|nil
 TableUtils.TableInnerValueToKey = function(refTable, innerValueAttributeName)
-    if refTable == nil then
-        return nil
-    end
     local newTable = {} ---@type table<any, any>
     for _, value in pairs(refTable) do
         newTable[value[innerValueAttributeName]] = value
@@ -365,7 +359,7 @@ end
 
 --- Inner looping of TableContentsToJSON.
 ---@param targetTable table<any, any>
----@param name? string|nil # If provided will appear as a "name:JSONData" output.
+---@param name? string # If provided will appear as a "name:JSONData" output.
 ---@param singleLineOutput boolean
 ---@param tablesLogged table<any, any>
 ---@param indent uint # Pass a default of 1 on initial calling.

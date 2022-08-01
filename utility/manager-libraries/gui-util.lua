@@ -18,27 +18,27 @@ local StyleDataStyleVersion = require("utility.lists.style-data").styleVersion
 --- - Doesn't support the "name" attribute, but offers "descriptiveName" instead. See the attributes details.
 ---@class UtilityGuiUtil_ElementDetails_Add : UtilityGuiUtil_ElementDetails_LuaGuiElement.add_param
 --- The GUI element this newly created element will be a child of. Not needed (ignored) if this ElementDetails is specified as a child within another ElementDetails specification.
----@field parent? LuaGuiElement|nil
+---@field parent? LuaGuiElement
 --- A descriptive name of the element. If provided will be automatically merged with the element's type and the mod name to make a semi unique reference name of type UtilityGuiUtil_GuiElementName that the GUI element will have as its "name" attribute.
----@field descriptiveName? string|nil
----@field storeName? UtilityGuiUtil_StoreName|nil
----@field style? UtilityGuiUtil_ElementDetails_style|nil
----@field styling? UtilityGuiUtil_ElementDetails_styling|nil
----@field caption? UtilityGuiUtil_ElementDetails_caption|nil
----@field tooltip? UtilityGuiUtil_ElementDetails_caption|nil
+---@field descriptiveName? string
+---@field storeName? UtilityGuiUtil_StoreName
+---@field style? UtilityGuiUtil_ElementDetails_style
+---@field styling? UtilityGuiUtil_ElementDetails_styling
+---@field caption? UtilityGuiUtil_ElementDetails_caption
+---@field tooltip? UtilityGuiUtil_ElementDetails_caption
 --- An array of other Element Details to recursively add in this hierarchy. Parent argument isn't required for children and is ignored if provided for them as it's worked out during recursive loop of creating the children.
----@field children? UtilityGuiUtil_ElementDetails_Add[]|nil
----@field registerClick? UtilityGuiUtil_ElementDetails_registerClick|nil
----@field registerCheckedStateChange? UtilityGuiUtil_ElementDetails_registerCheckedStateChange|nil
+---@field children? UtilityGuiUtil_ElementDetails_Add[]
+---@field registerClick? UtilityGuiUtil_ElementDetails_registerClick
+---@field registerCheckedStateChange? UtilityGuiUtil_ElementDetails_registerCheckedStateChange
 --- If TRUE will return this Gui element when created in a table of elements with returnElement enabled. Key will be the elements UtilityGuiUtil_GuiElementName and the value a reference to the element. The UtilityGuiUtil_GuiElementName can be worked out by the calling function using GuiUtil.GenerateGuiElementName().
 ---
 --- Defaults to FALSE if not provided.
----@field returnElement? boolean|nil
+---@field returnElement? boolean
 --- If TRUE will mean the GUI Element is ignored and not added. To allow more natural templating as the value can be pre-calculated and then applied to a standard template being passed in to this function to not include certain elements.
 ---
 --- Defaults to FALSE if not provided.
----@field exclude? boolean|nil
----@field attributes? UtilityGuiUtil_ElementDetails_attributes|nil
+---@field exclude? boolean
+---@field attributes? UtilityGuiUtil_ElementDetails_attributes
 
 ---@class UtilityGuiUtil_ElementDetails_RegisterClickOption # Option of ElementDetails for calling GuiActionsClick.RegisterGuiForClick() as part of the Gui element creation.
 ---@field actionName string # The actionName of the registered function to be called when the GUI element is clicked.
@@ -54,13 +54,13 @@ local StyleDataStyleVersion = require("utility.lists.style-data").styleVersion
 ---
 --- Review the LuaGuiElement documentation for which attributes can be directly set on an existing element (https://lua-api.factorio.com/latest/LuaGuiElement.html#LuaGuiElement).
 ---@class UtilityGuiUtil_ElementDetails_Update : UtilityGuiUtil_ElementDetails_LuaGuiElement.updatable
----@field style? UtilityGuiUtil_ElementDetails_style|nil
----@field styling? UtilityGuiUtil_ElementDetails_styling|nil
----@field caption? UtilityGuiUtil_ElementDetails_caption|nil
----@field tooltip? UtilityGuiUtil_ElementDetails_tooltip|nil
----@field registerClick? UtilityGuiUtil_ElementDetails_registerClick|nil
----@field registerCheckedStateChange? UtilityGuiUtil_ElementDetails_registerCheckedStateChange|nil
----@field attributes? UtilityGuiUtil_ElementDetails_attributes|nil
+---@field style? UtilityGuiUtil_ElementDetails_style
+---@field styling? UtilityGuiUtil_ElementDetails_styling
+---@field caption? UtilityGuiUtil_ElementDetails_caption
+---@field tooltip? UtilityGuiUtil_ElementDetails_tooltip
+---@field registerClick? UtilityGuiUtil_ElementDetails_registerClick
+---@field registerCheckedStateChange? UtilityGuiUtil_ElementDetails_registerCheckedStateChange
+---@field attributes? UtilityGuiUtil_ElementDetails_attributes
 
 --------------------------------------------------------------------------------------------
 --                                    Public Functions
@@ -281,7 +281,7 @@ end
 
 --- Destroys all GUI elements within a players reference storage and removes the reference storage space for them.
 ---@param playerIndex uint
----@param storeName? UtilityGuiUtil_StoreName|nil # If provided filters the removal to that storeName, otherwise does all storeNames for this player.
+---@param storeName? UtilityGuiUtil_StoreName # If provided filters the removal to that storeName, otherwise does all storeNames for this player.
 GuiUtil.DestroyPlayersReferenceStorage = function(playerIndex, storeName)
     if global.GUIUtilPlayerElementReferenceStorage == nil or global.GUIUtilPlayerElementReferenceStorage[playerIndex] == nil then
         return
