@@ -1,0 +1,35 @@
+-- Description of what the job does and any odd logic within it.
+
+local XXXXXXXXX = {} ---@class XXXXXXXXX : Job
+XXXXXXXXX.jobName = "XXXXXXXXX"
+
+XXXXXXXXX.OnLoad = function()
+    MOD.Interfaces.Jobs.XXXXXXXXX = XXXXXXXXX
+end
+
+--- Called to create the job when it's initially added.
+---@param playerIndex uint
+XXXXXXXXX.Create = function(playerIndex)
+    local job = MOD.Interfaces.JobManager.CreateGenericJob(XXXXXXXXX.jobName, playerIndex)
+    local job.primaryTask = MOD.Interfaces.Tasks.YYYYYYYYYY.Create()
+end
+
+--- Called to remove the job when it's no longer wanted.
+---@param playerIndex uint
+---@param jobId uint
+XXXXXXXXX.Remove = function(playerIndex, jobId)
+end
+
+--- Called to pause the job and all of its activity. This will mean all robots move on to their next active job permanently. Also no new robot will be assignable to the job.
+---@param playerIndex uint
+---@param jobId uint
+XXXXXXXXX.Pause = function(playerIndex, jobId)
+end
+
+--- Called to resume a previously paused job. Just means robots can be assigned back to the job.
+---@param playerIndex uint
+---@param jobId uint
+XXXXXXXXX.Resume = function(playerIndex, jobId)
+end
+
+return XXXXXXXXX

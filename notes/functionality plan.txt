@@ -17,7 +17,7 @@ Actions are:
     - Repairing - LuaControl.repair_state
     - Rotate entity - LuaEntity.rotate
 
-Behaviours are related to the job and may dictate the action chosen or the choices made during the task decision process.
+Behaviours are related to the job and may dictate the action chosen or the choices made during the tasks decision process.
 
 Tasks can contain other tasks. I.e. "build this blueprint" includes the tasks of obtaining a list of required materials, collecting or crafting them, moving there and placing the entities.
 
@@ -54,7 +54,14 @@ Planned Jobs Tasks list (main tasks that masters will generally get their robots
         - Move to location
         - Complete ghosts
     - Move to location:
-        - After finding distance and players inputs on method then one of:
+        - After finding distance:
             - Walk to location
             - Drive to location
             - Ride train to location
+
+
+Jobs are owned and managed by a single player. A robot is owned by a single player. Players can assign their robots to their own jobs or to other players jobs.
+
+All jobs will have some standard options like travel type restrictions (i.e. block car usage), combat mode, etc. There should be per player settings/GUI to control defaults for these as well.
+
+We won't support updating jobs, but will allow via the GUI some sort of clone (with/out robots) to allow quick copying/replacing of them.

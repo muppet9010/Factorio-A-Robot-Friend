@@ -2,8 +2,10 @@ local Constants = require("constants")
 local TaskManager = require("scripts.managers.task-manager")
 local TestingManager = require("scripts.testing.testing-manager")
 local RobotManager = require("scripts.managers.robot-manager")
+local JobManager = require("scripts.managers.job-manager")
 
 local function CreateGlobals()
+    JobManager.CreateGlobals()
     TaskManager.CreateGlobals()
 
     RobotManager.CreateGlobals()
@@ -12,6 +14,7 @@ local function CreateGlobals()
 end
 
 local function OnLoad()
+    JobManager.OnLoad()
     TaskManager.OnLoad()
 
     RobotManager.OnLoad()
