@@ -5,3 +5,4 @@ flesh out simple mod upgrade process to handle when the mod is upgraded and jobs
 Future things to cover:
     - Forces being deleted and merged. We cache them in Robot.
     - Robot entities dying, we need to update our cache of them and track their corpses.
+    - At present we only support 1 robot per job as the task list is under the job. The task list should likely have a per robot element with some sort of sharing between the robots, i.e. if building a ghost they ned to not both bring the same start of the items list.

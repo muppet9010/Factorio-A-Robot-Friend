@@ -1,42 +1,56 @@
-local LoggingUtils = require("utility.helper-utils.logging-utils")
+---@class Job_WalkToLocation_Data : Job_Data
+---@field jobData Job_WalkToLocation_BespokeData
 
-local MoveToLocation = {} ---@class MoveToLocation : Job
+---@class Job_WalkToLocation_BespokeData
+---@field targetLocation MapPosition
+---@field surface LuaSurface
+
+local MoveToLocation = {} ---@class Job_MoveToLocation_Interface : Job_Interface
 MoveToLocation.jobName = "MoveToLocation"
 
-MoveToLocation.OnLoad = function()
+MoveToLocation._OnLoad = function()
     MOD.Interfaces.Jobs.MoveToLocation = MoveToLocation
 end
 
 --- Called to create the job when it's initially added.
 ---@param playerIndex uint
----@param targetLocation? MapPosition
----@param targetEntity? LuaEntity
-MoveToLocation.Create = function(playerIndex, targetLocation, targetEntity)
-    targetLocation = targetLocation or (targetEntity and targetEntity.position)
-    if targetLocation == nil then
-        error("no location provided")
-    end
+---@param targetLocation MapPosition
+---@param surface LuaSurface
+---@return Job_WalkToLocation_Data
+MoveToLocation.Create = function(playerIndex, targetLocation, surface)
+    local job = MOD.Interfaces.JobManager.CreateGenericJob(MoveToLocation.jobName, playerIndex) ---@cast job Job_WalkToLocation_Data
 
-    local job = MOD.Interfaces.JobManager.CreateGenericJob(MoveToLocation.jobName, playerIndex)
-    job.primaryTask = MOD.Interfaces.Tasks.WalkToLocation.Create(targetLocation, targetEntity, job, nil, nil) -- This will be the MoveToLocation task in future, but for now just hard code it to WalkToLocation to avoid a pointless task level, as robots can only walk.
+    -- Store the target data.
+    job.jobData = {
+        targetLocation = targetLocation,
+        surface = surface
+    }
+
+    return job
+end
+
+--- Called by a robot when it actively starts the job.
+---@param robot Robot
+---@param job Job_WalkToLocation_Data
+MoveToLocation.Activate = function(robot, job)
+    MOD.Interfaces.JobManager.ActivateGenericJob(job)
+
+    job.primaryTask = MOD.Interfaces.Tasks.WalkToLocation.Begin(job, nil, nil, robot, job.jobData.targetLocation, job.jobData.surface) -- This will be the MoveToLocation task in future, but for now just hard code it to WalkToLocation to avoid a pointless task level, as robots can only walk.
 end
 
 --- Called to remove the job when it's no longer wanted.
----@param playerIndex uint
----@param jobId uint
-MoveToLocation.Remove = function(playerIndex, jobId)
+---@param job Job_WalkToLocation_Data
+MoveToLocation.Remove = function(job)
 end
 
---- Called to pause the job and all of its activity. This will mean all robots move on to their next active job permanently. Also no new robot will be assignable to the job.
----@param playerIndex uint
----@param jobId uint
-MoveToLocation.Pause = function(playerIndex, jobId)
+--- Called to pause the job and all of its activity.
+---@param job Job_WalkToLocation_Data
+MoveToLocation.Pause = function(job)
 end
 
---- Called to resume a previously paused job. Just means robots can be assigned back to the job.
----@param playerIndex uint
----@param jobId uint
-MoveToLocation.Resume = function(playerIndex, jobId)
+--- Called to resume a previously paused job.
+---@param job Job_WalkToLocation_Data
+MoveToLocation.Resume = function(job)
 end
 
 return MoveToLocation

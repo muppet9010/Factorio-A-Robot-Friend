@@ -1,43 +1,49 @@
 local Events = require("utility.manager-libraries.events")
 
-local GetWalkingPath = {} ---@class GetWalkingPath : Task
+---@class Task_GetWalkingPath_Data : Task_Data
+---@field taskData Task_GetWalkingPath_BespokeData
 
----@class GetWalkingPath_PathRequester
----@field pathRequestId uint
----@field requestDetails GetWalkingPath_RequestDetails
----@field callbackTaskInterfaceName string
----@field callbackData table<any, any>
-
----@class GetWalkingPath_RequestDetails
----@field robot Robot
----@field surface LuaSurface
+---@class Task_GetWalkingPath_BespokeData
 ---@field startPosition MapPosition
 ---@field endPosition MapPosition
----@field endPositionEntity? LuaEntity
+---@field surface LuaSurface
+---@field robot Robot
 
----@alias GetWalkingPath_FindPath_ResultInterface fun(event: EventData.on_script_path_request_finished, requestDetails: GetWalkingPath_RequestDetails, callbackData:table<any, any>) --- The function that's called back by GetWalkingPath.FindPath() must confirm to this interface.
+---@alias GetWalkingPath_Begin_ResponseInterface fun(getWalkingPathTask: Task_GetWalkingPath_Data, event: EventData.on_script_path_request_finished, requestData: Task_GetWalkingPath_BespokeData) --- The function that's called back by GetWalkingPath.Begin() must confirm to this interface.
 
-GetWalkingPath.CreateGlobals = function()
+local GetWalkingPath = {} ---@class Task_GetWalkingPath_Interface : Task_Interface
+GetWalkingPath.taskName = "GetWalkingPath"
+
+GetWalkingPath._CreateGlobals = function()
     global.Tasks.GetWalkingPath = global.Tasks.GetWalkingPath or {} ---@class Global_Task_GetWalkingPath
-    global.Tasks.GetWalkingPath.pathRequests = global.Tasks.GetWalkingPath.pathRequests or {} ---@type table<uint, GetWalkingPath_PathRequester> # Keyed by the path request id.
+    global.Tasks.GetWalkingPath.pathRequests = global.Tasks.GetWalkingPath.pathRequests or {} ---@type table<uint, Task_GetWalkingPath_Data> # Keyed by the path request id.
 end
 
-GetWalkingPath.OnLoad = function()
-    MOD.Interfaces.Tasks.GetWalkingPath = GetWalkingPath._FindPath
+GetWalkingPath._OnLoad = function()
+    MOD.Interfaces.Tasks.GetWalkingPath = GetWalkingPath
     Events.RegisterHandlerEvent(defines.events.on_script_path_request_finished, "GetWalkingPath.OnPathRequestFinished", GetWalkingPath._OnPathRequestFinished)
 end
 
---- Request to find a walking path between 2 points for the robot.
----
---- The function referenced by callbackTaskInterfaceName must conform to GetWalkingPath_FindPath_ResultInterface.
+--- Called to create the task and start the process when an active robot first reaches this task.
+---@param job Job_Data # The job related to the lead task in this hierarchy.
+---@param parentTask? Task_Data # The parent Task or nil if this is a primary Task of a Job.
+---@param parentCallbackFunctionName? string # The name this task calls when it wants to give its parent a status update of some sort. This named function must conform to GetWalkingPath_Begin_ResponseInterface.
 ---@param robot Robot
----@param surface LuaSurface
 ---@param startPosition MapPosition
 ---@param endPosition MapPosition
----@param endPositionEntity? LuaEntity # An entity at the endPosition that the pathfinder should ignore when trying to get to the position.
----@param callbackTaskInterfaceName string # The task interface name to be called when the path request completes. Function must confirm to GetWalkingPath_FindPath_ResultInterface.
----@param callbackData table<any, any> # The data that should be passed back to the callback task when the path request completes.
-GetWalkingPath._FindPath = function(robot, surface, startPosition, endPosition, endPositionEntity, callbackTaskInterfaceName, callbackData)
+---@param surface LuaSurface
+---@return Task_GetWalkingPath_Data
+GetWalkingPath.Begin = function(job, parentTask, parentCallbackFunctionName, robot, startPosition, endPosition, surface)
+    local thisTask = MOD.Interfaces.TaskManager.CreateGenericTask(GetWalkingPath.taskName, job, parentTask, parentCallbackFunctionName) ---@cast thisTask Task_GetWalkingPath_Data
+
+    -- Store the request data.
+    thisTask.taskData = {
+        startPosition = startPosition,
+        endPosition = endPosition,
+        surface = surface,
+        robot = robot
+    }
+
     local pathRequestId = surface.request_path({
         bounding_box = robot.entity.prototype.collision_box, -- Future: should be cached as there may be no entity if the robot is dead at request time and we don't want to error.
         collision_mask = robot.entity.prototype.collision_mask, -- Future: should be cached as there may be no entity if the robot is dead at request time and we don't want to error.
@@ -46,25 +52,26 @@ GetWalkingPath._FindPath = function(robot, surface, startPosition, endPosition, 
         force = robot.force,
         radius = 1.0,
         can_open_gates = true,
-        entity_to_ignore = endPositionEntity,
-        pathfind_flags = { cache = false, prefer_straight_paths = true, no_break = true } -- Is done as a higher priority pathing request even over long distances with these settings. We don't cache as we want the best path for this robot and not just something in the vague vicinity.
+        entity_to_ignore = nil, -- FUTURE: get whatever is at the position right now, but may be multiple entities and so we need to select the correct one to ignore (one with a collision box that affects our robot?)
+        pathfind_flags = { cache = false, prefer_straight_paths = true, no_break = true }, -- Is done as a higher priority pathing request even over long distances with these settings. We don't cache as we want the best path for this robot and not just something in the vague vicinity.
+        path_resolution_modifier = 0 -- FUTURE: should play around with these values and see what impact they have. Need to check pathfinder going through dense and difficult areas, not just simple open and blocky areas.
     })
-    global.Tasks.GetWalkingPath.pathRequests[pathRequestId] = {
-        pathRequestId = pathRequestId,
-        requestDetails = { robot = robot, surface = surface, startPosition = startPosition, endPosition = endPosition, endPositionEntity = endPositionEntity },
-        callbackTaskInterfaceName = callbackTaskInterfaceName,
-        callbackData = callbackData
-    }
+    global.Tasks.GetWalkingPath.pathRequests[pathRequestId] = thisTask
+
+    return thisTask
 end
 
 --- React to a path request being completed. Its up to the caller to handle the too busy response as it may want to try again or try some alternative task instead.
 ---@param event EventData.on_script_path_request_finished
 GetWalkingPath._OnPathRequestFinished = function(event)
-    local pathRequester = global.Tasks.GetWalkingPath.pathRequests[event.id]
-    if pathRequester == nil then return end
+    local thisTask = global.Tasks.GetWalkingPath.pathRequests[event.id]
+    if thisTask == nil then return end
+
+    -- This task has completed in all situations.
+    thisTask.state = "completed"
 
     -- Call back to requesters task handler with the response and details.
-    MOD.Interfaces.Tasks[pathRequester.callbackTaskInterfaceName](event, pathRequester.requestDetails, pathRequester.callbackData)
+    MOD.Interfaces.Tasks[thisTask.parentTask.taskName][thisTask.parentCallbackFunctionName](thisTask, event, thisTask.taskData)
 end
 
 return GetWalkingPath

@@ -5,19 +5,19 @@ local RobotManager = require("scripts.managers.robot-manager")
 local JobManager = require("scripts.managers.job-manager")
 
 local function CreateGlobals()
-    JobManager.CreateGlobals()
-    TaskManager.CreateGlobals()
+    JobManager._CreateGlobals()
+    TaskManager._CreateGlobals()
 
-    RobotManager.CreateGlobals()
+    RobotManager._CreateGlobals()
 
     TestingManager.CreateGlobals()
 end
 
 local function OnLoad()
-    JobManager.OnLoad()
-    TaskManager.OnLoad()
+    JobManager._OnLoad()
+    TaskManager._OnLoad()
 
-    RobotManager.OnLoad()
+    RobotManager._OnLoad()
 
     TestingManager.OnLoad()
 

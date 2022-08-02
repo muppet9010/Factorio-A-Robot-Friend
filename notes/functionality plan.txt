@@ -30,21 +30,39 @@ Planned Lower Tasks list (never directly called, but used by many other tasks in
     - Find walking path
     - Search chests for items
     - Scan area for ghosted items
-    - Craft required items (manage the actions)
+    - Craft required item from ingredients in robot inventory
 
 Planned Medium Tasks list (actually callable on their own in simple situations):
     - Walk to location:
         - Find walking path
         - Walk a path
     - Collect items:
-        - Search chests for items
-        - Move to location
-        - Move items between chest and robot
-        - Craft required items
+        - Search chests for items. Looking for as many items as we can until our inventory fills up. In the hope that anything we can;t get now and our inventory is full may be available when we return.
+        - Collect item from chest (loops):
+            - Move to location
+            - Move items between chest and robot
+            - Review if other needed items are in chests and either loop or move on to next step.
+        - Craft required items not in chests (loop):
+            - Identify ingredients needed for required item type
+            - For each ingredient:
+                - Identify if robot has these items already
+                - Search chests for items and record if they exist.
+            - If all ingredients for recipe can be obtained then collect them from the chests:
+                - Move to location
+                - Move items between chest and robot
+                - Review if other needed items are in chests and either loop or move on to next step.
+            - Otherwise flag item as not obtainable.
+            - Craft items that are possible.
+        - Report to master any items that can not be obtained. Let master decide if robot considers task as completed and continues with job or waits for master to resolve issue and then repeats the collection activities.
     - Complete ghosts (includes build, mining, upgrading, rotating, etc):
         - Scan area for ghosted items (if not passed in)
-        - Move to location
-        - Do action (build, mining, upgrading, rotating, etc)
+        - For each ghost item:
+            - Do we have material to do it, if not skip it for now and mark it for later.
+            - Do we need to move to reach it, if so:
+                - Move to location
+            - Do action (build, mining, upgrading, rotating, etc)
+            - Loop back until finished.
+
 
 
 Planned Jobs Tasks list (main tasks that masters will generally get their robots to do):
@@ -53,6 +71,7 @@ Planned Jobs Tasks list (main tasks that masters will generally get their robots
         - Collect items
         - Move to location
         - Complete ghosts
+        - Repeat scan area and either re-loop or job completed.
     - Move to location:
         - After finding distance:
             - Walk to location

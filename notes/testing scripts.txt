@@ -1,13 +1,11 @@
-Make a robot at spawn:
-
-/sc __a_robot_friend__ MOD.Interfaces.RobotManager.CreateRobot(game.surfaces[1], {0,0})
+All done for player 1.
 
 
 
+Make a robot at spawn and make it walk to the set location under a job:
 
-
-Make the robot walk from its current location to a target location:
-
-/sc
-local targetPosition = {}
-__a_robot_friend__ MOD.Interfaces.XXXXXX
+/sc __a_robot_friend__
+local targetPosition = {100,100}
+local robot = MOD.Interfaces.RobotManager.CreateRobot(game.surfaces[1], {2,2}, 1)
+local job = MOD.Interfaces.Jobs.MoveToLocation(1, targetPosition, game.surfaces[1])
+MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job)
