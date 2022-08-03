@@ -79,8 +79,14 @@ Planned Jobs Tasks list (main tasks that masters will generally get their robots
             - Ride train to location
 
 
-Jobs are owned and managed by a single player. A robot is owned by a single player. Players can assign their robots to their own jobs or to other players jobs.
+Jobs are owned and managed by a single player. A robot is owned by a single player. Players can assign their robots to their own jobs or to other player's jobs.
 
 All jobs will have some standard options like travel type restrictions (i.e. block car usage), combat mode, etc. There should be per player settings/GUI to control defaults for these as well.
 
 We won't support updating jobs, but will allow via the GUI some sort of clone (with/out robots) to allow quick copying/replacing of them.
+
+Multiple robots can be assigned to the same job. Each robot will have its own main primaryTask and task hierarchy under the Job. As this way the a task can cross talk and share data when needed between each robots version. In most cases the the tasks will be entirely separate as the robots will be doing their own thing within their own section of the task.
+Initially this multi robot support won't be present in the initial features, but the structure should exist for it and it should be tested as working ok in 1 case (completing a blueprint job).
+
+Each layer should call only to other managers, with each manager then knowing its own areas structure and calling in to the specific modules. Also means that Sumneko type identification works better as managers functions are all clearly defined, with any greyness from Factory type interfaces within their functions.
+Exceptions are when a specific job needs to call to a specific task, as it needs to know the specific tasks arguments.

@@ -8,10 +8,13 @@ local Events = require("utility.manager-libraries.events")
 ---@class Robot
 ---@field id uint
 ---@field entity? LuaEntity
+---@field surface LuaSurface
 ---@field force LuaForce
 ---@field master LuaPlayer
 ---@field activeJobs Job_Data[]
----@field state "active"|"standby"
+---@field state "active"|"standby" # FUTURE: standby is what players can do to their own or other players robots. They can't change their orders, but they can order the robot to stop and it goes in to standby until re-activated by its master or the order issuer.
+---@field jobBusyUntilTick uint # The tick the robot is busy until on the current job. 0 is not busy.
+---@field currentStateRenderingId uint64
 
 local RobotManager = {} ---@class RobotManager
 
@@ -22,9 +25,7 @@ RobotManager._CreateGlobals = function()
 end
 
 RobotManager._OnLoad = function()
-    MOD.Interfaces.RobotManager = MOD.Interfaces.RobotManager or {} ---@class MOD_InternalInterfaces_RobotManager
-    MOD.Interfaces.RobotManager.CreateRobot = RobotManager.CreateRobot
-    MOD.Interfaces.RobotManager.AssignRobotToJob = RobotManager.AssignRobotToJob
+    MOD.Interfaces.RobotManager = RobotManager
 
     Events.RegisterHandlerEvent(defines.events.on_tick, "RobotManager.ManageRobots", RobotManager.ManageRobots)
 end
@@ -32,15 +33,18 @@ end
 --- Create a new robot with its entity starting at the given position.
 ---@param surface LuaSurface
 ---@param position MapPosition
+---@param master LuaPlayer
 ---@return Robot
 RobotManager.CreateRobot = function(surface, position, master)
     ---@type Robot
     local robot = {
         id = global.RobotManager.nextRobotId,
-        force = master.force,
+        surface = surface,
+        force = master.force --[[@as LuaForce]] ,
         master = master,
         activeJobs = {},
-        state = "active"
+        state = "active",
+        jobBusyUntilTick = 0
     }
 
     -- Create the robot's entity.
@@ -57,19 +61,34 @@ RobotManager.CreateRobot = function(surface, position, master)
     return robot
 end
 
---- Assigns a job to a robot at the end of its list.
+--- Assigns a job to a robot at the end of its active job list. Doesn't activate any tasks until the robot starts wanting to do the job.
 ---@param robot Robot
 ---@param job Job_Data
 RobotManager.AssignRobotToJob = function(robot, job)
-    robot.activeJobs[robot.activeJobs + 1] = job
+    robot.activeJobs[#robot.activeJobs + 1] = job
+end
+
+--- Removes a job from a robot's list and tidies up any task state data related to it.
+---@param robot Robot
+---@param robotsJobIndex uint
+RobotManager.RemoveRobotFromJob = function(robot, robotsJobIndex)
+    local job = robot.activeJobs[robotsJobIndex]
+    MOD.Interfaces.JobManager.RemoveRobotFromJob(robot, job)
+    table.remove(robot.activeJobs, robotsJobIndex)
 end
 
 --- Called every tick to manage the robots.
 ---@param event EventData.on_tick
 RobotManager.ManageRobots = function(event)
-    --TODO: check each robot and if past the robots "busyUntil" tick call back to the jobs current task to "Progress()".
-
-    -- Robot does its top non completed job. Calling Activate() on first time and later in to the .primaryTask.Progress().
+    -- For each robot check if its not busy waiting check down its active job list for something to do.
+    for _, robot in pairs(global.RobotManager.robots) do
+        if robot.jobBusyUntilTick < event.tick then
+            for _, job in pairs(robot.activeJobs) do
+                local ticksToWait = MOD.Interfaces.JobManager.ProgressRobotForJob(robot, job)
+                robot.jobBusyUntilTick = event.tick + ticksToWait
+            end
+        end
+    end
 end
 
 return RobotManager

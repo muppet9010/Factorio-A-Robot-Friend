@@ -3,11 +3,12 @@ local TaskManager = require("scripts.managers.task-manager")
 local TestingManager = require("scripts.testing.testing-manager")
 local RobotManager = require("scripts.managers.robot-manager")
 local JobManager = require("scripts.managers.job-manager")
+local SettingsManager = require("scripts.managers.settings-manager")
 
 local function CreateGlobals()
+    SettingsManager._CreateGlobals()
     JobManager._CreateGlobals()
     TaskManager._CreateGlobals()
-
     RobotManager._CreateGlobals()
 
     TestingManager.CreateGlobals()

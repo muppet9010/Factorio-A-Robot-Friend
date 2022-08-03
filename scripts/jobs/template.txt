@@ -1,3 +1,6 @@
+--- OLD AND NEEDS UPDATING - USE OF XXXXX AND YYYY IS GOOD THOUGH. But needs template usage naotes at top of what to replace each with.
+
+
 -- Description of what the job does and any odd logic within it.
 
 local XXXXXXXXX = {} ---@class XXXXXXXXX : Job
