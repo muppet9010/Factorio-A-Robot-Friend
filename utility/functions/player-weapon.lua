@@ -103,7 +103,7 @@ PlayerWeapon.EnsureHasWeapon = function(player, weaponName, forceWeaponToWeaponI
                     removedWeaponDetails.weaponItemName = currentName
                 end
                 removedWeaponDetails.weaponFilterName = gunInventory.get_filter(weaponFoundIndex)
-                gunInventory.set_filter(weaponFoundIndex, nil) ---@diagnostic disable-line:param-type-mismatch -- Mistake in API Docs, bugged: https://forums.factorio.com/viewtopic.php?f=7&t=102859
+                gunInventory.set_filter(weaponFoundIndex, nil)
                 gunItemStack.clear()
             else
                 -- As we won't force the weapon it should go in to the characters inventory if they don't already have one.
@@ -152,7 +152,7 @@ PlayerWeapon.EnsureHasWeapon = function(player, weaponName, forceWeaponToWeaponI
         local currentAmmoFilterName = ammoInventory.get_filter(weaponFoundIndex)
         if currentAmmoFilterName ~= nil and currentAmmoFilterName ~= ammoTypePlanned then
             removedWeaponDetails.ammoFilterName = currentAmmoFilterName
-            ammoInventory.set_filter(weaponFoundIndex, nil) ---@diagnostic disable-line:param-type-mismatch  -- Mistake in API Docs, bugged: https://forums.factorio.com/viewtopic.php?f=7&t=102859
+            ammoInventory.set_filter(weaponFoundIndex, nil)
         end
     else
         -- No expected ammo type so we just need to remove any incompatible ammo, any filter can stay.
@@ -303,14 +303,14 @@ PlayerWeapon.GetWeaponAmmoDetails = function(ammoType, weaponItemPrototype)
     local minRange = weapon_attackParameters.min_range
 
     local maxRange = weapon_attackParameters.range
-    -- CODE NOTE: the range_modifier isn't exposed via the API at present. Code written for if/when it is included, requested here: https://forums.factorio.com/viewtopic.php?f=28&t=103012
+    -- CODE NOTE: the range_modifier is exposed but the API documentation doesn't include it yet. https://forums.factorio.com/viewtopic.php?p=571575#p571575
     local ammoRangeModifier = ammoType.range_modifier ---@diagnostic disable-line: undefined-field, no-unknown
     if ammoRangeModifier ~= nil then
         maxRange = maxRange * ammoRangeModifier
     end
 
     local cooldown = weapon_attackParameters.cooldown
-    -- CODE NOTE: the cooldown_modifier isn't exposed via the API at present. Code written for if/when it is included, requested here: https://forums.factorio.com/viewtopic.php?f=28&t=103012
+    -- CODE NOTE: the cooldown_modifier is exposed but the API documentation doesn't include it yet. https://forums.factorio.com/viewtopic.php?p=571575#p571575
     local cooldownModifier = ammoType.cooldown_modifier ---@diagnostic disable-line: undefined-field, no-unknown
     if cooldownModifier ~= nil then
         cooldown = cooldown * cooldownModifier
