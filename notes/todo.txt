@@ -1,17 +1,21 @@
-flesh out a basic job and task structure that is save/load safe and stores very basic data.
-flesh out simple mod upgrade process to handle when the mod is upgraded and jobs need to be re-evaluated.
-
-
 Future things to cover:
     - Forces being deleted and merged. We cache them in Robot.
-    - Robot entities dying, we need to update our cache of them and track their corpses.
-    - At present we only support 1 robot per job as the task list is under the job. The task list should likely have a per robot element with some sort of sharing between the robots, i.e. if building a ghost they ned to not both bring the same start of the items list.
+    - Robot entities dying, we need to update our cache of them and track their corpses. Also want to handle a robot entity becoming invalid at a high level of Progress() to avoid every task having to use UPS checking .valid every tick.
+    - At present we only fully support 1 robot per job. The task list should likely have a per robot element with some sort of sharing between the robots, i.e. if building a ghost they need to not both bring the same start of the items list. Also at present the first primaryTask to complete finishes the whole job, see the FUTURE note JobManager.ProgressRobotForJob().
+    - Robots need to support having their task in a job paused and the robot told to do something else, i.e. robot gets attacked so needs to defend itself. I want to get the framework in for this in a simple format early.
 
 
 Feature Enhancements:
-    - Walking a path:
+    - Walking to location:
         - Detect railway and either try to path around or stop just before it, look both ways and then cross when safe. If not safe for X time place a signal and wire it up to be red, then cross safely.
+        - Look at FUTURE note in path request. Need to try and use light touch paths for long distance and detailed paths for short difficult bits. Likely have to smooth things somewhere to stop the robot jerking around too much. Running in to things and glancing off is fine as long as it doesn't get stuck.
     - Robot personalisation:
         - Robot name: Allow for a generic server name list (mod setting) and also each player to be able to rename their robots individually.
         - Robot color: Allow players to set a color per robot.
         - Show the robots as colored dots on the map. I don't think I can make the names appear on the map and thus can't honour the Show Players option on the map (and minimap) view.
+    - Job management:
+        - Being able to pause and resume jobs. Will need to propagate to the robots and tasks ?
+    - Robot control:
+        - Add a "standby" mode that players can set their own and other player's robots in to with a "Pause" command. In standby the robot doesn't perform any jobs and will stand idle. As players can't change other player's robots or jobs, but they can use "Pause" to stop anything they deem as damaging/bad. Any player can re-activated the robot with a "Resume" command. Type definitions and robot status are partially setup for this already.
+     - Performance:
+        - On a quick performance test of the Walking to Location a lot of the UPS went to just the structure, however it was every tick and the actual per tick UPS cost was very low. So seems ok so far. Will be the large burst activities that need the most UPS optimisation.

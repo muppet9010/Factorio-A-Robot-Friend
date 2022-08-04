@@ -12,8 +12,8 @@ local ShowRobotState = require("scripts.common.show-robot-state")
 ---@field surface LuaSurface
 ---@field force LuaForce
 ---@field master LuaPlayer
----@field activeJobs Job_Data[]
----@field state "active"|"standby" # FUTURE: standby is what players can do to their own or other players robots. They can't change their orders, but they can order the robot to stop and it goes in to standby until re-activated by its master or the order issuer.
+---@field activeJobs table<uint, Job_Data> # Key'd by the job's id.
+---@field state "active"|"standby" # The standby feature is a future task, see readme.
 ---@field jobBusyUntilTick uint # The tick the robot is busy until on the current job. 0 is not busy.
 ---@field stateRenderedText? RobotStateRenderedText
 ---@field name string # The robots' actual name, like Bob or Robot 13
@@ -74,16 +74,15 @@ end
 ---@param robot Robot
 ---@param job Job_Data
 RobotManager.AssignRobotToJob = function(robot, job)
-    robot.activeJobs[#robot.activeJobs + 1] = job
+    robot.activeJobs[job.id] = job
 end
 
 --- Removes a job from a robot's list and tidies up any task state data related to it.
 ---@param robot Robot
----@param robotsJobIndex int
-RobotManager.RemoveRobotFromJob = function(robot, robotsJobIndex)
-    local job = robot.activeJobs[robotsJobIndex]
+---@param job Job_Data
+RobotManager.RemoveRobotFromJob = function(robot, job)
     MOD.Interfaces.JobManager.RemoveRobotFromJob(robot, job)
-    table.remove(robot.activeJobs, robotsJobIndex)
+    robot.activeJobs[job.id] = nil
 end
 
 --- Called every tick to manage the robots.
@@ -92,20 +91,24 @@ RobotManager.ManageRobots = function(event)
     -- For each robot check if its not busy waiting check down its active job list for something to do.
     for _, robot in pairs(global.RobotManager.robots) do
         if robot.jobBusyUntilTick <= event.tick then
-            if #robot.activeJobs > 0 then
-                -- There are jobs for this robot to try and do.
-                for robotsJobIndex, job in pairs(robot.activeJobs) do
-                    local ticksToWait = MOD.Interfaces.JobManager.ProgressRobotForJob(robot, job)
-                    if ticksToWait > 0 then
-                        robot.jobBusyUntilTick = event.tick + ticksToWait
-                    else
-                        -- 0 ticksToWait means job completed.
-                        RobotManager.RemoveRobotFromJob(robot, robotsJobIndex)
-                        robot.jobBusyUntilTick = 0
-                    end
+            for _, job in pairs(robot.activeJobs) do
+                local ticksToWait = MOD.Interfaces.JobManager.ProgressRobotForJob(robot, job)
+                if ticksToWait > 0 then
+                    robot.jobBusyUntilTick = event.tick + ticksToWait
                 end
-            else
-                -- No jobs for this robot.
+
+                if job.state == "completed" then
+                    -- Job completed so remove it from the list.
+                    RobotManager.RemoveRobotFromJob(robot, job)
+                end
+                if ticksToWait > 0 then
+                    -- Job is waiting to do something so don't do any other jobs this tick for this robot.
+                    break
+                end
+            end
+
+            -- If no jobs for this robot, do its idle activity.
+            if next(robot.activeJobs) == nil then
                 if global.Settings.showRobotState then
                     ShowRobotState.UpdateStateText(robot, "Idle", "normal")
                 end

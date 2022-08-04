@@ -18,12 +18,11 @@ local ShowRobotState = {} ---@class ShowRobotState
 ShowRobotState.UpdateStateText = function(robot, text, level)
     -- Get the details for the text to be actually made.
     local targetEntity, targetPosition, surface
-    if robot.entity.valid then
+    if robot.entity ~= nil then
+        -- Generally there is an entity set for the robot.
         targetEntity = robot.entity
         surface = robot.surface
     else
-        -- FUTURE: robot corpse detection would go in here.
-
         -- As last resort show the state over the player so it goes somewhere and this should make it obvious something minor has gone wrong without throwing error messages everywhere.
         local masterCharacter = robot.master.character
         if masterCharacter ~= nil then

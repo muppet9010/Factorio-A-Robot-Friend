@@ -108,4 +108,11 @@ WalkToLocation.Progress = function(thisTask)
     return ticksToWait
 end
 
+--- Called to remove a task. This will propagates down to all sub tasks to tidy up any non task managed globals and other active effects.
+---@param thisTask Task_WalkToLocation_Data
+WalkToLocation.Remove = function(thisTask)
+    -- Nothing unique this task needs to do.
+    MOD.Interfaces.TaskManager.GenericTaskPropagateRemove(thisTask)
+end
+
 return WalkToLocation

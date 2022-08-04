@@ -6,6 +6,7 @@ local ShowRobotState = require("scripts.common.show-robot-state")
 ---@class Task_WalkPath_BespokeData
 ---@field pathToWalk PathfinderWaypoint[]
 ---@field nodeTarget int
+---@field lastWalkingDirection defines.direction # Cache the direction we were last going in, as if its unchanged we won't need to set the walking state every tick. FUTURE: when we have concept of interrupting a robot's task hierarchy we will need to clear this cached value to avoid odd resume effects.
 
 local WalkPath = {} ---@class Task_WalkPath_Interface : Task_Interface
 WalkPath.taskName = "WalkPath"
@@ -57,6 +58,10 @@ WalkPath.Progress = function(thisTask)
             if thisTask.taskData.nodeTarget > #thisTask.taskData.pathToWalk then
                 -- Reached end of path.
                 MOD.Interfaces.TaskManager.TaskCompleted(thisTask)
+
+                -- Cancel the last movement input sent to the robot as it will stay persistent otherwise.
+                thisTask.robot.entity.walking_state = { walking = false, direction = defines.direction.north }
+
                 return 0
             end
             targetPosition = thisTask.taskData.pathToWalk[thisTask.taskData.nodeTarget].position
@@ -107,12 +112,24 @@ WalkPath.Progress = function(thisTask)
         end
     end
 
-    -- Move towards the target node.
-    thisTask.robot.entity.walking_state = { walking = (walkDirection ~= nil), direction = walkDirection }
+    -- Move towards the target node if we're not going the right direction all ready. This is a persistent command until the walking_state is overridden.
+    if walkDirection ~= thisTask.taskData.lastWalkingDirection then
+        thisTask.robot.entity.walking_state = { walking = true, direction = walkDirection }
+        thisTask.taskData.lastWalkingDirection = walkDirection
+    end
 
     return 1
 end
 
+--- Called to remove a task. This will propagates down to all sub tasks to tidy up any non task managed globals and other active effects.
+---@param thisTask Task_WalkPath_Data
+WalkPath.Remove = function(thisTask)
+    -- If this task was active then cancel the last movement input sent to the robot as it will stay persistent otherwise.
+    if thisTask.state == "active" then
+        thisTask.robot.entity.walking_state = { walking = false, direction = defines.direction.north }
+    end
 
+    -- This task never has children.
+end
 
 return WalkPath

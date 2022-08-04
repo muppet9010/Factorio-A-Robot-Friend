@@ -15,8 +15,8 @@ local MoveToLocation = require("scripts.jobs.move-to-location")
 ---@field Create fun(playerIndex:uint): Job_Data # Called to create the job when it's initially added. Can take extra arguments after these default ones. FUTURE: these extra parameters will need to be defined in a searchable way for the GUI to find them, so part of the Job Interface.
 ---@field ActivateRobotOnJob fun(robot:Robot, job:Job_Data): uint # Called by a robot when it actively starts the job. This triggers the job to make the first task for that robot and start actual work being done. The first robot activation will change the job's state to "active" from "pending". Returns the wait time for the robot before it next calls Progress().
 ---@field Remove fun(job:Job_Data) # Called to remove the job when it's no longer wanted.
----@field Pause fun(job:Job_Data) # Called to pause the job and all of its activity. This will mean all robots move on to their next active job permanently. Also no new robot will be assignable to the job.
----@field Resume fun(job:Job_Data) # Called to resume a previously paused job. Just means robots can be assigned back to the job.
+---@field Pause fun(job:Job_Data) # Called to pause the job and all of its activity. This will mean all robots sit idle on this job as this is intended as a temporary player action. NOT IMPLEMENTED.
+---@field Resume fun(job:Job_Data) # Called to resume a previously paused job. NOT IMPLEMENTED.
 
 --- The generic characteristics of a Job Global that all instances must implement. Stored in global jobs list by player.
 ---@class Job_Data
@@ -77,7 +77,6 @@ end
 ---@param job Job_Data
 ---@param robot Robot
 JobManager.JobCompleted = function(job, robot)
-    --FUTURE: this needs to go back to the job as it may be completed for all robots or just the task for this one robot, and thus not the job.
     job.state = "completed"
 end
 
@@ -97,6 +96,7 @@ JobManager.ProgressRobotForJob = function(robot, job)
     end
 
     -- Check if the primaryTask completed.
+    -- FUTURE: in jobs with multiple robots the job will never be completed when only robot completes its. As the robots could be acting independently (move to location) or the other robots may be finishing up other parts of the shared work (completing a ghost). Will need a task specific function to decide what to do with the robots. Do we send them on to the next job or have them hang around until the job is finished. Maybe helping speed it up if they can.
     if primaryTask.state == "completed" then
         JobManager.JobCompleted(job, robot)
     end

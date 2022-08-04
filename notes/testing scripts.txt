@@ -13,3 +13,21 @@ if targetPosition == nil then game.print("no valid target position", {1,0,0,1});
 local robot = MOD.Interfaces.RobotManager.CreateRobot(game.surfaces[1], robotPosition, game.get_player(1))
 local job = MOD.Interfaces.Jobs.MoveToLocation.Create(1, targetPosition, game.surfaces[1])
 MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job)
+
+
+
+
+Move an existing robot (10 to a series of positions.
+
+/sc __a_robot_friend__
+local robotId, targetPosition1, targetPosition2, targetPosition3 = 1, {x=4,y=24}, {x=-5,y=27}, {x=-14,y=-11}
+targetPosition1 = game.surfaces[1].find_non_colliding_position("character", targetPosition1, 10, 0.2, false)
+targetPosition2 = game.surfaces[1].find_non_colliding_position("character", targetPosition2, 10, 0.2, false)
+targetPosition3 = game.surfaces[1].find_non_colliding_position("character", targetPosition3, 10, 0.2, false)
+local robot = global.RobotManager.robots[robotId]
+local job = MOD.Interfaces.Jobs.MoveToLocation.Create(1, targetPosition1, game.surfaces[1])
+MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job)
+job = MOD.Interfaces.Jobs.MoveToLocation.Create(1, targetPosition2, game.surfaces[1])
+MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job)
+job = MOD.Interfaces.Jobs.MoveToLocation.Create(1, targetPosition3, game.surfaces[1])
+MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job)
