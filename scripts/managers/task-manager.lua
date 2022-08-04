@@ -10,7 +10,7 @@ local WalkToLocation = require("scripts.tasks.walk-to-location")
 --- The generic characteristics of a Task Interface that all instances must implement. Stored in MOD.Interfaces.Tasks and each task must register itself during OnLoad() with a key of its taskName and the value of its bespoke Task Interface object.
 ---@class Task_Interface
 ---@field taskName string # The internal name of the task. Recorded in here to avoid having to hard code it all over the code.
----@field Begin fun(robot:Robot, job:Job_Data, parentTask:Task_Data, parentCallbackFunctionName:string): Task_Data, uint # Called to create the task and start the process when an active robot first reaches this task. This will often involve some scanning or other activity before the robot is assigned actions. Returns the Task data and the ticksToWait. In some cases it will call its own Progress() if its initial action is the same as subsequent ones.
+---@field Begin fun(robot:Robot, job:Job_Data, parentTask:Task_Data): Task_Data, uint # Called to create the task and start the process when an active robot first reaches this task. This will often involve some scanning or other activity before the robot is assigned actions. Returns the Task data and the ticksToWait. In some cases it will call its own Progress() if its initial action is the same as subsequent ones.
 ---@field Progress fun(thisTask:Task_Data): uint # Called to continue progression on the task by on_tick. Returns how many ticks to wait before next Progress() call.
 ---@field Pause function # Called to pause any activity, i.e. task has been interrupted by another higher priority task.
 ---@field Resume function # Called to resume a previously paused task. This will need some state checking to be done as anything could have changed from before.
@@ -26,7 +26,6 @@ local WalkToLocation = require("scripts.tasks.walk-to-location")
 ---@field currentTaskIndex int # The current task in the `tasks` list that is the active task.
 ---@field job Job_Data # The job related to the lead task in this hierarchy.
 ---@field parentTask? Task_Data # The parent Task or nil if this is a primary Task of a Job.
----@field parentCallbackFunctionName? string # The name this task calls when it wants to give its parent a status update of some sort.
 
 local TaskManager = {} ---@class TaskManager
 
@@ -53,11 +52,10 @@ end
 ---@param robot Robot
 ---@param job Job_Data # The job related to the lead task in this hierarchy.
 ---@param parentTask? Task_Data # The parent Task or nil if this is a primary Task of a Job.
----@param parentCallbackFunctionName? string # The name this task calls when it wants to give its parent a status update of some sort.
 ---@return Task_Data
-TaskManager.CreateGenericTask = function(taskName, robot, job, parentTask, parentCallbackFunctionName)
+TaskManager.CreateGenericTask = function(taskName, robot, job, parentTask)
     ---@type Task_Data
-    local task = { taskName = taskName, taskData = {}, state = "active", tasks = {}, currentTaskIndex = 0, robot = robot, job = job, parentTask = parentTask, parentCallbackFunctionName = parentCallbackFunctionName }
+    local task = { taskName = taskName, taskData = {}, state = "active", tasks = {}, currentTaskIndex = 0, robot = robot, job = job, parentTask = parentTask }
     return task
 end
 

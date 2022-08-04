@@ -311,10 +311,10 @@ LoggingUtils.DrawPath = function(path, surface, lineColor, startLabel, endLabel)
             text = startLabel,
             surface = surface,
             target = path[1].position,
-            color = { r = 1.0, g = 0.0, b = 0.0, a = 1.0 },
+            color = lineColor,
             scale_with_zoom = true,
             alignment = "center",
-            vertical_alignment = "bottom"
+            vertical_alignment = "middle"
         }
     end
     for _, waypoint in pairs(path) do
@@ -335,10 +335,10 @@ LoggingUtils.DrawPath = function(path, surface, lineColor, startLabel, endLabel)
             text = endLabel,
             surface = surface,
             target = path[#path].position,
-            color = { r = 1.0, g = 0.0, b = 0.0, a = 1.0 },
+            color = lineColor,
             scale_with_zoom = true,
             alignment = "center",
-            vertical_alignment = "bottom"
+            vertical_alignment = "middle"
         }
     end
     return renderIds

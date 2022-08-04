@@ -11,6 +11,7 @@
         require("utility.lists.style-data").GeneratePrototypes()
 
     Require the file and obtain the MuppetStyles dictionary in any usage scenarios (lua files) to get autocomplete list of all the styles and their options. Saves having to remember them or check which options are available in this source code.
+    Note: the MuppetStyles don't include the version in their names as the GUI utilities inject this at run time and handle the font version numbers.. However the MuppetFonts's do include a hardcoded version number as when they are used directly (i.e. in LuaRendering) they need to be explicit.
         local MuppetStyles = require("utility.lists.style-data").MuppetStyles
         local MuppetFonts = require("utility.lists.style-data").MuppetFonts
     If a sub field is available in the autocomplete list then one must be selected, otherwise you will end up with a blank style at runtime. For this reason (and simplicity) the margin, padding and other optional settings are just a single string with each combination covered.
@@ -858,7 +859,7 @@ StyleData.MuppetStyles = {
     }
 }
 
----@class UtilityGuiStyle_MuppetFonts
+---@class UtilityGuiStyle_MuppetFonts # These names include the font version in them...
 StyleData.MuppetFonts = {
     muppet_small_1_1_0 = "muppet_small_1_1_0",
     muppet_small_semibold_1_1_0 = "muppet_small_semibold_1_1_0",

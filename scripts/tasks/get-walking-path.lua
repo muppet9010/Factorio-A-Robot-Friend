@@ -1,5 +1,5 @@
 local Events = require("utility.manager-libraries.events")
-local ShowRobotState = require("scripts.show-robot-state")
+local ShowRobotState = require("scripts.common.show-robot-state")
 
 ---@class Task_GetWalkingPath_Data : Task_Data
 ---@field taskData Task_GetWalkingPath_BespokeData
@@ -8,8 +8,8 @@ local ShowRobotState = require("scripts.show-robot-state")
 ---@field startPosition MapPosition
 ---@field endPosition MapPosition
 ---@field surface LuaSurface
-
----@alias GetWalkingPath_Begin_ResponseInterface fun(getWalkingPathTask: Task_GetWalkingPath_Data, event: EventData.on_script_path_request_finished, requestData: Task_GetWalkingPath_BespokeData) --- The function that's called back by GetWalkingPath.Begin() must confirm to this interface.
+---@field pathFound? PathfinderWaypoint[]
+---@field pathFinderTimeout? boolean
 
 local GetWalkingPath = {} ---@class Task_GetWalkingPath_Interface : Task_Interface
 GetWalkingPath.taskName = "GetWalkingPath"
@@ -28,14 +28,13 @@ end
 ---@param robot Robot
 ---@param job Job_Data # The job related to the lead task in this hierarchy.
 ---@param parentTask? Task_Data # The parent Task or nil if this is a primary Task of a Job.
----@param parentCallbackFunctionName? string # The name this task calls when it wants to give its parent a status update of some sort. This named function must conform to GetWalkingPath_Begin_ResponseInterface.
 ---@param startPosition MapPosition
 ---@param endPosition MapPosition
 ---@param surface LuaSurface
 ---@return Task_GetWalkingPath_Data
 ---@return uint ticksToWait
-GetWalkingPath.Begin = function(robot, job, parentTask, parentCallbackFunctionName, startPosition, endPosition, surface)
-    local thisTask = MOD.Interfaces.TaskManager.CreateGenericTask(GetWalkingPath.taskName, robot, job, parentTask, parentCallbackFunctionName) ---@cast thisTask Task_GetWalkingPath_Data
+GetWalkingPath.Begin = function(robot, job, parentTask, startPosition, endPosition, surface)
+    local thisTask = MOD.Interfaces.TaskManager.CreateGenericTask(GetWalkingPath.taskName, robot, job, parentTask) ---@cast thisTask Task_GetWalkingPath_Data
 
     -- Store the request data.
     thisTask.taskData = {
@@ -66,6 +65,10 @@ GetWalkingPath.Begin = function(robot, job, parentTask, parentCallbackFunctionNa
     })
     global.Tasks.GetWalkingPath.pathRequests[pathRequestId] = thisTask
 
+    if global.Settings.showRobotState then
+        ShowRobotState.UpdateStateText(thisTask.robot, "Looking for walking path", "normal")
+    end
+
     return thisTask, 1
 end
 
@@ -75,11 +78,10 @@ GetWalkingPath._OnPathRequestFinished = function(event)
     local thisTask = global.Tasks.GetWalkingPath.pathRequests[event.id]
     if thisTask == nil then return end
 
-    -- This task has completed in all situations.
+    -- This task has completed in all situations, so record the result. The parent task can obtain it when it polls.
     thisTask.state = "completed"
-
-    -- Call back to requester's task handler with the response and details. This function must implement GetWalkingPath_Begin_ResponseInterface class.
-    MOD.Interfaces.Tasks[thisTask.parentTask.taskName][thisTask.parentCallbackFunctionName](thisTask, event, thisTask.taskData)
+    thisTask.taskData.pathFinderTimeout = event.try_again_later
+    thisTask.taskData.pathFound = event.path
 end
 
 --- Called to continue progression on the task by on_tick.
@@ -87,7 +89,7 @@ end
 ---@return uint ticksToWait
 GetWalkingPath.Progress = function(thisTask)
     if global.Settings.showRobotState then
-        ShowRobotState.ShowNormalState(thisTask.robot, "Looking for walking path", 1)
+        ShowRobotState.UpdateStateText(thisTask.robot, "Looking for walking path", "normal")
     end
     return 1
 end

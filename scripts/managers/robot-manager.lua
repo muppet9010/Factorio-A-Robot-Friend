@@ -3,8 +3,7 @@
 ]]
 
 local Events = require("utility.manager-libraries.events")
-local ShowRobotState = require("scripts.show-robot-state")
-local Colors = require("utility.lists.colors")
+local ShowRobotState = require("scripts.common.show-robot-state")
 
 --- The global object for the robot.
 ---@class Robot
@@ -16,7 +15,11 @@ local Colors = require("utility.lists.colors")
 ---@field activeJobs Job_Data[]
 ---@field state "active"|"standby" # FUTURE: standby is what players can do to their own or other players robots. They can't change their orders, but they can order the robot to stop and it goes in to standby until re-activated by its master or the order issuer.
 ---@field jobBusyUntilTick uint # The tick the robot is busy until on the current job. 0 is not busy.
----@field currentStateRenderingId uint64
+---@field stateRenderedText? RobotStateRenderedText
+---@field name string # The robots' actual name, like Bob or Robot 13
+---@field nameRenderId uint64 # The render Id of the robots name tag.
+---@field color Color # The color of the robot, affects its entity and things that expect opacity.
+---@field fontColor Color # The color of the robot with no opacity, used for fonts.
 
 local RobotManager = {} ---@class RobotManager
 
@@ -50,12 +53,15 @@ RobotManager.CreateRobot = function(surface, position, master)
     }
 
     -- Create the robot's entity.
-    local entity = surface.create_entity({ name = "character", position = position, force = "player" })
+    local entity = robot.surface.create_entity({ name = "character", position = position, force = "player" })
     if entity == nil then
         error("failed to create robot entity")
     end
     robot.entity = entity
-    robot.entity.color = Colors.PrimaryLocomotiveColors[math.random(1, #Colors.PrimaryLocomotiveColors)]
+
+    -- Robot personalisation.
+    RobotManager.UpdateColor(robot, master.color)
+    RobotManager.UpdateName(robot, "Robot " .. robot.id)
 
     -- Record the robot to the globals.
     global.RobotManager.robots[robot.id] = robot
@@ -101,11 +107,43 @@ RobotManager.ManageRobots = function(event)
             else
                 -- No jobs for this robot.
                 if global.Settings.showRobotState then
-                    ShowRobotState.ShowNormalState(robot, "Idle", 1)
+                    ShowRobotState.UpdateStateText(robot, "Idle", "normal")
                 end
             end
         end
     end
+end
+
+--- Sets a robots color and updates visual elements related to it.
+---@param robot Robot
+---@param color Color
+RobotManager.UpdateColor = function(robot, color)
+    robot.color = color
+    if robot.entity ~= nil then
+        robot.entity.color = color
+    end
+    robot.fontColor = { r = color.r, g = color.g, b = color.b, 255 }
+end
+
+--- Sets a robots name and updates visual elements related to it.
+---@param robot Robot
+---@param name string
+RobotManager.UpdateName = function(robot, name)
+    robot.name = name
+    if robot.nameRenderId ~= nil then
+        rendering.destroy(robot.nameRenderId)
+    end
+    robot.nameRenderId = rendering.draw_text {
+        text = robot.name,
+        surface = robot.surface,
+        target = robot.entity,
+        target_offset = { 0, -2 },
+        color = robot.fontColor,
+        scale_with_zoom = true,
+        alignment = "center",
+        vertical_alignment = "middle",
+        forces = { robot.force }
+    }
 end
 
 return RobotManager

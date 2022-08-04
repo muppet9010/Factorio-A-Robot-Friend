@@ -1,4 +1,4 @@
-local ShowRobotState = require("scripts.show-robot-state")
+local ShowRobotState = require("scripts.common.show-robot-state")
 
 ---@class Task_WalkPath_Data : Task_Data
 ---@field taskData Task_WalkPath_BespokeData
@@ -18,12 +18,11 @@ end
 ---@param robot Robot
 ---@param job Job_Data # The job related to the lead task in this hierarchy.
 ---@param parentTask? Task_Data # The parent Task or nil if this is a primary Task of a Job.
----@param parentCallbackFunctionName? string # The name this task calls when it wants to give its parent a status update of some sort.
 ---@param pathToWalk PathfinderWaypoint[]
 ---@return Task_WalkPath_Data
 ---@return uint ticksToWait
-WalkPath.Begin = function(robot, job, parentTask, parentCallbackFunctionName, pathToWalk)
-    local thisTask = MOD.Interfaces.TaskManager.CreateGenericTask(WalkPath.taskName, robot, job, parentTask, parentCallbackFunctionName) ---@cast thisTask Task_WalkPath_Data
+WalkPath.Begin = function(robot, job, parentTask, pathToWalk)
+    local thisTask = MOD.Interfaces.TaskManager.CreateGenericTask(WalkPath.taskName, robot, job, parentTask) ---@cast thisTask Task_WalkPath_Data
 
     -- Store the request data.
     thisTask.taskData = {
@@ -41,7 +40,7 @@ end
 ---@return uint ticksToWait
 WalkPath.Progress = function(thisTask)
     if global.Settings.showRobotState then
-        ShowRobotState.ShowNormalState(thisTask.robot, "Walking the path", 1)
+        ShowRobotState.UpdateStateText(thisTask.robot, "Walking the path", "normal")
     end
 
     -- Currently this accuracy requires the entity to be very very close to the target which may cause overshooting and the entity to loop back and fourth over it.

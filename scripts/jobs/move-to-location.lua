@@ -34,7 +34,7 @@ end
 ---@param job Job_WalkToLocation_Data
 ---@return uint ticksToWait
 MoveToLocation.ActivateRobotOnJob = function(robot, job)
-    local primaryTask, ticksToWait = MOD.Interfaces.Tasks.WalkToLocation.Begin(robot, job, nil, nil, job.jobData.targetLocation, job.jobData.surface) -- This will be a MoveToLocation task in future, but for now just hard code it to WalkToLocation to avoid a pointless task level, as robots can only walk at present.
+    local primaryTask, ticksToWait = MOD.Interfaces.Tasks.WalkToLocation.Begin(robot, job, nil, job.jobData.targetLocation, job.jobData.surface) -- This will be a MoveToLocation task in future, but for now just hard code it to WalkToLocation to avoid a pointless task level, as robots can only walk at present.
 
     MOD.Interfaces.JobManager.ActivateGenericJob(job, robot, primaryTask)
 

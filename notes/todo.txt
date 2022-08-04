@@ -6,3 +6,12 @@ Future things to cover:
     - Forces being deleted and merged. We cache them in Robot.
     - Robot entities dying, we need to update our cache of them and track their corpses.
     - At present we only support 1 robot per job as the task list is under the job. The task list should likely have a per robot element with some sort of sharing between the robots, i.e. if building a ghost they ned to not both bring the same start of the items list.
+
+
+Feature Enhancements:
+    - Walking a path:
+        - Detect railway and either try to path around or stop just before it, look both ways and then cross when safe. If not safe for X time place a signal and wire it up to be red, then cross safely.
+    - Robot personalisation:
+        - Robot name: Allow for a generic server name list (mod setting) and also each player to be able to rename their robots individually.
+        - Robot color: Allow players to set a color per robot.
+        - Show the robots as colored dots on the map. I don't think I can make the names appear on the map and thus can't honour the Show Players option on the map (and minimap) view.
