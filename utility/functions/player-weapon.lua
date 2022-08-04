@@ -303,15 +303,13 @@ PlayerWeapon.GetWeaponAmmoDetails = function(ammoType, weaponItemPrototype)
     local minRange = weapon_attackParameters.min_range
 
     local maxRange = weapon_attackParameters.range
-    -- CODE NOTE: the range_modifier is exposed but the API documentation doesn't include it yet. https://forums.factorio.com/viewtopic.php?p=571575#p571575
-    local ammoRangeModifier = ammoType.range_modifier ---@diagnostic disable-line: undefined-field, no-unknown
+    local ammoRangeModifier = ammoType.range_modifier
     if ammoRangeModifier ~= nil then
         maxRange = maxRange * ammoRangeModifier
     end
 
     local cooldown = weapon_attackParameters.cooldown
-    -- CODE NOTE: the cooldown_modifier is exposed but the API documentation doesn't include it yet. https://forums.factorio.com/viewtopic.php?p=571575#p571575
-    local cooldownModifier = ammoType.cooldown_modifier ---@diagnostic disable-line: undefined-field, no-unknown
+    local cooldownModifier = ammoType.cooldown_modifier
     if cooldownModifier ~= nil then
         cooldown = cooldown * cooldownModifier
     end
