@@ -1,5 +1,5 @@
 local Events = require("utility.manager-libraries.events")
-local showRobotState = require("scripts.show-robot-state")
+local ShowRobotState = require("scripts.show-robot-state")
 
 ---@class Task_GetWalkingPath_Data : Task_Data
 ---@field taskData Task_GetWalkingPath_BespokeData
@@ -46,15 +46,23 @@ GetWalkingPath.Begin = function(robot, job, parentTask, parentCallbackFunctionNa
 
     local pathRequestId = surface.request_path({
         bounding_box = robot.entity.prototype.collision_box, -- Future: should be cached as there may be no entity if the robot is dead at request time and we don't want to error.
-        collision_mask = robot.entity.prototype.collision_mask, -- Future: should be cached as there may be no entity if the robot is dead at request time and we don't want to error.
+        collision_mask = robot.entity.prototype.collision_mask, -- Future: should be cached as there may be no entity if the robot is dead at request time and we don't want to error. Also may be some of these options we want as non default?
         start = startPosition,
         goal = endPosition,
         force = robot.force,
         radius = 1.0, -- FUTURE: this probably wants to be higher to allow us just getting close enough.
         can_open_gates = true,
         entity_to_ignore = robot.entity, -- has to be the entity itself as otherwise it blocks its own path request.
-        pathfind_flags = { cache = false, prefer_straight_paths = true, no_break = true }, -- Is done as a higher priority pathing request even over long distances with these settings. We don't cache as we want the best path for this robot and not just something in the vague vicinity.
-        path_resolution_modifier = 0 -- FUTURE: should play around with these values and see what impact they have. Need to check pathfinder going through dense and difficult areas, not just simple open and blocky areas.
+        pathfind_flags = {
+            cache = false, -- We don't cache as we want the best path for this robot and not just something in the vague vicinity.
+            prefer_straight_paths = false, -- Oddly straight paths lead to some odd paths the it tries to square off things and doesn't do it very well.
+            no_break = true -- Is done as a higher priority pathing request even over long distances with these settings.
+        },
+        path_resolution_modifier = 0 --[[
+            FUTURE: should play around with these values and see what impact they have. Need to check pathfinder going through dense and difficult areas, not just simple open and blocky areas.
+            Xorimuth said: path_resolution_modifier determines the resolution of the path. When the number is lower (e.g. -3), it will finish quicker and the waypoints will be further apart. I use it for my spidertron pathfinder, where I start with -3, if it fails, I then try -1, 1, and 3, which are more likely to succeed (e.g. if the valid path is very intricate), but take progressively more time to complete.
+            value of 10 crashes the game, bugged: https://forums.factorio.com/viewtopic.php?f=7&t=103056
+        ]]
     })
     global.Tasks.GetWalkingPath.pathRequests[pathRequestId] = thisTask
 
@@ -79,7 +87,7 @@ end
 ---@return uint ticksToWait
 GetWalkingPath.Progress = function(thisTask)
     if global.Settings.showRobotState then
-        showRobotState.ShowNormalState(thisTask.robot, "Looking for walking path", 1)
+        ShowRobotState.ShowNormalState(thisTask.robot, "Looking for walking path", 1)
     end
     return 1
 end

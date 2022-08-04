@@ -7,6 +7,7 @@ local LoggingUtils = require("utility.helper-utils.logging-utils")
 ---@field targetLocation MapPosition
 ---@field surface LuaSurface
 ---@field pathToWalk? PathfinderWaypoint[]
+---@field pathToWalkDebugRenderIds? uint64[]
 
 local WalkToLocation = {} ---@class Task_WalkToLocation_Interface : Task_Interface
 WalkToLocation.taskName = "WalkToLocation"
@@ -67,6 +68,10 @@ WalkToLocation._WalkToLocation_GetWalkingPathCallback = function(getWalkingPathT
 
     -- Record the path ready for the robot to call progress in future ticks and utilise the result.
     thisTask.taskData.pathToWalk = event.path
+
+    if global.Settings.Debug.showPathWalking then
+        thisTask.taskData.pathToWalkDebugRenderIds = LoggingUtils.DrawPath(event.path, thisTask.taskData.surface, thisTask.robot.entity.color, "start", "end")
+    end
 end
 
 --- Called to continue progression on the task by on_tick.
@@ -86,6 +91,19 @@ WalkToLocation.Progress = function(thisTask)
         thisTask.currentTaskIndex = #thisTask.tasks
     else
         ticksToWait = MOD.Interfaces.Tasks.WalkPath.Progress(thisTask.tasks[thisTask.currentTaskIndex]--[[@as Task_WalkPath_Data]] )
+        if thisTask.tasks[thisTask.currentTaskIndex]--[[@as Task_WalkPath_Data]] .state == "completed" then
+            -- Have walked to location.
+            MOD.Interfaces.TaskManager.TaskCompleted(thisTask)
+
+            -- Tidy up any renders that existed for the duration of the task.
+            if thisTask.taskData.pathToWalkDebugRenderIds ~= nil then
+                for _, renderId in pairs(thisTask.taskData.pathToWalkDebugRenderIds) do
+                    rendering.destroy(renderId)
+                end
+            end
+
+            return 0
+        end
     end
     return ticksToWait
 end

@@ -73,10 +73,11 @@ JobManager.ActivateGenericJob = function(job, robot, primaryTask)
     job.robotsPrimaryTask[robot] = primaryTask
 end
 
---- Called by the primaryTask when the the task (and thus job) is completed, so it can update it's status and do any configured alerts, etc.
+--- Called by the primaryTask when it (and thus job) is completed, so it can update it's status and do any configured alerts, etc.
 ---@param job Job_Data
 ---@param robot Robot
 JobManager.JobCompleted = function(job, robot)
+    --FUTURE: this needs to go back to the job as it may be completed for all robots or just the task for this one robot, and thus not the job.
     job.state = "completed"
 end
 
@@ -90,8 +91,14 @@ JobManager.ProgressRobotForJob = function(robot, job)
     if primaryTask == nil then
         -- Activate the primary task for this robot on this job, as it's the robots initial efforts.
         waitTime = MOD.Interfaces.Jobs[job.jobName]--[[@as Job_Interface]] .ActivateRobotOnJob(robot, job)
+        primaryTask = job.robotsPrimaryTask[robot]
     else
         waitTime = MOD.Interfaces.TaskManager.ProgressPrimaryTask(primaryTask)
+    end
+
+    -- Check if the primaryTask completed.
+    if primaryTask.state == "completed" then
+        JobManager.JobCompleted(job, robot)
     end
 
     return waitTime

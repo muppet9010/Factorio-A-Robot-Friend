@@ -177,4 +177,35 @@ Colors.maroon = { 128, 0, 0, 255 } ---@type Color
 Colors.errorMessage = Colors.midRed
 Colors.warningMessage = Colors.orange
 
+--- A primary list of unique colors.
+Colors.PrimaryLocomotiveColors = {
+    Colors.red,
+    Colors.darkorange,
+    Colors.yellow,
+    Colors.lime,
+    Colors.cyan,
+    Colors.blue,
+    Colors.darkviolet,
+    Colors.black,
+    Colors.lavender
+}
+
+--- A secondary list of less unique colors.
+Colors.SecondaryLocomotiveColors = {
+    Colors.grey,
+    Colors.teal,
+    Colors.lightblue,
+    Colors.green,
+    Colors.brown,
+    Colors.wheat,
+    Colors.deeppink,
+    Colors.olive,
+    Colors.pink,
+    Colors.darkred,
+    Colors.salmon,
+    Colors.slateblue,
+    Colors.orchid,
+    Colors.goldenrod
+}
+
 return Colors

@@ -5,7 +5,7 @@ All done for player 1.
 Make a robot at spawn and make it walk to the set location under a job:
 
 /sc __a_robot_friend__
-local robotPosition, targetPosition = {x=2,y=2}, {x=10,y=10}
+local robotPosition, targetPosition = {x=2,y=2}, {x=81,y=118}
 robotPosition = game.surfaces[1].find_non_colliding_position("character", robotPosition, 10, 0.2, false)
 if robotPosition == nil then game.print("no valid robot creation position", {1,0,0,1}); return; end
 targetPosition = game.surfaces[1].find_non_colliding_position("character", targetPosition, 10, 0.2, false)

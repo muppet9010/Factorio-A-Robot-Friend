@@ -61,10 +61,16 @@ TaskManager.CreateGenericTask = function(taskName, robot, job, parentTask, paren
     return task
 end
 
+--- Called by the Task when it is completed, so it can update it's status and do any configured alerts, etc.
+---@param task Task_Data
+TaskManager.TaskCompleted = function(task)
+    task.state = "completed"
+end
+
 --- Called to remove a primary task from a job (so robot instance specific). This will propagates down to all sub tasks to tidy up any globals and other active effects.
 ---@param primaryTask Task_Data
 TaskManager.RemovePrimaryTask = function(primaryTask)
-    MOD.Interfaces.Tasks[primaryTask.taskName]--[[@as Task_Interface]] .Remove(primaryTask)
+    MOD.Interfaces.Tasks[primaryTask.taskName]--[[@as Task_Interface]] .Remove(primaryTask) --TODO: not yet implemented and code test gets this far.
 end
 
 ---@param primaryTask Task_Data

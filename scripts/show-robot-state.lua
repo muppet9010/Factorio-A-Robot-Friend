@@ -23,7 +23,6 @@ ShowRobotState.ShowNormalState = function(robot, text, durationTicks)
         end
     end
 
-
     if robot.currentStateRenderingId ~= nil and rendering.is_valid(robot.currentStateRenderingId) then
         error("Tried to add new state text over old state text")
     end
@@ -36,7 +35,7 @@ ShowRobotState.ShowNormalState = function(robot, text, durationTicks)
         scale_with_zoom = true,
         alignment = "center",
         vertical_alignment = "bottom",
-        time_to_live = durationTicks + 1 -- Add 1 as the current tick is the first and otherwise it vanishes before it starts.
+        time_to_live = durationTicks + 1 -- Add 1 as the current tick is the first and otherwise it vanishes before it starts. TODO - this needs to be more than 1 tick otherwise it doesn't show, however, it then still exists when we come to update it. So need to keep the text indefinitely and a cache of the message and only replace it if the new message is different. (same logic for color).
     }
 end
 

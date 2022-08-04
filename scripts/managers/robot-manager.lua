@@ -3,6 +3,8 @@
 ]]
 
 local Events = require("utility.manager-libraries.events")
+local ShowRobotState = require("scripts.show-robot-state")
+local Colors = require("utility.lists.colors")
 
 --- The global object for the robot.
 ---@class Robot
@@ -53,6 +55,7 @@ RobotManager.CreateRobot = function(surface, position, master)
         error("failed to create robot entity")
     end
     robot.entity = entity
+    robot.entity.color = Colors.PrimaryLocomotiveColors[math.random(1, #Colors.PrimaryLocomotiveColors)]
 
     -- Record the robot to the globals.
     global.RobotManager.robots[robot.id] = robot
@@ -70,7 +73,7 @@ end
 
 --- Removes a job from a robot's list and tidies up any task state data related to it.
 ---@param robot Robot
----@param robotsJobIndex uint
+---@param robotsJobIndex int
 RobotManager.RemoveRobotFromJob = function(robot, robotsJobIndex)
     local job = robot.activeJobs[robotsJobIndex]
     MOD.Interfaces.JobManager.RemoveRobotFromJob(robot, job)
@@ -82,10 +85,24 @@ end
 RobotManager.ManageRobots = function(event)
     -- For each robot check if its not busy waiting check down its active job list for something to do.
     for _, robot in pairs(global.RobotManager.robots) do
-        if robot.jobBusyUntilTick < event.tick then
-            for _, job in pairs(robot.activeJobs) do
-                local ticksToWait = MOD.Interfaces.JobManager.ProgressRobotForJob(robot, job)
-                robot.jobBusyUntilTick = event.tick + ticksToWait
+        if robot.jobBusyUntilTick <= event.tick then
+            if #robot.activeJobs > 0 then
+                -- There are jobs for this robot to try and do.
+                for robotsJobIndex, job in pairs(robot.activeJobs) do
+                    local ticksToWait = MOD.Interfaces.JobManager.ProgressRobotForJob(robot, job)
+                    if ticksToWait > 0 then
+                        robot.jobBusyUntilTick = event.tick + ticksToWait
+                    else
+                        -- 0 ticksToWait means job completed.
+                        RobotManager.RemoveRobotFromJob(robot, robotsJobIndex)
+                        robot.jobBusyUntilTick = 0
+                    end
+                end
+            else
+                -- No jobs for this robot.
+                if global.Settings.showRobotState then
+                    ShowRobotState.ShowNormalState(robot, "Idle", 1)
+                end
             end
         end
     end

@@ -1,4 +1,4 @@
---- Logging functions.
+--- Logging and debugging functions.
 --- Requires the utility "constants" file to be populated within the root of the mod.
 
 local LoggingUtils = {} ---@class Utility_LoggingUtils
@@ -294,6 +294,54 @@ end
 LoggingUtils.WriteOutNumberedMarkerForSurfacePositionString = function(targetSurfacePositionString)
     local tempSurfaceId, tempPos = StringUtils.SurfacePositionStringToSurfaceAndPosition(targetSurfacePositionString)
     LoggingUtils.WriteOutNumberedMarker(tempSurfaceId, tempPos)
+end
+
+--- Draw a path with options to label the 2 ends.
+---@param path PathfinderWaypoint[]
+---@param surface LuaSurface
+---@param lineColor Color
+---@param startLabel? string
+---@param endLabel? string
+---@return uint64[] renderIds
+LoggingUtils.DrawPath = function(path, surface, lineColor, startLabel, endLabel)
+    local renderIds = {} ---@type uint64[]
+    local lastPoint ---@type MapPosition|nil
+    if startLabel ~= nil then
+        renderIds[#renderIds + 1] = rendering.draw_text {
+            text = startLabel,
+            surface = surface,
+            target = path[1].position,
+            color = { r = 1.0, g = 0.0, b = 0.0, a = 1.0 },
+            scale_with_zoom = true,
+            alignment = "center",
+            vertical_alignment = "bottom"
+        }
+    end
+    for _, waypoint in pairs(path) do
+        if lastPoint ~= nil then
+            renderIds[#renderIds + 1] = rendering.draw_line({
+                color = lineColor,
+                width = 4.0,
+                from = lastPoint,
+                to = waypoint.position,
+                surface = surface,
+                scale_with_zoom = true,
+            })
+        end
+        lastPoint = waypoint.position
+    end
+    if endLabel ~= nil then
+        renderIds[#renderIds + 1] = rendering.draw_text {
+            text = endLabel,
+            surface = surface,
+            target = path[#path].position,
+            color = { r = 1.0, g = 0.0, b = 0.0, a = 1.0 },
+            scale_with_zoom = true,
+            alignment = "center",
+            vertical_alignment = "bottom"
+        }
+    end
+    return renderIds
 end
 
 ----------------------------------------------------------------------------------
