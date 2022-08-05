@@ -13,7 +13,7 @@ local MoveToLocation = require("scripts.jobs.move-to-location")
 ---@class Job_Interface
 ---@field jobName string # The internal name of the job. Recorded in here to avoid having to hard code it all over the code.
 ---@field Create fun(playerIndex:uint): Job_Data # Called to create the job when it's initially added. Can take extra arguments after these default ones. FUTURE: these extra parameters will need to be defined in a searchable way for the GUI to find them, so part of the Job Interface.
----@field ActivateRobotOnJob fun(robot:Robot, job:Job_Data): uint # Called by a robot when it actively starts the job. This triggers the job to make the first task for that robot and start actual work being done. The first robot activation will change the job's state to "active" from "pending". Returns the wait time for the robot before it next calls Progress().
+---@field ActivateJob fun(job:Job_Data) # Called when the job is actively started by a robot. This triggers the job to make the first task. The activation will change the job's state to "active" from "pending".
 ---@field Remove fun(job:Job_Data) # Called to remove the job when it's no longer wanted.
 ---@field Pause fun(job:Job_Data) # Called to pause the job and all of its activity. This will mean all robots sit idle on this job as this is intended as a temporary player action. NOT IMPLEMENTED.
 ---@field Resume fun(job:Job_Data) # Called to resume a previously paused job. NOT IMPLEMENTED.
@@ -26,7 +26,7 @@ local MoveToLocation = require("scripts.jobs.move-to-location")
 ---@field jobData? table # Any data that the job needs to store about itself goes in here. Each job will have its own BespokeData class for this.
 ---@field state "pending"|"active"|"completed"
 ---@field primaryTaskName string # The Interface name of the primary task.
----@field robotsPrimaryTask table<Robot, Task_Data> # A mapping of each robot assigned to this job to the primary task for that robot of this task.
+---@field primaryTask? Task_Data # The primary task for this job.
 ---@field description? string # A text description for the Job.
 
 local JobManager = {} ---@class JobManager
@@ -56,7 +56,7 @@ end
 JobManager.CreateGenericJob = function(jobName, playerIndex, primaryTaskName)
     global.JobManager.playersJobs[playerIndex] = global.JobManager.playersJobs[playerIndex] or {}
     ---@type Job_Data
-    local job = { playerIndex = playerIndex, id = global.JobManager.nextJobId, jobName = jobName, jobData = {}, state = "pending", primaryTaskName = primaryTaskName, robotsPrimaryTask = {} }
+    local job = { playerIndex = playerIndex, id = global.JobManager.nextJobId, jobName = jobName, jobData = {}, state = "pending", primaryTaskName = primaryTaskName }
     global.JobManager.playersJobs[playerIndex][job.id] = job
     global.JobManager.nextJobId = global.JobManager.nextJobId + 1
     return job
@@ -64,41 +64,38 @@ end
 
 --- Called by the specific Job when it is first activated to handle generic state and GUI updates.
 ---@param job Job_Data
----@param robot Robot
 ---@param primaryTask Task_Data
-JobManager.ActivateGenericJob = function(job, robot, primaryTask)
+JobManager.ActivateGenericJob = function(job, primaryTask)
     if job.state == "pending" then
         job.state = "active"
     end
-    job.robotsPrimaryTask[robot] = primaryTask
+    job.primaryTask = primaryTask
 end
 
 --- Called by the primaryTask when it (and thus job) is completed, so it can update it's status and do any configured alerts, etc.
 ---@param job Job_Data
----@param robot Robot
-JobManager.JobCompleted = function(job, robot)
+JobManager.JobCompleted = function(job)
     job.state = "completed"
 end
 
---- Progress the robot for the job. This may be its initial activation or another cycle in progressing the job's tasks.
+--- Progress the robot for the job. This may include the jobs initial activation or another cycle in progressing the job's tasks.
 ---@param robot Robot
 ---@param job Job_Data
 ---@return uint ticksToWait
 JobManager.ProgressRobotForJob = function(robot, job)
-    local primaryTask = job.robotsPrimaryTask[robot]
-    local waitTime
+    local primaryTask = job.primaryTask
     if primaryTask == nil then
-        -- Activate the primary task for this robot on this job, as it's the robots initial efforts.
-        waitTime = MOD.Interfaces.Jobs[job.jobName]--[[@as Job_Interface]] .ActivateRobotOnJob(robot, job)
-        primaryTask = job.robotsPrimaryTask[robot]
-    else
-        waitTime = MOD.Interfaces.TaskManager.ProgressPrimaryTask(primaryTask)
+        -- As first running of the Job, Activate the job to generate the primary task for the job.
+        MOD.Interfaces.Jobs[job.jobName]--[[@as Job_Interface]] .ActivateJob(job)
+        primaryTask = job.primaryTask ---@cast primaryTask Task_Data # We always populate it as part of Job.ActivateJob().
     end
+
+    local waitTime = MOD.Interfaces.TaskManager.ProgressPrimaryTask(primaryTask, robot)
 
     -- Check if the primaryTask completed.
     -- FUTURE: in jobs with multiple robots the job will never be completed when only robot completes its. As the robots could be acting independently (move to location) or the other robots may be finishing up other parts of the shared work (completing a ghost). Will need a task specific function to decide what to do with the robots. Do we send them on to the next job or have them hang around until the job is finished. Maybe helping speed it up if they can.
     if primaryTask.state == "completed" then
-        JobManager.JobCompleted(job, robot)
+        JobManager.JobCompleted(job)
     end
 
     return waitTime
@@ -108,6 +105,7 @@ end
 ---@param robot Robot
 ---@param job Job_Data
 JobManager.RemoveRobotFromJob = function(robot, job)
+    --TODO: all needs re-doing.
     local primaryTask = job.robotsPrimaryTask[robot]
     MOD.Interfaces.TaskManager.RemovePrimaryTask(primaryTask)
     job.robotsPrimaryTask[robot] = nil

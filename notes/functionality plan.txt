@@ -85,8 +85,51 @@ All jobs will have some standard options like travel type restrictions (i.e. blo
 
 We won't support updating jobs, but will allow via the GUI some sort of clone (with/out robots) to allow quick copying/replacing of them.
 
-Multiple robots can be assigned to the same job. Each robot will have its own main primaryTask and task hierarchy under the Job. As this way the a task can cross talk and share data when needed between each robots version. In most cases the the tasks will be entirely separate as the robots will be doing their own thing within their own section of the task.
-Initially this multi robot support won't be present in the initial features, but the structure should exist for it and it should be tested as working ok in 1 case (completing a blueprint job).
+Multiple robots can be assigned to the same job. Each robot will have its own main primaryTask and task hierarchy under the Job. As this way the a task can cross talk and share data when needed between each robots version. In most cases the tasks will be entirely separate as the robots will be doing their own thing within their own section of the task.
+When multiple robots are on a job and some finish all their tasks and others are still working, it will be up to the tasks to define if the robots should get new sub tasks to help, or if their role is completed and they should move on to their next job (some robots still working, others will consider themselves finished and move on).
 
 Each layer should call only to other managers, with each manager then knowing its own areas structure and calling in to the specific modules. Also means that Sumneko type identification works better as managers functions are all clearly defined, with any greyness from Factory type interfaces within their functions.
 Exceptions are when a specific job needs to call to a specific task, as it needs to know the specific tasks arguments.
+
+Avoid pre-emptive UPS optimisation as most things are run once per tick per robot at most. And so this load will be very evenly distributed and low background. Aim for minimal optimisation especially on state data to keep code simpler to maintain.
+
+
+
+Current - Task hierarchy per robot
+-------
+
+Job:
+    Robots to their instance of Primary Task Data list:
+        This robots task data
+        Child Task Data:
+            (
+            This robots task data
+            Child Task Data:
+            ) to N level
+
+Robot:
+    Active Jobs list referencing the Job.
+
+Robot do work function calls: Robot > Job > Primary Task for Robot > Child Task (N)
+
+
+
+
+Future - Task hierarchy per job with task specific per robot task data.
+------
+
+Job:
+    PrimaryTask Task Data for Job:
+        Per Robot Task Data list
+        Job task data
+        Child Task Data:
+            (
+            Per Robot Task Data list
+            Job task data
+            Child Task Data:
+            ) to N level
+
+Robot:
+    Active Jobs list referencing the Job.
+
+Robot do work function calls: Robot > Job > Primary Task For Job > Task calls in to child task with mix of per robot and job's task data.

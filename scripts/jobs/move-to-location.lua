@@ -29,16 +29,12 @@ MoveToLocation.Create = function(playerIndex, targetLocation, surface)
     return job
 end
 
---- Called by a robot when it actively starts the job.
----@param robot Robot
+--- Called when the job is actively started by a robot.
 ---@param job Job_WalkToLocation_Data
----@return uint ticksToWait
-MoveToLocation.ActivateRobotOnJob = function(robot, job)
-    local primaryTask, ticksToWait = MOD.Interfaces.Tasks.WalkToLocation.Begin(robot, job, nil, job.jobData.targetLocation, job.jobData.surface) -- This will be a MoveToLocation task in future, but for now just hard code it to WalkToLocation to avoid a pointless task level, as robots can only walk at present.
+MoveToLocation.ActivateJob = function(job)
+    local primaryTask = MOD.Interfaces.Tasks.WalkToLocation.ActivateTask(job, nil, job.jobData.targetLocation, job.jobData.surface) -- This will be a MoveToLocation task in future, but for now just hard code it to WalkToLocation to avoid a pointless task level, as robots can only walk at present.
 
-    MOD.Interfaces.JobManager.ActivateGenericJob(job, robot, primaryTask)
-
-    return ticksToWait
+    MOD.Interfaces.JobManager.ActivateGenericJob(job, primaryTask)
 end
 
 --- Called to remove the job when it's no longer wanted.

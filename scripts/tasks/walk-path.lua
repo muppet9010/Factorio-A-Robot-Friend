@@ -2,11 +2,13 @@ local ShowRobotState = require("scripts.common.show-robot-state")
 
 ---@class Task_WalkPath_Data : Task_Data
 ---@field taskData Task_WalkPath_BespokeData
+---@field robotsTaskData table<Robot, Task_WalkPath_Robot_BespokeData>
 
 ---@class Task_WalkPath_BespokeData
+
+---@class Task_WalkPath_Robot_BespokeData : Task_Data_Robot
 ---@field pathToWalk PathfinderWaypoint[]
 ---@field nodeTarget int
----@field lastWalkingDirection defines.direction # Cache the direction we were last going in, as if its unchanged we won't need to set the walking state every tick. FUTURE: when we have concept of interrupting a robot's task hierarchy we will need to clear this cached value to avoid odd resume effects.
 
 local WalkPath = {} ---@class Task_WalkPath_Interface : Task_Interface
 WalkPath.taskName = "WalkPath"
@@ -15,33 +17,38 @@ WalkPath._OnLoad = function()
     MOD.Interfaces.Tasks.WalkPath = WalkPath
 end
 
---- Called to create the task and start the process when an active robot first reaches this task.
----@param robot Robot
+--- Called ONCE per Task to create the task when the first robot first reaches this task in the job.
 ---@param job Job_Data # The job related to the lead task in this hierarchy.
 ---@param parentTask? Task_Data # The parent Task or nil if this is a primary Task of a Job.
----@param pathToWalk PathfinderWaypoint[]
 ---@return Task_WalkPath_Data
----@return uint ticksToWait
-WalkPath.Begin = function(robot, job, parentTask, pathToWalk)
-    local thisTask = MOD.Interfaces.TaskManager.CreateGenericTask(WalkPath.taskName, robot, job, parentTask) ---@cast thisTask Task_WalkPath_Data
+WalkPath.ActivateTask = function(job, parentTask)
+    local thisTask = MOD.Interfaces.TaskManager.CreateGenericTask(WalkPath.taskName, job, parentTask) ---@cast thisTask Task_WalkPath_Data
 
-    -- Store the request data.
-    thisTask.taskData = {
-        pathToWalk = pathToWalk,
-        nodeTarget = 1
-    }
-
-    -- Just do a progression once to start.
-    local ticksToWait = WalkPath.Progress(thisTask)
-    return thisTask, ticksToWait
+    return thisTask
 end
 
---- Called to continue progression on the task by on_tick.
+--- Called to do work on the task by on_tick by each robot.
 ---@param thisTask Task_WalkPath_Data
+---@param robot Robot
+---@param pathToWalk? PathfinderWaypoint[] # Only needed on first Progress() for each robot.
 ---@return uint ticksToWait
-WalkPath.Progress = function(thisTask)
+WalkPath.Progress = function(thisTask, robot, pathToWalk)
+
+    -- Handle if this is the first Progress() for a robot.
+    local robotTaskData = thisTask.robotsTaskData[robot]
+    if robotTaskData == nil then
+        ---@cast pathToWalk -nil
+
+        -- Record robot specific details to this task.
+        robotTaskData = MOD.Interfaces.TaskManager.CreateGenericRobotTaskData(robot, thisTask.currentTaskIndex, thisTask) --[[@as Task_WalkPath_Robot_BespokeData]]
+        thisTask.robotsTaskData[robot] = robotTaskData
+        robotTaskData.pathToWalk = pathToWalk
+        robotTaskData.nodeTarget = 1
+    end
+
+
     if global.Settings.showRobotState then
-        ShowRobotState.UpdateStateText(thisTask.robot, "Walking the path", "normal")
+        ShowRobotState.UpdateStateText(robot, "Walking the path", "normal")
     end
 
     -- Currently this accuracy requires the entity to be very very close to the target which may cause overshooting and the entity to loop back and fourth over it.
@@ -49,22 +56,22 @@ WalkPath.Progress = function(thisTask)
 
     -- Check if we are at our target node yet, if we are move the target on by one. Keeps on checking target nodes until it finds one we aren't at.
     -- Code Note: have to check x and y rather than diagonal distance to avoid mismatch between the 2 checks when moving diagonally.
-    local currentPosition = thisTask.robot.entity.position
-    local targetPosition = thisTask.taskData.pathToWalk[thisTask.taskData.nodeTarget].position
+    local currentPosition = robot.entity.position
+    local targetPosition = robotTaskData.pathToWalk[robotTaskData.nodeTarget].position
     local largerDistanceToMove = false -- Just starting value so the while loop is entered. All logic paths within the loop replace this value.
     while (not largerDistanceToMove) do
         if math.abs(currentPosition.x - targetPosition.x) <= walkAccuracy and math.abs(currentPosition.y - targetPosition.y) <= walkAccuracy then
-            thisTask.taskData.nodeTarget = thisTask.taskData.nodeTarget + 1
-            if thisTask.taskData.nodeTarget > #thisTask.taskData.pathToWalk then
+            robotTaskData.nodeTarget = robotTaskData.nodeTarget + 1
+            if robotTaskData.nodeTarget > #robotTaskData.pathToWalk then
                 -- Reached end of path.
-                MOD.Interfaces.TaskManager.TaskCompleted(thisTask)
+                robotTaskData.state = "completed"
 
                 -- Cancel the last movement input sent to the robot as it will stay persistent otherwise.
-                thisTask.robot.entity.walking_state = { walking = false, direction = defines.direction.north }
+                robot.entity.walking_state = { walking = false, direction = defines.direction.north }
 
                 return 0
             end
-            targetPosition = thisTask.taskData.pathToWalk[thisTask.taskData.nodeTarget].position
+            targetPosition = robotTaskData.pathToWalk[robotTaskData.nodeTarget].position
             largerDistanceToMove = false
         else
             largerDistanceToMove = true
@@ -113,10 +120,7 @@ WalkPath.Progress = function(thisTask)
     end
 
     -- Move towards the target node if we're not going the right direction all ready. This is a persistent command until the walking_state is overridden.
-    if walkDirection ~= thisTask.taskData.lastWalkingDirection then
-        thisTask.robot.entity.walking_state = { walking = true, direction = walkDirection }
-        thisTask.taskData.lastWalkingDirection = walkDirection
-    end
+    robot.entity.walking_state = { walking = true, direction = walkDirection }
 
     return 1
 end

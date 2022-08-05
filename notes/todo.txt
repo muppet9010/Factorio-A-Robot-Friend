@@ -18,4 +18,4 @@ Feature Enhancements:
     - Robot control:
         - Add a "standby" mode that players can set their own and other player's robots in to with a "Pause" command. In standby the robot doesn't perform any jobs and will stand idle. As players can't change other player's robots or jobs, but they can use "Pause" to stop anything they deem as damaging/bad. Any player can re-activated the robot with a "Resume" command. Type definitions and robot status are partially setup for this already.
      - Performance:
-        - On a quick performance test of the Walking to Location a lot of the UPS went to just the structure, however it was every tick and the actual per tick UPS cost was very low. So seems ok so far. Will be the large burst activities that need the most UPS optimisation.
+        - Only focus on burst activities and not background ones for UPS optimisation. Aim for minimal optimisation especially on state data to keep code simpler to maintain.
