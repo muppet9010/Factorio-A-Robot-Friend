@@ -1,3 +1,7 @@
+Remove logic is questionable and needs to fit in to new mindset. Stopped being called currently so no data is tidied up while testing.
+General definition of mod in Functionality Plan needs updating for new job and task structure.
+
+
 Future things to cover:
     - Forces being deleted and merged. We cache them in Robot.
     - Robot entities dying, we need to update our cache of them and track their corpses. Also want to handle a robot entity becoming invalid at a high level of Progress() to avoid every task having to use UPS checking .valid every tick.
@@ -9,6 +13,7 @@ Feature Enhancements:
     - Walking to location:
         - Detect railway and either try to path around or stop just before it, look both ways and then cross when safe. If not safe for X time place a signal and wire it up to be red, then cross safely.
         - Look at FUTURE note in path request. Need to try and use light touch paths for long distance and detailed paths for short difficult bits. Likely have to smooth things somewhere to stop the robot jerking around too much. Running in to things and glancing off is fine as long as it doesn't get stuck.
+        - The current path_resolution_modifier of 3 can have issues with rocks and off grid items close together sometimes. In one test case they could path in 1 direction, but not the other.
     - Robot personalisation:
         - Robot name: Allow for a generic server name list (mod setting) and also each player to be able to rename their robots individually.
         - Robot color: Allow players to set a color per robot.
@@ -17,5 +22,7 @@ Feature Enhancements:
         - Being able to pause and resume jobs. Will need to propagate to the robots and tasks ?
     - Robot control:
         - Add a "standby" mode that players can set their own and other player's robots in to with a "Pause" command. In standby the robot doesn't perform any jobs and will stand idle. As players can't change other player's robots or jobs, but they can use "Pause" to stop anything they deem as damaging/bad. Any player can re-activated the robot with a "Resume" command. Type definitions and robot status are partially setup for this already.
-     - Performance:
+    - Performance:
         - Only focus on burst activities and not background ones for UPS optimisation. Aim for minimal optimisation especially on state data to keep code simpler to maintain.
+    - Completed jobs:
+        - Probably want to keep a trimmed version of completed job data for both robots and the job itself. Will be mainly down to what we show in GUIs.

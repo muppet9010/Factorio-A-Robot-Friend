@@ -109,11 +109,11 @@ WalkToLocation.Progress = function(thisTask, robot)
 
     -- Walk the path as we have one at this point.
     local walkPathTask = thisTask.tasks[robotTaskData.currentTaskIndex] --[[@as Task_WalkPath_Data]]
-    local walkPathTask_robotTaskData = walkPathTask.robotsTaskData[robot]
     local ticksToWait = MOD.Interfaces.Tasks.WalkPath.Progress(walkPathTask, robot, robotTaskData.pathToWalk)
+    local walkPathTask_robotTaskData = walkPathTask.robotsTaskData[robot]
     if walkPathTask_robotTaskData.state == "completed" then
         -- Have walked to location.
-        walkPathTask_robotTaskData.state = "completed"
+        robotTaskData.state = "completed"
 
         -- Tidy up any renders that existed for the duration of the task.
         if robotTaskData.pathToWalkDebugRenderIds ~= nil then
@@ -132,7 +132,8 @@ end
 ---@param thisTask Task_WalkToLocation_Data
 WalkToLocation.Remove = function(thisTask)
     -- Nothing unique this task needs to do.
-    MOD.Interfaces.TaskManager.GenericTaskPropagateRemove(thisTask)
+    error("old code on unused code path")
+    --MOD.Interfaces.TaskManager.GenericTaskPropagateRemove(thisTask)
 end
 
 return WalkToLocation

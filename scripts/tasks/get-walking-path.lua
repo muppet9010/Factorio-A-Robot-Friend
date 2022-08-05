@@ -129,8 +129,9 @@ end
 --- Called to remove a task. This will propagates down to all sub tasks to tidy up any non task managed globals and other active effects.
 ---@param thisTask Task_GetWalkingPath_Data
 GetWalkingPath.Remove = function(thisTask)
+    error("old code on unused code path")
     -- Remove any global waiting for the path finder request to complete that may be pending.
-    global.Tasks.GetWalkingPath.pathRequests[thisTask.taskData.pathRequestId] = nil
+    --global.Tasks.GetWalkingPath.pathRequests[thisTask.taskData.pathRequestId] = nil
 
     -- This task never has children.
 end

@@ -12,7 +12,7 @@ local ShowRobotState = require("scripts.common.show-robot-state")
 ---@field surface LuaSurface
 ---@field force LuaForce
 ---@field master LuaPlayer
----@field activeJobs table<uint, Job_Data> # Key'd by the job's id.
+---@field activeJobs Job_Data[] # Ordered by priority.
 ---@field state "active"|"standby" # The standby feature is a future task, see readme.
 ---@field jobBusyUntilTick uint # The tick the robot is busy until on the current job. 0 is not busy.
 ---@field stateRenderedText? RobotStateRenderedText
@@ -74,15 +74,16 @@ end
 ---@param robot Robot
 ---@param job Job_Data
 RobotManager.AssignRobotToJob = function(robot, job)
-    robot.activeJobs[job.id] = job
+    robot.activeJobs[#robot.activeJobs + 1] = job
 end
 
 --- Removes a job from a robot's list and tidies up any task state data related to it.
+---@param jobIndex int # The order id of the job in the robots active tasks.
 ---@param robot Robot
 ---@param job Job_Data
-RobotManager.RemoveRobotFromJob = function(robot, job)
-    MOD.Interfaces.JobManager.RemoveRobotFromJob(robot, job)
-    robot.activeJobs[job.id] = nil
+RobotManager.RemoveJobFromRobot = function(jobIndex, robot, job)
+    --MOD.Interfaces.JobManager.RemoveRobotFromJob(robot, job) -- FUTURE: Do we ever want to remove a robots task record from a job prior to the job being fully removed.
+    table.remove(robot.activeJobs, jobIndex)
 end
 
 --- Called every tick to manage the robots.
@@ -91,24 +92,33 @@ RobotManager.ManageRobots = function(event)
     -- For each robot check if its not busy waiting check down its active job list for something to do.
     for _, robot in pairs(global.RobotManager.robots) do
         if robot.jobBusyUntilTick <= event.tick then
-            for _, job in pairs(robot.activeJobs) do
-                local ticksToWait = MOD.Interfaces.JobManager.ProgressRobotForJob(robot, job)
-                if ticksToWait > 0 then
-                    robot.jobBusyUntilTick = event.tick + ticksToWait
-                end
+            if #robot.activeJobs > 0 then
+                -- Code Note: have to manually handle looping the active jobs as we remove entries from it while iterating.
+                local jobIndex = 1
+                while jobIndex <= #robot.activeJobs do
+                    local job = robot.activeJobs[jobIndex]
+                    if job ~= nil then
+                        local ticksToWait = MOD.Interfaces.JobManager.ProgressJobForRobot(job, robot)
+                        if ticksToWait > 0 then
+                            robot.jobBusyUntilTick = event.tick + ticksToWait
+                        end
 
-                if job.state == "completed" then
-                    -- Job completed so remove it from the list.
-                    RobotManager.RemoveRobotFromJob(robot, job)
-                end
-                if ticksToWait > 0 then
-                    -- Job is waiting to do something so don't do any other jobs this tick for this robot.
-                    break
+                        if MOD.Interfaces.JobManager.IsJobCompleteForRobot(job, robot) then
+                            -- Job completed for this robot so remove it from the list.
+                            RobotManager.RemoveJobFromRobot(jobIndex, robot, job)
+                            jobIndex = jobIndex - 1 -- As RobotManager.RemoveJobFromRobot() removed an entry from the list we are iterating.
+                        end
+                        if ticksToWait > 0 then
+                            -- Job is waiting to do something so don't do any other jobs this tick for this robot.
+                            break
+                        end
+                    end
+                    jobIndex = jobIndex + 1
                 end
             end
 
             -- If no jobs for this robot, do its idle activity.
-            if next(robot.activeJobs) == nil then
+            if #robot.activeJobs == 0 then
                 if global.Settings.showRobotState then
                     ShowRobotState.UpdateStateText(robot, "Idle", "normal")
                 end

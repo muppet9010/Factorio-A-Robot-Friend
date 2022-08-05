@@ -79,10 +79,10 @@ JobManager.JobCompleted = function(job)
 end
 
 --- Progress the robot for the job. This may include the jobs initial activation or another cycle in progressing the job's tasks.
----@param robot Robot
 ---@param job Job_Data
+---@param robot Robot
 ---@return uint ticksToWait
-JobManager.ProgressRobotForJob = function(robot, job)
+JobManager.ProgressJobForRobot = function(job, robot)
     local primaryTask = job.primaryTask
     if primaryTask == nil then
         -- As first running of the Job, Activate the job to generate the primary task for the job.
@@ -92,23 +92,30 @@ JobManager.ProgressRobotForJob = function(robot, job)
 
     local waitTime = MOD.Interfaces.TaskManager.ProgressPrimaryTask(primaryTask, robot)
 
-    -- Check if the primaryTask completed.
-    -- FUTURE: in jobs with multiple robots the job will never be completed when only robot completes its. As the robots could be acting independently (move to location) or the other robots may be finishing up other parts of the shared work (completing a ghost). Will need a task specific function to decide what to do with the robots. Do we send them on to the next job or have them hang around until the job is finished. Maybe helping speed it up if they can.
-    if primaryTask.state == "completed" then
+    -- Check if the primaryTask has just been completed for all.
+    if job.state ~= "completed" and primaryTask.state == "completed" then
         JobManager.JobCompleted(job)
     end
 
     return waitTime
 end
 
+--- Checks if the job is completed for this specific robot.
+---@param job Job_Data
+---@param robot Robot
+---@return boolean jobCompletedForRobot
+JobManager.IsJobCompleteForRobot = function(job, robot)
+    if job.state == "completed" then return true end
+    if MOD.Interfaces.TaskManager.IsPrimaryTaskCompleteForRobot(job.primaryTask, robot) == true then return true end
+    return false
+end
+
 --- Remove the robot from the job.
 ---@param robot Robot
 ---@param job Job_Data
 JobManager.RemoveRobotFromJob = function(robot, job)
-    --TODO: all needs re-doing.
-    local primaryTask = job.robotsPrimaryTask[robot]
-    MOD.Interfaces.TaskManager.RemovePrimaryTask(primaryTask)
-    job.robotsPrimaryTask[robot] = nil
+    error("old code on unused code path")
+    --MOD.Interfaces.TaskManager.RemovePrimaryTask(job.primaryTask)
 end
 
 return JobManager

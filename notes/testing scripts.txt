@@ -1,33 +1,54 @@
 All done for player 1.
 
+path through the walls and furnaces from spawn location: {x=81,y=118}
 
 
-Make a robot at spawn and make it walk to the set location under a job:
+
+
+Make 2 robots at spawn and make them walk to a number of shared jobs:
 
 /sc __a_robot_friend__
-local robotPosition, targetPosition = {x=2,y=2}, {x=81,y=118}
+local robotPosition, targetPosition = {x=2,y=2}, {x=0,y=27}
 robotPosition = game.surfaces[1].find_non_colliding_position("character", robotPosition, 10, 0.2, false)
-if robotPosition == nil then game.print("no valid robot creation position", {1,0,0,1}); return; end
 targetPosition = game.surfaces[1].find_non_colliding_position("character", targetPosition, 10, 0.2, false)
-if targetPosition == nil then game.print("no valid target position", {1,0,0,1}); return; end
 local robot = MOD.Interfaces.RobotManager.CreateRobot(game.surfaces[1], robotPosition, game.get_player(1))
 local job = MOD.Interfaces.Jobs.MoveToLocation.Create(1, targetPosition, game.surfaces[1])
 MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job)
 
+local robotPosition2, targetPosition2 = {x=-14,y=-11}, {x=4,y=19}
+local robotPosition2 = game.surfaces[1].find_non_colliding_position("character", robotPosition2, 10, 0.2, false)
+targetPosition2 = game.surfaces[1].find_non_colliding_position("character", targetPosition2, 10, 0.2, false)
+local robot2 = MOD.Interfaces.RobotManager.CreateRobot(game.surfaces[1], robotPosition2, game.get_player(1))
+local job2 = MOD.Interfaces.Jobs.MoveToLocation.Create(1, targetPosition2, game.surfaces[1])
+MOD.Interfaces.RobotManager.AssignRobotToJob(robot2, job2)
+
+MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job2)
+MOD.Interfaces.RobotManager.AssignRobotToJob(robot2, job)
+local targetPosition3 = {x=-17,y=-3}
+targetPosition3 = game.surfaces[1].find_non_colliding_position("character", targetPosition3, 10, 0.2, false)
+local job3 = MOD.Interfaces.Jobs.MoveToLocation.Create(1, targetPosition3, game.surfaces[1])
+MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job3)
+MOD.Interfaces.RobotManager.AssignRobotToJob(robot2, job3)
 
 
 
-Move an existing robot (10 to a series of positions.
+
+Move an existing robot to a series of positions.
 
 /sc __a_robot_friend__
-local robotId, targetPosition1, targetPosition2, targetPosition3 = 1, {x=4,y=24}, {x=-5,y=27}, {x=-14,y=-11}
-targetPosition1 = game.surfaces[1].find_non_colliding_position("character", targetPosition1, 10, 0.2, false)
+local robotPosition, targetPosition = {x=2,y=2}, {x=0,y=27}
+robotPosition = game.surfaces[1].find_non_colliding_position("character", robotPosition, 10, 0.2, false)
+targetPosition = game.surfaces[1].find_non_colliding_position("character", targetPosition, 10, 0.2, false)
+local robot = MOD.Interfaces.RobotManager.CreateRobot(game.surfaces[1], robotPosition, game.get_player(1))
+local job = MOD.Interfaces.Jobs.MoveToLocation.Create(1, targetPosition, game.surfaces[1])
+MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job)
+
+local targetPosition2 = {x=-2,y=28}
 targetPosition2 = game.surfaces[1].find_non_colliding_position("character", targetPosition2, 10, 0.2, false)
+local job2 = MOD.Interfaces.Jobs.MoveToLocation.Create(1, targetPosition2, game.surfaces[1])
+MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job2)
+
+local targetPosition3 = {x=-17,y=-3}
 targetPosition3 = game.surfaces[1].find_non_colliding_position("character", targetPosition3, 10, 0.2, false)
-local robot = global.RobotManager.robots[robotId]
-local job = MOD.Interfaces.Jobs.MoveToLocation.Create(1, targetPosition1, game.surfaces[1])
-MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job)
-job = MOD.Interfaces.Jobs.MoveToLocation.Create(1, targetPosition2, game.surfaces[1])
-MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job)
-job = MOD.Interfaces.Jobs.MoveToLocation.Create(1, targetPosition3, game.surfaces[1])
-MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job)
+local job3 = MOD.Interfaces.Jobs.MoveToLocation.Create(1, targetPosition3, game.surfaces[1])
+MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job3)

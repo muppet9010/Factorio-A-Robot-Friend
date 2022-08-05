@@ -36,6 +36,7 @@ ShowRobotState.UpdateStateText = function(robot, text, level)
     local color = (level == "normal") and Colors.white or (level == "warning") and Colors.warningMessage or (level == "error") and Colors.errorMessage or Colors.black
 
     -- Check if there's already a rendering and if so are we asking for the same thing (no change), or do we need to remove the old one and put the new one in place.
+    -- Code Note: as many of our tasks only last 1 tick we can't create a rendering that only lasts 1 tick. So we have to create an indefinite one and check when it needs updating. Rather than having weird state tracking we generate the new ones details every update and then just see if its the same output as we already have ot if we need to replace the old one with the new one.
     local replaceText = false
     if robot.stateRenderedText ~= nil then
         if text ~= robot.stateRenderedText.stateText then replaceText = true; goto ShowRobotState_UpdateStateText_EndOfReplaceTextCheck end

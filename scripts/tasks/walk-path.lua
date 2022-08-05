@@ -128,10 +128,11 @@ end
 --- Called to remove a task. This will propagates down to all sub tasks to tidy up any non task managed globals and other active effects.
 ---@param thisTask Task_WalkPath_Data
 WalkPath.Remove = function(thisTask)
+    error("old code on unused code path")
     -- If this task was active then cancel the last movement input sent to the robot as it will stay persistent otherwise.
-    if thisTask.state == "active" then
-        thisTask.robot.entity.walking_state = { walking = false, direction = defines.direction.north }
-    end
+    --if thisTask.state == "active" then
+    --    thisTask.robot.entity.walking_state = { walking = false, direction = defines.direction.north }
+    --end
 
     -- This task never has children.
 end
