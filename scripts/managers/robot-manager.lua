@@ -82,7 +82,7 @@ end
 ---@param robot Robot
 ---@param job Job_Data
 RobotManager.RemoveJobFromRobot = function(jobIndex, robot, job)
-    --MOD.Interfaces.JobManager.RemoveRobotFromJob(robot, job) -- FUTURE: Do we ever want to remove a robots task record from a job prior to the job being fully removed.
+    MOD.Interfaces.JobManager.RemoveRobotFromJob(robot, job)
     table.remove(robot.activeJobs, jobIndex)
 end
 
@@ -104,7 +104,7 @@ RobotManager.ManageRobots = function(event)
                         end
 
                         if MOD.Interfaces.JobManager.IsJobCompleteForRobot(job, robot) then
-                            -- Job completed for this robot so remove it from the list.
+                            -- Job completed for this robot so remove the job from the robot and the robot from the job.
                             RobotManager.RemoveJobFromRobot(jobIndex, robot, job)
                             jobIndex = jobIndex - 1 -- As RobotManager.RemoveJobFromRobot() removed an entry from the list we are iterating.
                         end
@@ -123,6 +123,17 @@ RobotManager.ManageRobots = function(event)
                     ShowRobotState.UpdateStateText(robot, "Idle", "normal")
                 end
             end
+        end
+    end
+end
+
+--- Removes a job from a robot's list as the job has been completed and the tasks removed.
+---@param robot Robot
+---@param jobCompleted Job_Data
+RobotManager.NotifyRobotJobIsCompleted = function(robot, jobCompleted)
+    for key, jobInList in pairs(robot.activeJobs) do
+        if jobInList == jobCompleted then
+            table.remove(robot.activeJobs, key)
         end
     end
 end

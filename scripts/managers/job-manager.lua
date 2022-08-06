@@ -30,6 +30,7 @@ local MoveToLocation = require("scripts.jobs.move-to-location")
 ---@field primaryTaskName string # The Interface name of the primary task.
 ---@field primaryTask? Task_Data # The primary task for this job.
 ---@field description? string # A text description for the Job.
+---@field robotsOnJob table<uint, Robot> @ Keyed by robot Id.
 
 local JobManager = {} ---@class JobManager
 
@@ -58,7 +59,7 @@ end
 JobManager.CreateGenericJob = function(jobName, playerIndex, primaryTaskName)
     global.JobManager.playersJobs[playerIndex] = global.JobManager.playersJobs[playerIndex] or {}
     ---@type Job_Data
-    local job = { playerIndex = playerIndex, id = global.JobManager.nextJobId, jobName = jobName, jobData = {}, state = "pending", primaryTaskName = primaryTaskName }
+    local job = { playerIndex = playerIndex, id = global.JobManager.nextJobId, jobName = jobName, jobData = {}, state = "pending", primaryTaskName = primaryTaskName, robotsOnJob = {} }
     global.JobManager.playersJobs[playerIndex][job.id] = job
     global.JobManager.nextJobId = global.JobManager.nextJobId + 1
     return job
@@ -74,17 +75,16 @@ JobManager.ActivateGenericJob = function(job, primaryTask)
     job.primaryTask = primaryTask
 end
 
---- Called by the primaryTask when it (and thus job) is completed, so it can update it's status and do any configured alerts, etc.
----@param job Job_Data
-JobManager.JobCompleted = function(job)
-    job.state = "completed"
-end
-
 --- Progress the robot for the job. This may include the jobs initial activation or another cycle in progressing the job's tasks.
 ---@param job Job_Data
 ---@param robot Robot
 ---@return uint ticksToWait
 JobManager.ProgressJobForRobot = function(job, robot)
+    -- Record that the robot is working on the job.
+    if job.robotsOnJob[robot.id] == nil then
+        job.robotsOnJob[robot.id] = robot
+    end
+
     local primaryTask = job.primaryTask
     if primaryTask == nil then
         -- As first running of the Job, Activate the job to generate the primary task for the job.
@@ -101,6 +101,22 @@ JobManager.ProgressJobForRobot = function(job, robot)
     return waitTime
 end
 
+--- Called by the progression of a Job when it finds its primary task is completed. So the Task data can be dropped and any publication of the job status is performed.
+---@param job Job_Data
+JobManager.JobCompleted = function(job)
+    job.state = "completed"
+
+    -- Clean out the primary task from the job and clean any persistent or global data.
+    MOD.Interfaces.TaskManager.RemovingPrimaryTaskFromJob(job.primaryTask)
+    job.primaryTask = nil
+
+    -- Clear all of the robots from being active on this job.
+    for _, robot in pairs(job.robotsOnJob) do
+        MOD.Interfaces.RobotManager.NotifyRobotJobIsCompleted(robot, job)
+    end
+    job.robotsOnJob = {}
+end
+
 --- Checks if the job is completed for this specific robot.
 ---@param job Job_Data
 ---@param robot Robot
@@ -115,8 +131,8 @@ end
 ---@param robot Robot
 ---@param job Job_Data
 JobManager.RemoveRobotFromJob = function(robot, job)
-    error("old code on unused code path")
-    --MOD.Interfaces.TaskManager.RemovePrimaryTask(job.primaryTask)
+    MOD.Interfaces.TaskManager.RemovingRobotFromPrimaryTask(job.primaryTask, robot)
+    job.robotsOnJob[robot.id] = nil
 end
 
 return JobManager

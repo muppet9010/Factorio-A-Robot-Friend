@@ -125,14 +125,31 @@ WalkPath.Progress = function(thisTask, robot, pathToWalk)
     return 1
 end
 
---- Called to remove a task. This will propagates down to all sub tasks to tidy up any non task managed globals and other active effects.
+--- Called when a specific robot is being removed from a task.
 ---@param thisTask Task_WalkPath_Data
-WalkPath.Remove = function(thisTask)
-    error("old code on unused code path")
-    -- If this task was active then cancel the last movement input sent to the robot as it will stay persistent otherwise.
-    --if thisTask.state == "active" then
-    --    thisTask.robot.entity.walking_state = { walking = false, direction = defines.direction.north }
-    --end
+---@param robot Robot
+WalkPath.RemovingRobotFromTask = function(thisTask, robot)
+    -- If the robot was being actively walked it will need its walking_state reset so they don't continue uncontrolled.
+    local robotTaskData = thisTask.robotsTaskData[robot]
+    if robotTaskData.state == "active" then
+        robot.entity.walking_state = { walking = false, direction = defines.direction.north }
+    end
+
+    -- Remove any robot specific task data.
+    thisTask.robotsTaskData[robot] = nil
+
+    -- This task never has children.
+end
+
+--- Called when a task is being removed and any task globals or ongoing activities need to be stopped.
+---@param thisTask Task_WalkPath_Data
+WalkPath.RemovingTask = function(thisTask)
+    -- Any robots which were being active walked will need their walking_state reset so they don't continue uncontrolled.
+    for _, robotTaskData in pairs(thisTask.robotsTaskData) do
+        if robotTaskData.state == "active" then
+            robotTaskData.robot.entity.walking_state = { walking = false, direction = defines.direction.north }
+        end
+    end
 
     -- This task never has children.
 end

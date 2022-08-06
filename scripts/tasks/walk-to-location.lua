@@ -122,18 +122,29 @@ WalkToLocation.Progress = function(thisTask, robot)
             end
         end
 
+        -- Cleanse the robots
+
         return 0
     end
 
     return ticksToWait
 end
 
---- Called to remove a task. This will propagates down to all sub tasks to tidy up any non task managed globals and other active effects.
+--- Called when a specific robot is being removed from a task.
 ---@param thisTask Task_WalkToLocation_Data
-WalkToLocation.Remove = function(thisTask)
+---@param robot Robot
+WalkToLocation.RemovingRobotFromTask = function(thisTask, robot)
+    -- Remove any robot specific task data.
+    thisTask.robotsTaskData[robot] = nil
+
+    MOD.Interfaces.TaskManager.GenericTaskPropagateRemoveRobot(thisTask, robot)
+end
+
+--- Called when a task is being removed and any task globals or ongoing activities need to be stopped.
+---@param thisTask Task_WalkToLocation_Data
+WalkToLocation.RemovingTask = function(thisTask)
     -- Nothing unique this task needs to do.
-    error("old code on unused code path")
-    --MOD.Interfaces.TaskManager.GenericTaskPropagateRemove(thisTask)
+    MOD.Interfaces.TaskManager.GenericTaskPropagateRemove(thisTask)
 end
 
 return WalkToLocation

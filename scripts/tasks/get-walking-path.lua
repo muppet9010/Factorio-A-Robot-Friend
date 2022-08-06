@@ -126,12 +126,31 @@ GetWalkingPath._OnPathRequestFinished = function(event)
     global.Tasks.GetWalkingPath.pathRequests[event.id] = nil
 end
 
---- Called to remove a task. This will propagates down to all sub tasks to tidy up any non task managed globals and other active effects.
+--- Called when a specific robot is being removed from a task.
 ---@param thisTask Task_GetWalkingPath_Data
-GetWalkingPath.Remove = function(thisTask)
-    error("old code on unused code path")
-    -- Remove any global waiting for the path finder request to complete that may be pending.
-    --global.Tasks.GetWalkingPath.pathRequests[thisTask.taskData.pathRequestId] = nil
+---@param robot Robot
+GetWalkingPath.RemovingRobotFromTask = function(thisTask, robot)
+    -- Remove any pending path request object in the global for this robot.
+    local robotTaskData = thisTask.robotsTaskData[robot]
+    if robotTaskData ~= nil and robotTaskData.state == "active" then
+        global.Tasks.GetWalkingPath.pathRequests[robotTaskData.pathRequestId] = nil
+    end
+
+    -- Remove any robot specific task data.
+    thisTask.robotsTaskData[robot] = nil
+
+    -- This task never has children.
+end
+
+--- Called when a task is being removed and any task globals or ongoing activities need to be stopped.
+---@param thisTask Task_GetWalkingPath_Data
+GetWalkingPath.RemovingTask = function(thisTask)
+    -- Remove any pending path request objects in the global for all robots in this task.
+    for _, robotTaskData in pairs(thisTask.robotsTaskData) do
+        if robotTaskData.state == "active" then
+            global.Tasks.GetWalkingPath.pathRequests[robotTaskData.pathRequestId] = nil
+        end
+    end
 
     -- This task never has children.
 end

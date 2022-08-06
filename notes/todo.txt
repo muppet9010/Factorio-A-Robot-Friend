@@ -1,5 +1,3 @@
-Remove logic is questionable and needs to fit in to new mindset. Stopped being called currently so no data is tidied up while testing.
-
 Make simple build blueprint job with dummy tasks for getting items. TO test framework as much as anything. Just give the robots the needed items as part of the job.
 
 
@@ -11,6 +9,7 @@ Core things to include:
     - Robots need to support having their task in a job paused and the robot told to do something else, i.e. robot gets attacked so needs to defend itself. I want to get the framework in for this in a simple format early.
     - Being able to pause and resume jobs. Will need to propagate to the robots and tasks ?
     - Add a "standby" mode that players can set their own and other player's robots in to with a "Pause" command. In standby the robot doesn't perform any jobs and will stand idle. As players can't change other player's robots or jobs, but they can use "Pause" to stop anything they deem as damaging/bad. Any player can re-activated the robot with a "Resume" command. Type definitions and robot status are partially setup for this already.
+    - Automated testing including lots of removing and breaking things mid and post tests. As I added very few nil checks during initial coding.
 
 
 Feature Enhancements:
@@ -18,9 +17,8 @@ Feature Enhancements:
         - Detect railway and either try to path around or stop just before it, look both ways and then cross when safe. If not safe for X time place a signal and wire it up to be red, then cross safely.
         - Look at FUTURE note in path request. Need to try and use light touch paths for long distance and detailed paths for short difficult bits. Likely have to smooth things somewhere to stop the robot jerking around too much. Running in to things and glancing off is fine as long as it doesn't get stuck.
         - The current path_resolution_modifier of 3 can have issues with rocks and off grid items close together sometimes. In one test case they could path in 1 direction, but not the other.
+        - When walking a path need to detect if the robot gets stuck and then trying moving sideways or do a short pathfinder request to un-jam it. Not sure how if we can handle a short MoveToLocation within a WalkPath though. As the task would be for a single robot.
     - Robot personalisation:
         - Robot name: Allow for a generic server name list (mod setting) and also each player to be able to rename their robots individually.
         - Robot color: Allow players to set a color per robot.
         - Show the robots as colored dots on the map. I don't think I can make the names appear on the map and thus can't honour the Show Players option on the map (and minimap) view.
-    - Completed jobs:
-        - Probably want to keep a trimmed version of completed job data for both robots and the job itself. Will be mainly down to what we show in GUIs?

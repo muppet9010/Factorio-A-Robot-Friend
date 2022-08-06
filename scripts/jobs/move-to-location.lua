@@ -44,6 +44,10 @@ end
 ---@param job Job_WalkToLocation_Data
 MoveToLocation.Remove = function(job)
     error("Not implemented")
+    -- Not done anything for this jobs specific global or its own data. Should a deleted job not keep some of its details and be moved to a deleted list in case of mistake?
+
+    -- Clean out the primary task from the job and clean any persistent or global data.
+    MOD.Interfaces.TaskManager.RemovingPrimaryTaskFromJob(job.primaryTask)
 end
 
 --- Called to pause the job and all of its activity.

@@ -17,7 +17,8 @@ local WalkToLocation = require("scripts.tasks.walk-to-location")
 ---@field Progress fun(thisTask:Task_Data, robot:Robot, ...): uint # Called to do work on the task by on_tick by each robot. Returns how many ticks to wait before next Progress() call for that robot.
 ---@field Pause function # Called to pause any activity, i.e. task has been interrupted by another higher priority task. NOT DEFINED
 ---@field Resume function # Called to resume a previously paused task. This will need some state checking to be done as anything could have changed from before. NOT DEFINED
----@field Remove fun(thisTask:Task_Data) # Called to remove a task. This will propagates down to all sub tasks to tidy up any non task managed globals and other active effects. FUTURE: this will likely need some tidy-up commands per robot and also for the whole task hierarchy being tidied up. Waiting on decision if we keep job and task data long term and to what extend it is trimmed.
+---@field RemovingTask fun(thisTask:Task_Data) # Called when a task is being removed and any task globals or ongoing activities need to be stopped. This will propagates down to all sub tasks.
+---@field RemovingRobotFromTask fun(thisTask:Task_Data, robot:Robot) # Called when a specific robot is being removed from a task. Removes any robot specific task data and any robot related task globals or ongoing activities will be stopped. This will propagates down to all sub tasks.
 
 --- The generic characteristics of an Task Global that all instances must implement. Stored under its parent Task or under its robot in the parent Job if its the primary task for the Job.
 ---@class Task_Data
@@ -79,20 +80,34 @@ TaskManager.CreateGenericRobotTaskData = function(robot, currentTaskIndex, task)
     return task
 end
 
---- Called to remove a primary task from a job (so robot instance specific). This will propagates down to all sub tasks to tidy up any non task managed globals and other active effects.
+--- Called when removing a robot from the primary task of a job. This will propagates down to all sub tasks to tidy up any non task managed globals and other active effects for this robot.
 ---@param primaryTask Task_Data
-TaskManager.RemovePrimaryTask = function(primaryTask)
-    error("old code on unused code path")
-    --MOD.Interfaces.Tasks[primaryTask.taskName]--[[@as Task_Interface]] .Remove(primaryTask)
+---@param robot Robot
+TaskManager.RemovingRobotFromPrimaryTask = function(primaryTask, robot)
+    MOD.Interfaces.Tasks[primaryTask.taskName]--[[@as Task_Interface]] .RemovingRobotFromTask(primaryTask, robot)
+end
+
+--- Called by a task to let its child tasks know they about a robot being removed from the task hierarchy. The bespoke task will do any unique actions for it in addition to calling this.
+---@param thisTask Task_Data
+---@param robot Robot
+TaskManager.GenericTaskPropagateRemoveRobot = function(thisTask, robot)
+    for _, childTask in pairs(thisTask.tasks) do
+        MOD.Interfaces.Tasks[childTask.taskName]--[[@as Task_Interface]] .RemovingRobotFromTask(childTask, robot)
+    end
+end
+
+--- Called when removing the primary task of a job. This will propagates down to all sub tasks to tidy up any non task managed globals and other active effects for this robot.
+---@param primaryTask Task_Data
+TaskManager.RemovingPrimaryTaskFromJob = function(primaryTask)
+    MOD.Interfaces.Tasks[primaryTask.taskName]--[[@as Task_Interface]] .RemovingTask(primaryTask)
 end
 
 --- Called by a task to let its child tasks know they are all being removed. The bespoke task will do any unique actions for it in addition to calling this.
 ---@param thisTask Task_Data
 TaskManager.GenericTaskPropagateRemove = function(thisTask)
-    error("old code on unused code path")
-    --for _, childTask in pairs(thisTask.tasks) do
-    --    MOD.Interfaces.Tasks[childTask.taskName]--[[@as Task_Interface]] .Remove(childTask)
-    --end
+    for _, childTask in pairs(thisTask.tasks) do
+        MOD.Interfaces.Tasks[childTask.taskName]--[[@as Task_Interface]] .RemovingTask(childTask)
+    end
 end
 
 --- Called by a job to progress the primary task of the job. This task will then propagate down as required for this robot.
