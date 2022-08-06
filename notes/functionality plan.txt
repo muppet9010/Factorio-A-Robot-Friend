@@ -1,4 +1,9 @@
+Player Experience
+-----------------
+
 A job is what a player asks the robot to do. This will be top level wrapper around a given task and may give the player behaviour choices on how it is completed.
+
+A task manages the doing of things by the robots. These can include direct actions by the robot in the map or managing child tasks.
 
 When a robot is undertaking a task it will use multiple actions and sub tasks autonomously to complete the task. Tasks can take time and may include searches of the map in a time distributed fashion.
 
@@ -22,8 +27,6 @@ Behaviours are related to the job and may dictate the action chosen or the choic
 Tasks can contain other tasks. I.e. "build this blueprint" includes the tasks of obtaining a list of required materials, collecting or crafting them, moving there and placing the entities.
 
 Tasks can be interrupted and will need to have a persisted state. When resumed the task will need to re-validate itself and confirm its current progress in the task is still accurate. Possibly returning to previously completed sub tasks and repeating their investigations and checking steps.
-
-Tasks should register their calling function by name in to MOD.Interfaces.Tasks and MOD.Interfaces.Jobs. Then the Jobs/Tasks can store the name in their global data to be save/load safe. The interfaces can be used to call from one task to another up/down the chain in a save/load safe manner.
 
 Planned Lower Tasks list (never directly called, but used by many other tasks in combinations):
     - Walk a path
@@ -63,8 +66,6 @@ Planned Medium Tasks list (actually callable on their own in simple situations):
             - Do action (build, mining, upgrading, rotating, etc)
             - Loop back until finished.
 
-
-
 Planned Jobs Tasks list (main tasks that masters will generally get their robots to do):
     - Complete Blueprint:
         - Scan area for ghosted items
@@ -78,45 +79,30 @@ Planned Jobs Tasks list (main tasks that masters will generally get their robots
             - Drive to location
             - Ride train to location
 
-
 Jobs are owned and managed by a single player. A robot is owned by a single player. Players can assign their robots to their own jobs or to other player's jobs.
 
 All jobs will have some standard options like travel type restrictions (i.e. block car usage), combat mode, etc. There should be per player settings/GUI to control defaults for these as well.
 
 We won't support updating jobs, but will allow via the GUI some sort of clone (with/out robots) to allow quick copying/replacing of them.
 
-Multiple robots can be assigned to the same job. Each robot will have its own main primaryTask and task hierarchy under the Job. As this way the a task can cross talk and share data when needed between each robots version. In most cases the tasks will be entirely separate as the robots will be doing their own thing within their own section of the task.
-When multiple robots are on a job and some finish all their tasks and others are still working, it will be up to the tasks to define if the robots should get new sub tasks to help, or if their role is completed and they should move on to their next job (some robots still working, others will consider themselves finished and move on).
+Multiple robots can be assigned to the same job and based on the type of task being done the robots will either work together or independently.
+
+
+
+Internal Code Structure
+-----------------------
+
+Tasks should register their calling function by name in to MOD.Interfaces.Tasks and MOD.Interfaces.Jobs. Then the Jobs/Tasks can store the name in their global data to be save/load safe. The interfaces can be used to call from one task to another up/down the chain in a save/load safe manner.
+
+Jobs and tasks both act largely as black boxes to the other layers (robots, GUI). Types of jobs and tasks implement standard core interface for data and functions, with additional bespoke extras per type. This allows for calling between the layers to normally be generic, with only specific types of tasks and jobs calling to other specific tasks and their bespoke functions and data.
 
 Each layer should call only to other managers, with each manager then knowing its own areas structure and calling in to the specific modules. Also means that Sumneko type identification works better as managers functions are all clearly defined, with any greyness from Factory type interfaces within their functions.
 Exceptions are when a specific job needs to call to a specific task, as it needs to know the specific tasks arguments.
 
 Avoid pre-emptive UPS optimisation as most things are run once per tick per robot at most. And so this load will be very evenly distributed and low background. Aim for minimal optimisation especially on state data to keep code simpler to maintain.
 
-
-
-Current - Task hierarchy per robot
--------
-
-Job:
-    Robots to their instance of Primary Task Data list:
-        This robots task data
-        Child Task Data:
-            (
-            This robots task data
-            Child Task Data:
-            ) to N level
-
-Robot:
-    Active Jobs list referencing the Job.
-
-Robot do work function calls: Robot > Job > Primary Task for Robot > Child Task (N)
-
-
-
-
-Future - Task hierarchy per job with task specific per robot task data.
-------
+There is only 1 task hierarchy per job regardless of the number of robots. Tasks will either implement independent robot activities or some form of coordinated planning and action across all robots actively working on that task. As there's only 1 instance of a task per job this means the task can act as a black box regarding how it handles robots from other tasks. It also allows for clean data sharing at any point in the task hierarchy. When multiple robots are on a job and some finish their part of a common task and others are still working, it will be up to the task to define if the robots should get released to the next task (task still active as a whole), or if the robots should have their activity within the task reset to include new work.
+Previously per robot task instance was trialled, but found to be problematic in a design/structural sense for data sharing at depths in the task hierarchy between robots.
 
 Job:
     PrimaryTask Task Data for Job:
@@ -132,4 +118,4 @@ Job:
 Robot:
     Active Jobs list referencing the Job.
 
-Robot do work function calls: Robot > Job > Primary Task For Job > Task calls in to child task with mix of per robot and job's task data.
+Robot do work function calls: Robot > Job > Primary Task For Job > Task calls in to child task with mix of per robot and job's task data as appropriate > Task cascades down hierarchy as required.

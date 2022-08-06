@@ -1,6 +1,9 @@
 --[[
-    All Tasks are required to register themselves in the dictionary MOD.Interfaces.Tasks. With a key of their Task.taskName and a value of a dictionary of interface functions.
-    Tasks are per robot under a shared Job entry.
+    Tasks manage the robots doing the actual work and are fully modular (black box) from each other. Allowing unlimited task stacking.
+
+    All Tasks are required to implement Task_Interface and Task_Data within their bespoke classes.
+
+    There is a single instance of a Task under a Job in the task hierarchy. With all robots sharing the Task, however they can have per robot state data.
 ]]
 
 local WalkPath = require("scripts.tasks.walk-path")
@@ -39,7 +42,7 @@ local TaskManager = {} ---@class TaskManager
 TaskManager._CreateGlobals = function()
     global.TaskManager = global.TaskManager or {} ---@class Global_TaskManager # Used by the TaskManager for its own global data.
 
-    global.Tasks = global.Tasks or {} ---@class Global_Tasks # All Tasks can put their own global table under this.
+    global.Tasks = global.Tasks or {} ---@class Global_Tasks # All Tasks can put their own global table under this. Keyed by their Task Name.
     -- Call any task types that need globals making.
     GetWalkingPath._CreateGlobals()
 end

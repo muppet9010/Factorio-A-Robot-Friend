@@ -1,12 +1,16 @@
 Remove logic is questionable and needs to fit in to new mindset. Stopped being called currently so no data is tidied up while testing.
-General definition of mod in Functionality Plan needs updating for new job and task structure.
+
+Make simple build blueprint job with dummy tasks for getting items. TO test framework as much as anything. Just give the robots the needed items as part of the job.
 
 
-Future things to cover:
+
+
+Core things to include:
     - Forces being deleted and merged. We cache them in Robot.
     - Robot entities dying, we need to update our cache of them and track their corpses. Also want to handle a robot entity becoming invalid at a high level of Progress() to avoid every task having to use UPS checking .valid every tick.
-    - At present we only fully support 1 robot per job. The task list should likely have a per robot element with some sort of sharing between the robots, i.e. if building a ghost they need to not both bring the same start of the items list. Also at present the first primaryTask to complete finishes the whole job, see the FUTURE note JobManager.ProgressRobotForJob().
     - Robots need to support having their task in a job paused and the robot told to do something else, i.e. robot gets attacked so needs to defend itself. I want to get the framework in for this in a simple format early.
+    - Being able to pause and resume jobs. Will need to propagate to the robots and tasks ?
+    - Add a "standby" mode that players can set their own and other player's robots in to with a "Pause" command. In standby the robot doesn't perform any jobs and will stand idle. As players can't change other player's robots or jobs, but they can use "Pause" to stop anything they deem as damaging/bad. Any player can re-activated the robot with a "Resume" command. Type definitions and robot status are partially setup for this already.
 
 
 Feature Enhancements:
@@ -18,11 +22,5 @@ Feature Enhancements:
         - Robot name: Allow for a generic server name list (mod setting) and also each player to be able to rename their robots individually.
         - Robot color: Allow players to set a color per robot.
         - Show the robots as colored dots on the map. I don't think I can make the names appear on the map and thus can't honour the Show Players option on the map (and minimap) view.
-    - Job management:
-        - Being able to pause and resume jobs. Will need to propagate to the robots and tasks ?
-    - Robot control:
-        - Add a "standby" mode that players can set their own and other player's robots in to with a "Pause" command. In standby the robot doesn't perform any jobs and will stand idle. As players can't change other player's robots or jobs, but they can use "Pause" to stop anything they deem as damaging/bad. Any player can re-activated the robot with a "Resume" command. Type definitions and robot status are partially setup for this already.
-    - Performance:
-        - Only focus on burst activities and not background ones for UPS optimisation. Aim for minimal optimisation especially on state data to keep code simpler to maintain.
     - Completed jobs:
-        - Probably want to keep a trimmed version of completed job data for both robots and the job itself. Will be mainly down to what we show in GUIs.
+        - Probably want to keep a trimmed version of completed job data for both robots and the job itself. Will be mainly down to what we show in GUIs?

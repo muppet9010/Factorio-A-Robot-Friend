@@ -1,5 +1,5 @@
 --[[
-    This manages the robot's entities, global objects and jobs.
+    This manages the robot's entities, global objects and jobs list.
 ]]
 
 local Events = require("utility.manager-libraries.events")
@@ -12,9 +12,9 @@ local ShowRobotState = require("scripts.common.show-robot-state")
 ---@field surface LuaSurface
 ---@field force LuaForce
 ---@field master LuaPlayer
----@field activeJobs Job_Data[] # Ordered by priority.
+---@field activeJobs Job_Data[] # Ordered by priority (top first).
 ---@field state "active"|"standby" # The standby feature is a future task, see readme.
----@field jobBusyUntilTick uint # The tick the robot is busy until on the current job. 0 is not busy.
+---@field jobBusyUntilTick uint # The tick the robot is busy until on the current job. 0 is not busy. Effectively sleeping the robot from work until then.
 ---@field stateRenderedText? RobotStateRenderedText
 ---@field name string # The robots' actual name, like Bob or Robot 13
 ---@field nameRenderId uint64 # The render Id of the robots name tag.
@@ -93,7 +93,7 @@ RobotManager.ManageRobots = function(event)
     for _, robot in pairs(global.RobotManager.robots) do
         if robot.jobBusyUntilTick <= event.tick then
             if #robot.activeJobs > 0 then
-                -- Code Note: have to manually handle looping the active jobs as we remove entries from it while iterating.
+                -- Code Note: have to manually handle looping the active jobs as we remove entries from it while iterating. Its a priority list so the order matters and thus can't be a table key'd by Id.
                 local jobIndex = 1
                 while jobIndex <= #robot.activeJobs do
                     local job = robot.activeJobs[jobIndex]
