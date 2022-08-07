@@ -13,7 +13,7 @@ local ShowRobotState = require("scripts.common.show-robot-state")
 ---@field force LuaForce
 ---@field master LuaPlayer
 ---@field activeJobs Job_Data[] # Ordered by priority (top first).
----@field state "active"|"standby" # The standby feature is a future task, see readme.
+---@field state "active"|"standby"
 ---@field jobBusyUntilTick uint # The tick the robot is busy until on the current job. 0 is not busy. Effectively sleeping the robot from work until then.
 ---@field stateRenderedText? ShowRobotState_RobotStateRenderedText
 ---@field name string # The robots' actual name, like Bob or Robot 13
@@ -91,7 +91,7 @@ end
 RobotManager.ManageRobots = function(event)
     -- For each robot check if its not busy waiting check down its active job list for something to do.
     for _, robot in pairs(global.RobotManager.robots) do
-        if robot.jobBusyUntilTick <= event.tick then
+        if robot.state == "active" and robot.jobBusyUntilTick <= event.tick then
             ---@type ShowRobotState_NewRobotStateDetails|nil, uint
             local newRobotStateDetails, ticksToWait
 
@@ -172,6 +172,13 @@ RobotManager.UpdateName = function(robot, name)
         vertical_alignment = "middle",
         forces = { robot.force }
     }
+end
+
+--- Sets the robot in standby mode. Can be called by a player or a primary task.
+---@param robot Robot
+RobotManager.SetRobotInStandby = function(robot)
+    robot.state = "standby"
+    MOD.Interfaces.JobManager.PausingRobotForJob(robot, robot.activeJobs[1])
 end
 
 return RobotManager

@@ -12,6 +12,7 @@ local ShowRobotState = require("scripts.common.show-robot-state")
 ---@class Task_WalkToLocation_Robot_BespokeData : Task_Data_Robot
 ---@field pathToWalk? PathfinderWaypoint[]
 ---@field pathToWalkDebugRenderIds? uint64[]
+---@field state "active"|"completed"|"noPath"
 
 local WalkToLocation = {} ---@class Task_WalkToLocation_Interface : Task_Interface
 WalkToLocation.taskName = "WalkToLocation"
@@ -82,6 +83,7 @@ WalkToLocation.Progress = function(thisTask, robot)
                 LoggingUtils.LogPrintWarning(robot.name .. "'s path finder timed out from " .. LoggingUtils.PositionToString(getWalkingPathTask_robotTaskData.startPosition) .. " to " .. LoggingUtils.PositionToString(getWalkingPathTask_taskData.endPosition) .. " so trying again.")
 
                 -- Just keep on trying until we get a proper result. Each attempt is a reset of this sub tasks robot data. So next poll it will start that request again in the hope the pathfinder is less busy.
+                -- CODE NOTE: this is on the assumption that if a path is found the robot can try and follow it.
                 getWalkingPathTask.robotsTaskData[robot] = nil
                 ---@type ShowRobotState_NewRobotStateDetails
                 local robotStateDetails = { stateText = "Going to start a new path search", level = ShowRobotState.StateLevel.warning }
@@ -90,12 +92,17 @@ WalkToLocation.Progress = function(thisTask, robot)
 
             -- Handle if no path was found.
             if getWalkingPathTask_robotTaskData.pathFound == nil then
-                LoggingUtils.LogPrintWarning(robot.name .. " failed to get a path from " .. LoggingUtils.PositionToString(getWalkingPathTask_robotTaskData.startPosition) .. " to " .. LoggingUtils.PositionToString(getWalkingPathTask_taskData.endPosition) .. " so giving up as no better handler is currently coded.")
-                -- FUTURE: callback to original calling task/job via interface name and let it decide what to do. I think this should escalate up to the job and have the final logic a that level as every task is should be coded just as a middleman?
+                LoggingUtils.LogPrintWarning(robot.name .. " failed to get a path from " .. LoggingUtils.PositionToString(getWalkingPathTask_robotTaskData.startPosition) .. " to " .. LoggingUtils.PositionToString(getWalkingPathTask_taskData.endPosition))
                 ---@type ShowRobotState_NewRobotStateDetails
-                local robotStateDetails = { stateText = "No path found, panic", level = ShowRobotState.StateLevel.warning }
-                error("unhandled fail to find path")
-                return 1, robotStateDetails
+                local robotStateDetails = { stateText = "No path found", level = ShowRobotState.StateLevel.warning }
+                robotTaskData.state = "noPath"
+
+                -- If this is the primary task then deal with the issue, otherwise it gets passed up the chain.
+                if thisTask.parentTask == nil then
+                    MOD.Interfaces.RobotManager.SetRobotInStandby(robot)
+                end
+
+                return 0, robotStateDetails
             end
 
             -- Record the path ready for the robot to call progress in future ticks and utilise the result.
@@ -168,7 +175,17 @@ end
 ---@param thisTask Task_WalkToLocation_Data
 WalkToLocation.RemovingTask = function(thisTask)
     -- Nothing unique this task needs to do.
+
     MOD.Interfaces.TaskManager.GenericTaskPropagateRemove(thisTask)
+end
+
+--- Called when pausing a robot and so all of its activities within the this task and sub tasks need to pause.
+---@param thisTask Task_WalkToLocation_Data
+---@param robot Robot
+WalkToLocation.PausingRobotForTask = function(thisTask, robot)
+    -- Nothing unique this task needs to do.
+
+    MOD.Interfaces.TaskManager.GenericTaskPropagatePausingRobot(thisTask, robot)
 end
 
 return WalkToLocation

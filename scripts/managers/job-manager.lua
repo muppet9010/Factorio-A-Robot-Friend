@@ -136,4 +136,11 @@ JobManager.RemoveRobotFromJob = function(robot, job)
     job.robotsOnJob[robot.id] = nil
 end
 
+--- The robot has been paused so pause all activities in this job.
+---@param robot Robot
+---@param job Job_Data
+JobManager.PausingRobotForJob = function(robot, job)
+    MOD.Interfaces.TaskManager.PausingRobotForPrimaryTask(job.primaryTask, robot)
+end
+
 return JobManager

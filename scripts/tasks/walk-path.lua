@@ -145,7 +145,7 @@ end
 WalkPath.RemovingRobotFromTask = function(thisTask, robot)
     -- If the robot was being actively walked it will need its walking_state reset so they don't continue uncontrolled.
     local robotTaskData = thisTask.robotsTaskData[robot]
-    if robotTaskData.state == "active" then
+    if robotTaskData ~= nil and robotTaskData.state == "active" then
         robot.entity.walking_state = { walking = false, direction = defines.direction.north }
     end
 
@@ -163,6 +163,19 @@ WalkPath.RemovingTask = function(thisTask)
         if robotTaskData.state == "active" then
             robotTaskData.robot.entity.walking_state = { walking = false, direction = defines.direction.north }
         end
+    end
+
+    -- This task never has children.
+end
+
+--- Called when pausing a robot and so all of its activities within the this task and sub tasks need to pause.
+---@param thisTask Task_WalkPath_Data
+---@param robot Robot
+WalkPath.PausingRobotForTask = function(thisTask, robot)
+    -- If the robot was being actively walked it will need its walking_state reset so they don't continue uncontrolled.
+    local robotTaskData = thisTask.robotsTaskData[robot]
+    if robotTaskData ~= nil and robotTaskData.state == "active" then
+        robot.entity.walking_state = { walking = false, direction = defines.direction.north }
     end
 
     -- This task never has children.

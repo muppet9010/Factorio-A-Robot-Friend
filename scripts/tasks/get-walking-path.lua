@@ -130,7 +130,7 @@ end
 ---@param thisTask Task_GetWalkingPath_Data
 ---@param robot Robot
 GetWalkingPath.RemovingRobotFromTask = function(thisTask, robot)
-    -- Remove any pending path request object in the global for this robot.
+    -- Remove any pending path request object in the global for this robot. This will mean any outstanding path requests are ignored when they return.
     local robotTaskData = thisTask.robotsTaskData[robot]
     if robotTaskData ~= nil and robotTaskData.state == "active" then
         global.Tasks.GetWalkingPath.pathRequests[robotTaskData.pathRequestId] = nil
@@ -145,12 +145,22 @@ end
 --- Called when a task is being removed and any task globals or ongoing activities need to be stopped.
 ---@param thisTask Task_GetWalkingPath_Data
 GetWalkingPath.RemovingTask = function(thisTask)
-    -- Remove any pending path request objects in the global for all robots in this task.
+    -- Remove any pending path request objects in the global for all robots in this task. This will mean any outstanding path requests are ignored when they return.
     for _, robotTaskData in pairs(thisTask.robotsTaskData) do
         if robotTaskData.state == "active" then
             global.Tasks.GetWalkingPath.pathRequests[robotTaskData.pathRequestId] = nil
         end
     end
+
+    -- This task never has children.
+end
+
+--- Called when pausing a robot and so all of its activities within the this task and sub tasks need to pause.
+---@param thisTask Task_GetWalkingPath_Data
+---@param robot Robot
+GetWalkingPath.PausingRobotForTask = function(thisTask, robot)
+    -- Nothing unique this task needs to do.
+    -- We still want to capture any outstanding path request. But the path result is only actioned on Progress() and so the capture can proceed unaffected.
 
     -- This task never has children.
 end

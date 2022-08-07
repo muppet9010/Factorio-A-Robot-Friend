@@ -6,9 +6,11 @@ I think any adhoc tasks can be recorded under the Robot Task Data for the task a
 Core things to include:
     - Forces being deleted and merged. We cache them in Robot.
     - Robot entities dying, we need to update our cache of them and track their corpses. Also want to handle a robot entity becoming invalid at a high level of Progress() to avoid every task having to use UPS checking .valid every tick.
-    - Robots need to support having their task in a job paused and the robot told to do something else, i.e. robot gets attacked so needs to defend itself. I want to get the framework in for this in a simple format early.
-    - Being able to pause and resume jobs. Will need to propagate to the robots and tasks ?
-    - Add a "standby" mode that players can set their own and other player's robots in to with a "Pause" command. In standby the robot doesn't perform any jobs and will stand idle. As players can't change other player's robots or jobs, but they can use "Pause" to stop anything they deem as damaging/bad. Any player can re-activated the robot with a "Resume" command. Type definitions and robot status are partially setup for this already.
+    - Robot standby and job paused:
+        - This has been partially started to handle no-path errors. But at present we just pause the robot and its tasks and leave it in this state.
+        - Robots need to support having their task in a job paused and the robot told to do something else, i.e. robot gets attacked so needs to defend itself. I want to get the framework in for this in a simple format early.
+        - Being able to pause and resume jobs. Will need to propagate to the robots and tasks ?
+        - Add a way for players to set their own and other player's robots in to a "standby" mode. In standby the robot doesn't perform any jobs and will stand idle. As players can't change other player's robots or jobs, but they can use standby to stop anything they deem as damaging/bad. Any player can return the robot to active state.
     - Automated testing including lots of removing and breaking things mid and post tests. As I added very few nil checks during initial coding.
 
 
@@ -17,7 +19,6 @@ Feature Enhancements:
         - Detect railway and either try to path around or stop just before it, look both ways and then cross when safe. If not safe for X time place a signal and wire it up to be red, then cross safely.
         - Look at FUTURE note in path request. Need to try and use light touch paths for long distance and detailed paths for short difficult bits. Likely have to smooth things somewhere to stop the robot jerking around too much. Running in to things and glancing off is fine as long as it doesn't get stuck.
         - The current path_resolution_modifier of 3 can have issues with rocks and off grid items close together sometimes. In one test case they could path in 1 direction, but not the other.
-        - When walking a path need to detect if the robot gets stuck and then trying moving sideways or do a short pathfinder request to un-jam it.
     - Robot personalisation:
         - Robot name: Allow for a generic server name list (mod setting) and also each player to be able to rename their robots individually.
         - Robot color: Allow players to set a color per robot.
