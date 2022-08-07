@@ -1,6 +1,6 @@
 local Colors = require("utility.lists.colors")
 
----@class RobotStateRenderedText
+---@class ShowRobotState_RobotStateRenderedText
 ---@field robot Robot
 ---@field stateText? string
 ---@field renderingId uint64
@@ -9,13 +9,23 @@ local Colors = require("utility.lists.colors")
 ---@field targetEntity? LuaEntity
 ---@field targetPosition? MapPosition
 
+---@class ShowRobotState_NewRobotStateDetails
+---@field stateText? string
+---@field level ShowRobotState_StateLevel
+
 local ShowRobotState = {} ---@class ShowRobotState
+
+---@enum ShowRobotState_StateLevel
+ShowRobotState.StateLevel = {
+    normal = "normal",
+    warning = "warning",
+    error = "error"
+}
 
 --- Shows the text above the robot in a normal color for the duration.
 ---@param robot Robot
----@param text string
----@param level "normal"|"warning"|"error"
-ShowRobotState.UpdateStateText = function(robot, text, level)
+---@param newRobotStateDetails ShowRobotState_NewRobotStateDetails
+ShowRobotState.UpdateStateText = function(robot, newRobotStateDetails)
     -- Get the details for the text to be actually made.
     local targetEntity, targetPosition, surface
     if robot.entity ~= nil then
@@ -33,13 +43,13 @@ ShowRobotState.UpdateStateText = function(robot, text, level)
             surface = robot.master.surface
         end
     end
-    local color = (level == "normal") and Colors.white or (level == "warning") and Colors.warningMessage or (level == "error") and Colors.errorMessage or Colors.black
+    local color = (newRobotStateDetails.level == "normal") and Colors.white or (newRobotStateDetails.level == "warning") and Colors.warningMessage or (newRobotStateDetails.level == "error") and Colors.errorMessage or Colors.black
 
     -- Check if there's already a rendering and if so are we asking for the same thing (no change), or do we need to remove the old one and put the new one in place.
     -- Code Note: as many of our tasks only last 1 tick we can't create a rendering that only lasts 1 tick. So we have to create an indefinite one and check when it needs updating. Rather than having weird state tracking we generate the new ones details every update and then just see if its the same output as we already have ot if we need to replace the old one with the new one.
     local replaceText = false
     if robot.stateRenderedText ~= nil then
-        if text ~= robot.stateRenderedText.stateText then replaceText = true; goto ShowRobotState_UpdateStateText_EndOfReplaceTextCheck end
+        if newRobotStateDetails.stateText ~= robot.stateRenderedText.stateText then replaceText = true; goto ShowRobotState_UpdateStateText_EndOfReplaceTextCheck end
         if color ~= robot.stateRenderedText.textColor then replaceText = true; goto ShowRobotState_UpdateStateText_EndOfReplaceTextCheck end
         if surface ~= robot.stateRenderedText.surface then replaceText = true; goto ShowRobotState_UpdateStateText_EndOfReplaceTextCheck end
         if targetEntity ~= robot.stateRenderedText.targetEntity then replaceText = true; goto ShowRobotState_UpdateStateText_EndOfReplaceTextCheck end
@@ -56,7 +66,7 @@ ShowRobotState.UpdateStateText = function(robot, text, level)
             rendering.destroy(robot.stateRenderedText.renderingId)
         end
         local newRenderingId = rendering.draw_text {
-            text = text,
+            text = newRobotStateDetails.stateText,
             surface = surface,
             target = targetEntity or targetPosition,
             target_offset = { 0, -0.5 },
@@ -67,7 +77,7 @@ ShowRobotState.UpdateStateText = function(robot, text, level)
         }
         robot.stateRenderedText = {
             robot = robot,
-            stateText = text,
+            stateText = newRobotStateDetails.stateText,
             renderingId = newRenderingId,
             textColor = color,
             surface = surface,

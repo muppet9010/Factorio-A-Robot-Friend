@@ -15,7 +15,7 @@ local ShowRobotState = require("scripts.common.show-robot-state")
 ---@field activeJobs Job_Data[] # Ordered by priority (top first).
 ---@field state "active"|"standby" # The standby feature is a future task, see readme.
 ---@field jobBusyUntilTick uint # The tick the robot is busy until on the current job. 0 is not busy. Effectively sleeping the robot from work until then.
----@field stateRenderedText? RobotStateRenderedText
+---@field stateRenderedText? ShowRobotState_RobotStateRenderedText
 ---@field name string # The robots' actual name, like Bob or Robot 13
 ---@field nameRenderId uint64 # The render Id of the robots name tag.
 ---@field color Color # The color of the robot, affects its entity and things that expect opacity.
@@ -92,13 +92,16 @@ RobotManager.ManageRobots = function(event)
     -- For each robot check if its not busy waiting check down its active job list for something to do.
     for _, robot in pairs(global.RobotManager.robots) do
         if robot.jobBusyUntilTick <= event.tick then
+            ---@type ShowRobotState_NewRobotStateDetails|nil, uint
+            local newRobotStateDetails, ticksToWait
+
             if #robot.activeJobs > 0 then
                 -- Code Note: have to manually handle looping the active jobs as we remove entries from it while iterating. Its a priority list so the order matters and thus can't be a table key'd by Id.
                 local jobIndex = 1
                 while jobIndex <= #robot.activeJobs do
                     local job = robot.activeJobs[jobIndex]
                     if job ~= nil then
-                        local ticksToWait = MOD.Interfaces.JobManager.ProgressJobForRobot(job, robot)
+                        ticksToWait, newRobotStateDetails = MOD.Interfaces.JobManager.ProgressJobForRobot(job, robot)
                         if ticksToWait > 0 then
                             robot.jobBusyUntilTick = event.tick + ticksToWait
                         end
@@ -107,9 +110,8 @@ RobotManager.ManageRobots = function(event)
                             -- Job completed for this robot so remove the job from the robot and the robot from the job.
                             RobotManager.RemoveJobFromRobot(jobIndex, robot, job)
                             jobIndex = jobIndex - 1 -- As RobotManager.RemoveJobFromRobot() removed an entry from the list we are iterating.
-                        end
-                        if ticksToWait > 0 then
-                            -- Job is waiting to do something so don't do any other jobs this tick for this robot.
+                        else
+                            -- Job isn't complete for robot so don't do any other jobs this tick for this robot.
                             break
                         end
                     end
@@ -118,10 +120,12 @@ RobotManager.ManageRobots = function(event)
             end
 
             -- If no jobs for this robot, do its idle activity.
-            if #robot.activeJobs == 0 then
-                if global.Settings.showRobotState then
-                    ShowRobotState.UpdateStateText(robot, "Idle", "normal")
+            if global.Settings.showRobotState then
+                if newRobotStateDetails == nil then
+                    ---@type ShowRobotState_NewRobotStateDetails
+                    newRobotStateDetails = { stateText = "Idle", level = ShowRobotState.StateLevel.normal }
                 end
+                ShowRobotState.UpdateStateText(robot, newRobotStateDetails)
             end
         end
     end

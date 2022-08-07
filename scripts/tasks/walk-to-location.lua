@@ -1,4 +1,5 @@
 local LoggingUtils = require("utility.helper-utils.logging-utils")
+local ShowRobotState = require("scripts.common.show-robot-state")
 
 ---@class Task_WalkToLocation_Data : Task_Data
 ---@field taskData Task_WalkToLocation_BespokeData
@@ -41,14 +42,15 @@ end
 ---@param thisTask Task_WalkToLocation_Data
 ---@param robot Robot
 ---@return uint ticksToWait
+---@return ShowRobotState_NewRobotStateDetails|nil robotStateDetails # nil if there is no state being set by this Task
 WalkToLocation.Progress = function(thisTask, robot)
     local taskData = thisTask.taskData
 
     -- Handle if this is the very first robot to Progress() this Task.
     if thisTask.currentTaskIndex == 0 then
         -- Activate both tasks initially as there's no meaningful variation in the second task based on the first tasks output.
-        thisTask.tasks[#thisTask.tasks + 1] = MOD.Interfaces.Tasks.GetWalkingPath.ActivateTask(thisTask.job, thisTask, taskData.targetLocation, taskData.surface)
-        thisTask.tasks[#thisTask.tasks + 1] = MOD.Interfaces.Tasks.WalkPath.ActivateTask(thisTask.job, thisTask)
+        thisTask.plannedTasks[#thisTask.plannedTasks + 1] = MOD.Interfaces.Tasks.GetWalkingPath.ActivateTask(thisTask.job, thisTask, taskData.targetLocation, taskData.surface)
+        thisTask.plannedTasks[#thisTask.plannedTasks + 1] = MOD.Interfaces.Tasks.WalkPath.ActivateTask(thisTask.job, thisTask)
         thisTask.currentTaskIndex = 1
     end
 
@@ -60,16 +62,16 @@ WalkToLocation.Progress = function(thisTask, robot)
         thisTask.robotsTaskData[robot] = robotTaskData
 
         -- Call the first task Progress() and return its wait.
-        return MOD.Interfaces.Tasks.GetWalkingPath.Progress(thisTask.tasks[robotTaskData.currentTaskIndex]--[[@as Task_GetWalkingPath_Data]] , robot, robot.entity.position)
+        return MOD.Interfaces.Tasks.GetWalkingPath.Progress(thisTask.plannedTasks[robotTaskData.currentTaskIndex]--[[@as Task_GetWalkingPath_Data]] , robot, robot.entity.position)
     end
 
     -------------------------------------------------------------------------------
     -- Handle child task Progress() fully per robot as both have no shared data. --
     -------------------------------------------------------------------------------
 
-    -- If still waiting for path to be found.
+    -- If this Task hasn't process a found path yet.
     if robotTaskData.pathToWalk == nil then
-        local getWalkingPathTask = thisTask.tasks[robotTaskData.currentTaskIndex] --[[@as Task_GetWalkingPath_Data]]
+        local getWalkingPathTask = thisTask.plannedTasks[robotTaskData.currentTaskIndex] --[[@as Task_GetWalkingPath_Data]]
         local getWalkingPathTask_taskData = getWalkingPathTask.taskData
         local getWalkingPathTask_robotTaskData = getWalkingPathTask.robotsTaskData[robot]
 
@@ -77,18 +79,23 @@ WalkToLocation.Progress = function(thisTask, robot)
         if getWalkingPathTask_robotTaskData.state == "completed" then
             -- Handle if the path finder timed out.
             if getWalkingPathTask_robotTaskData.pathFinderTimeout == true then
-                LoggingUtils.LogPrintWarning("Path finder timed out from " .. LoggingUtils.PositionToString(getWalkingPathTask_robotTaskData.startPosition) .. " to " .. LoggingUtils.PositionToString(getWalkingPathTask_taskData.endPosition) .. " so trying again.")
+                LoggingUtils.LogPrintWarning(robot.name .. "'s path finder timed out from " .. LoggingUtils.PositionToString(getWalkingPathTask_robotTaskData.startPosition) .. " to " .. LoggingUtils.PositionToString(getWalkingPathTask_taskData.endPosition) .. " so trying again.")
 
                 -- Just keep on trying until we get a proper result. Each attempt is a reset of this sub tasks robot data. So next poll it will start that request again in the hope the pathfinder is less busy.
                 getWalkingPathTask.robotsTaskData[robot] = nil
-                return 1
+                ---@type ShowRobotState_NewRobotStateDetails
+                local robotStateDetails = { stateText = "Going to start a new path search", level = ShowRobotState.StateLevel.warning }
+                return 60, robotStateDetails
             end
 
             -- Handle if no path was found.
             if getWalkingPathTask_robotTaskData.pathFound == nil then
-                LoggingUtils.LogPrintWarning("No path found from " .. LoggingUtils.PositionToString(getWalkingPathTask_robotTaskData.startPosition) .. " to " .. LoggingUtils.PositionToString(getWalkingPathTask_taskData.endPosition) .. " so giving up as no better handler is currently coded.")
+                LoggingUtils.LogPrintWarning(robot.name .. " failed to get a path from " .. LoggingUtils.PositionToString(getWalkingPathTask_robotTaskData.startPosition) .. " to " .. LoggingUtils.PositionToString(getWalkingPathTask_taskData.endPosition) .. " so giving up as no better handler is currently coded.")
                 -- FUTURE: callback to original calling task/job via interface name and let it decide what to do. I think this should escalate up to the job and have the final logic a that level as every task is should be coded just as a middleman?
-                return 1
+                ---@type ShowRobotState_NewRobotStateDetails
+                local robotStateDetails = { stateText = "No path found, panic", level = ShowRobotState.StateLevel.warning }
+                error("unhandled fail to find path")
+                return 1, robotStateDetails
             end
 
             -- Record the path ready for the robot to call progress in future ticks and utilise the result.
@@ -108,9 +115,20 @@ WalkToLocation.Progress = function(thisTask, robot)
     end
 
     -- Walk the path as we have one at this point.
-    local walkPathTask = thisTask.tasks[robotTaskData.currentTaskIndex] --[[@as Task_WalkPath_Data]]
-    local ticksToWait = MOD.Interfaces.Tasks.WalkPath.Progress(walkPathTask, robot, robotTaskData.pathToWalk)
+    local walkPathTask = thisTask.plannedTasks[robotTaskData.currentTaskIndex] --[[@as Task_WalkPath_Data]]
+    local ticksToWait, robotStateDetails = MOD.Interfaces.Tasks.WalkPath.Progress(walkPathTask, robot, robotTaskData.pathToWalk)
     local walkPathTask_robotTaskData = walkPathTask.robotsTaskData[robot]
+
+    -- Check and handle if the path walker got stuck.
+    if walkPathTask_robotTaskData.state == "stuck" then
+        LoggingUtils.LogPrintWarning(robot.name .. " got stuck, so trying to path around issue")
+
+        -- Clear the data from the task and its children for just this robot. Then re-run the process again to try and find a fresh valid path.
+        WalkToLocation.RemovingRobotFromTask(thisTask, robot)
+        return WalkToLocation.Progress(thisTask, robot)
+    end
+
+    -- Check and handle if the path walker completed.
     if walkPathTask_robotTaskData.state == "completed" then
         -- Have walked to location.
         robotTaskData.state = "completed"
@@ -122,18 +140,24 @@ WalkToLocation.Progress = function(thisTask, robot)
             end
         end
 
-        -- Cleanse the robots
-
-        return 0
+        return 0, nil
     end
 
-    return ticksToWait
+    return ticksToWait, robotStateDetails
 end
 
 --- Called when a specific robot is being removed from a task.
 ---@param thisTask Task_WalkToLocation_Data
 ---@param robot Robot
 WalkToLocation.RemovingRobotFromTask = function(thisTask, robot)
+    -- Tidy up any renders that existed for the duration of the task.
+    local robotTaskData = thisTask.robotsTaskData[robot]
+    if robotTaskData.pathToWalkDebugRenderIds ~= nil then
+        for _, renderId in pairs(robotTaskData.pathToWalkDebugRenderIds) do
+            rendering.destroy(renderId)
+        end
+    end
+
     -- Remove any robot specific task data.
     thisTask.robotsTaskData[robot] = nil
 

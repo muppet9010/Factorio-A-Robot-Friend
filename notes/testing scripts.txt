@@ -5,35 +5,7 @@ path through the walls and furnaces from spawn location: {x=81,y=118}
 
 
 
-Make 2 robots at spawn and make them walk to a number of shared jobs:
-
-/sc __a_robot_friend__
-local robotPosition, targetPosition = {x=2,y=2}, {x=0,y=27}
-robotPosition = game.surfaces[1].find_non_colliding_position("character", robotPosition, 10, 0.2, false)
-targetPosition = game.surfaces[1].find_non_colliding_position("character", targetPosition, 10, 0.2, false)
-local robot = MOD.Interfaces.RobotManager.CreateRobot(game.surfaces[1], robotPosition, game.get_player(1))
-local job = MOD.Interfaces.Jobs.MoveToLocation.Create(1, targetPosition, game.surfaces[1])
-MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job)
-
-local robotPosition2, targetPosition2 = {x=-14,y=-11}, {x=4,y=19}
-local robotPosition2 = game.surfaces[1].find_non_colliding_position("character", robotPosition2, 10, 0.2, false)
-targetPosition2 = game.surfaces[1].find_non_colliding_position("character", targetPosition2, 10, 0.2, false)
-local robot2 = MOD.Interfaces.RobotManager.CreateRobot(game.surfaces[1], robotPosition2, game.get_player(1))
-local job2 = MOD.Interfaces.Jobs.MoveToLocation.Create(1, targetPosition2, game.surfaces[1])
-MOD.Interfaces.RobotManager.AssignRobotToJob(robot2, job2)
-
-MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job2)
-MOD.Interfaces.RobotManager.AssignRobotToJob(robot2, job)
-local targetPosition3 = {x=-17,y=-3}
-targetPosition3 = game.surfaces[1].find_non_colliding_position("character", targetPosition3, 10, 0.2, false)
-local job3 = MOD.Interfaces.Jobs.MoveToLocation.Create(1, targetPosition3, game.surfaces[1])
-MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job3)
-MOD.Interfaces.RobotManager.AssignRobotToJob(robot2, job3)
-
-
-
-
-Move an existing robot to a series of positions.
+Move an existing robot to a series of positions:
 
 /sc __a_robot_friend__
 local robotPosition, targetPosition = {x=2,y=2}, {x=0,y=27}
@@ -52,3 +24,63 @@ local targetPosition3 = {x=-17,y=-3}
 targetPosition3 = game.surfaces[1].find_non_colliding_position("character", targetPosition3, 10, 0.2, false)
 local job3 = MOD.Interfaces.Jobs.MoveToLocation.Create(1, targetPosition3, game.surfaces[1])
 MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job3)
+
+
+
+
+Make 2 robots at spawn and make them walk to a number of shared jobs:
+
+/sc __a_robot_friend__
+local robotPosition, targetPosition = {x=2,y=2}, {x=0,y=27}
+robotPosition = game.surfaces[1].find_non_colliding_position("character", robotPosition, 10, 0.2, false)
+targetPosition = game.surfaces[1].find_non_colliding_position("character", targetPosition, 10, 0.2, false)
+local robot1 = MOD.Interfaces.RobotManager.CreateRobot(game.surfaces[1], robotPosition, game.get_player(1))
+local job1 = MOD.Interfaces.Jobs.MoveToLocation.Create(1, targetPosition, game.surfaces[1])
+MOD.Interfaces.RobotManager.AssignRobotToJob(robot1, job1)
+
+local robotPosition2, targetPosition2 = {x=-14,y=-11}, {x=4,y=19}
+local robotPosition2 = game.surfaces[1].find_non_colliding_position("character", robotPosition2, 10, 0.2, false)
+targetPosition2 = game.surfaces[1].find_non_colliding_position("character", targetPosition2, 10, 0.2, false)
+local robot2 = MOD.Interfaces.RobotManager.CreateRobot(game.surfaces[1], robotPosition2, game.get_player(1))
+local job2 = MOD.Interfaces.Jobs.MoveToLocation.Create(1, targetPosition2, game.surfaces[1])
+MOD.Interfaces.RobotManager.AssignRobotToJob(robot2, job2)
+
+MOD.Interfaces.RobotManager.AssignRobotToJob(robot1, job2)
+MOD.Interfaces.RobotManager.AssignRobotToJob(robot2, job1)
+local targetPosition3 = {x=-17,y=-3}
+targetPosition3 = game.surfaces[1].find_non_colliding_position("character", targetPosition3, 10, 0.2, false)
+local job3 = MOD.Interfaces.Jobs.MoveToLocation.Create(1, targetPosition3, game.surfaces[1])
+MOD.Interfaces.RobotManager.AssignRobotToJob(robot1, job3)
+MOD.Interfaces.RobotManager.AssignRobotToJob(robot2, job3)
+
+
+
+
+Check that we can queue the same job multiple times for a robot and each one is run correctly (as the job is never completed).
+
+/sc __a_robot_friend__
+local robotPosition, targetPosition1 = {x=2,y=2}, {x=-2,y=28}
+robotPosition = game.surfaces[1].find_non_colliding_position("character", robotPosition, 10, 0.2, false)
+targetPosition1 = game.surfaces[1].find_non_colliding_position("character", targetPosition1, 10, 0.2, false)
+local robot = MOD.Interfaces.RobotManager.CreateRobot(game.surfaces[1], robotPosition, game.get_player(1))
+local job1 = MOD.Interfaces.Jobs.MoveToLocation.Create(1, targetPosition1, game.surfaces[1])
+MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job1)
+local targetPosition2 = {x=0,y=27}
+targetPosition2 = game.surfaces[1].find_non_colliding_position("character", targetPosition2, 10, 0.2, false)
+local job2 = MOD.Interfaces.Jobs.MoveToLocation.Create(1, targetPosition2, game.surfaces[1])
+MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job2)
+MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job1)
+MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job2)
+
+
+
+
+Make the robot get stuck by player moving between rocks to block its path.
+
+/sc __a_robot_friend__
+local robotPosition, targetPosition1 = {x=2,y=2}, {x=4,y=19}
+robotPosition = game.surfaces[1].find_non_colliding_position("character", robotPosition, 10, 0.2, false)
+targetPosition1 = game.surfaces[1].find_non_colliding_position("character", targetPosition1, 10, 0.2, false)
+local robot = MOD.Interfaces.RobotManager.CreateRobot(game.surfaces[1], robotPosition, game.get_player(1))
+local job1 = MOD.Interfaces.Jobs.MoveToLocation.Create(1, targetPosition1, game.surfaces[1])
+MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job1)

@@ -9,6 +9,8 @@ local ShowRobotState = require("scripts.common.show-robot-state")
 ---@class Task_WalkPath_Robot_BespokeData : Task_Data_Robot
 ---@field pathToWalk PathfinderWaypoint[]
 ---@field nodeTarget int
+---@field positionLastTick? MapPosition
+---@field state "active"|"completed"|"stuck"
 
 local WalkPath = {} ---@class Task_WalkPath_Interface : Task_Interface
 WalkPath.taskName = "WalkPath"
@@ -32,6 +34,7 @@ end
 ---@param robot Robot
 ---@param pathToWalk? PathfinderWaypoint[] # Only needed on first Progress() for each robot.
 ---@return uint ticksToWait
+---@return ShowRobotState_NewRobotStateDetails|nil robotStateDetails # nil if there is no state being set by this Task
 WalkPath.Progress = function(thisTask, robot, pathToWalk)
 
     -- Handle if this is the first Progress() for a robot.
@@ -44,11 +47,6 @@ WalkPath.Progress = function(thisTask, robot, pathToWalk)
         thisTask.robotsTaskData[robot] = robotTaskData
         robotTaskData.pathToWalk = pathToWalk
         robotTaskData.nodeTarget = 1
-    end
-
-
-    if global.Settings.showRobotState then
-        ShowRobotState.UpdateStateText(robot, "Walking the path", "normal")
     end
 
     -- Currently this accuracy requires the entity to be very very close to the target which may cause overshooting and the entity to loop back and fourth over it.
@@ -69,7 +67,7 @@ WalkPath.Progress = function(thisTask, robot, pathToWalk)
                 -- Cancel the last movement input sent to the robot as it will stay persistent otherwise.
                 robot.entity.walking_state = { walking = false, direction = defines.direction.north }
 
-                return 0
+                return 0, nil
             end
             targetPosition = robotTaskData.pathToWalk[robotTaskData.nodeTarget].position
             largerDistanceToMove = false
@@ -77,6 +75,18 @@ WalkPath.Progress = function(thisTask, robot, pathToWalk)
             largerDistanceToMove = true
         end
     end
+
+    -- Check if the robot has got stuck (same position as last tick).
+    if robotTaskData.positionLastTick ~= nil and robotTaskData.positionLastTick.x == currentPosition.x and robotTaskData.positionLastTick.y == currentPosition.y then
+        -- Robot stuck so tell calling task so it can handle.
+        robotTaskData.state = "stuck"
+
+        -- Cancel the last movement input sent to the robot as it will stay persistent otherwise.
+        robot.entity.walking_state = { walking = false, direction = defines.direction.north }
+
+        return 0, nil
+    end
+    robotTaskData.positionLastTick = currentPosition
 
     -- Get the direction to move towards the target node.
     local walkDirection ---@type defines.direction|nil
@@ -122,7 +132,11 @@ WalkPath.Progress = function(thisTask, robot, pathToWalk)
     -- Move towards the target node if we're not going the right direction all ready. This is a persistent command until the walking_state is overridden.
     robot.entity.walking_state = { walking = true, direction = walkDirection }
 
-    return 1
+
+    ---@type ShowRobotState_NewRobotStateDetails
+    local robotStateDetails = { stateText = "Walking the path", level = ShowRobotState.StateLevel.normal }
+
+    return 1, robotStateDetails
 end
 
 --- Called when a specific robot is being removed from a task.

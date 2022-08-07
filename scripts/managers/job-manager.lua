@@ -79,6 +79,7 @@ end
 ---@param job Job_Data
 ---@param robot Robot
 ---@return uint ticksToWait
+---@return ShowRobotState_NewRobotStateDetails|nil robotStateDetails # nil if there is no state being set by this Task
 JobManager.ProgressJobForRobot = function(job, robot)
     -- Record that the robot is working on the job.
     if job.robotsOnJob[robot.id] == nil then
@@ -91,14 +92,14 @@ JobManager.ProgressJobForRobot = function(job, robot)
         primaryTask = MOD.Interfaces.Jobs[job.jobName]--[[@as Job_Interface]] .ActivateJob(job)
     end
 
-    local waitTime = MOD.Interfaces.TaskManager.ProgressPrimaryTask(primaryTask, robot)
+    local waitTime, robotStateDetails = MOD.Interfaces.TaskManager.ProgressPrimaryTask(primaryTask, robot)
 
     -- Check if the primaryTask has just been completed for all.
     if job.state ~= "completed" and primaryTask.state == "completed" then
         JobManager.JobCompleted(job)
     end
 
-    return waitTime
+    return waitTime, robotStateDetails
 end
 
 --- Called by the progression of a Job when it finds its primary task is completed. So the Task data can be dropped and any publication of the job status is performed.

@@ -51,6 +51,7 @@ end
 ---@param robot Robot
 ---@param startPosition? MapPosition # Only needed on first Progress() for each robot.
 ---@return uint ticksToWait
+---@return ShowRobotState_NewRobotStateDetails|nil robotStateDetails # nil if there is no state being set by this Task
 GetWalkingPath.Progress = function(thisTask, robot, startPosition)
     local taskData = thisTask.taskData
 
@@ -87,7 +88,7 @@ GetWalkingPath.Progress = function(thisTask, robot, startPosition)
             start = startPosition,
             goal = taskData.endPosition,
             force = robot.force,
-            radius = 1.0, -- FUTURE: this probably wants to be higher to allow us just getting close enough for what we want to do. Maybe it should be specified as part of when the parent task calls in. With a default of close like this.
+            radius = 0.0, -- FUTURE: this probably wants to be higher to allow us just getting close enough for what we want to do. Maybe it should be specified as part of when the parent task calls in. With a default of close like this. When it was at a value of 1.0 the pathfinder would sometimes suggest pathing in to a blocking entity right next to the target location and mining it. At 0 while it requires the target position to be reachable, it does avoid this oddity.
             can_open_gates = true,
             entity_to_ignore = robot.entity, -- has to be the entity itself as otherwise it blocks its own path request.
             pathfind_flags = {
@@ -105,10 +106,9 @@ GetWalkingPath.Progress = function(thisTask, robot, startPosition)
     end
 
     -- There's nothing active to be done and when the pathfinder returns the event will record the data and mark the task as complete for that robot.
-    if global.Settings.showRobotState then
-        ShowRobotState.UpdateStateText(robot, "Looking for walking path", "normal")
-    end
-    return 1
+    ---@type ShowRobotState_NewRobotStateDetails
+    local robotStateDetails = { stateText = "Looking for walking path", level = ShowRobotState.StateLevel.normal }
+    return 1, robotStateDetails
 end
 
 --- React to a path request being completed. Its up to the caller to handle the too busy response as it may want to try again or try some alternative task instead.

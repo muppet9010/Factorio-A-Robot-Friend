@@ -14,7 +14,7 @@ local WalkToLocation = require("scripts.tasks.walk-to-location")
 ---@class Task_Interface
 ---@field taskName string # The internal name of the task. Recorded in here to avoid having to hard code it all over the code.
 ---@field ActivateTask fun(job:Job_Data, parentTask:Task_Data, ...): Task_Data # Called ONCE per Task to create the task when the first robot first reaches this task in the job. It is robot agnostic and returns the Task data for the bespoke task.
----@field Progress fun(thisTask:Task_Data, robot:Robot, ...): uint # Called to do work on the task by on_tick by each robot. Returns how many ticks to wait before next Progress() call for that robot.
+---@field Progress fun(thisTask:Task_Data, robot:Robot, ...): uint, ShowRobotState_NewRobotStateDetails|nil # Called to do work on the task by on_tick by each robot. Returns how many ticks to wait before next Progress() call for that robot and the robot state details object for storing by the robot. The return tick wait of 0 will make the robot moveThe robot state can be nil if there is no state being set by this Task.
 ---@field Pause function # Called to pause any activity, i.e. task has been interrupted by another higher priority task. NOT DEFINED
 ---@field Resume function # Called to resume a previously paused task. This will need some state checking to be done as anything could have changed from before. NOT DEFINED
 ---@field RemovingTask fun(thisTask:Task_Data) # Called when a task is being removed and any task globals or ongoing activities need to be stopped. This will propagates down to all sub tasks.
@@ -26,7 +26,7 @@ local WalkToLocation = require("scripts.tasks.walk-to-location")
 ---@field taskData table # Any task wide (all robot) data that the task needs to store about itself goes in here. Each task will have its own BespokeData class for this.
 ---@field robotsTaskData table<Robot, Task_Data_Robot> # Any per robot data that the task needs to store about each robot goes in here. Each task will have its own BespokeData class for this.
 ---@field state "active"|"completed" # The state of the overall task. Some individual robots may be completed on an active task as recorded under the robotsTaskData.
----@field tasks Task_Data[] # The child tasks of this task.
+---@field plannedTasks Task_Data[] # The planned child tasks of this task.
 ---@field currentTaskIndex int # The current task in the `tasks` list that is the active task. This is for all robots. Some individual robots will be on different current task as recorded under the robotsTaskData. Starts at 0 for a generic Task.
 ---@field job Job_Data # The job related to the lead task in this hierarchy.
 ---@field parentTask? Task_Data # The parent Task or nil if this is a primary Task of a Job.
@@ -34,7 +34,7 @@ local WalkToLocation = require("scripts.tasks.walk-to-location")
 --- The generic characteristics of the robot specific Task Data that all Task instances must implement if they have per robot data.
 ---@class Task_Data_Robot
 ---@field robot Robot
----@field state "active"|"completed" # The state of this robot in this task.
+---@field state "active"|"completed" # The state of this robot in this task. Some specific task types may add their own states per robot.
 ---@field currentTaskIndex int # The current task in the `tasks` list that is the active task for just this robot.
 ---@field task Task_Data # The Task that this robot specific data is for.
 
@@ -65,13 +65,13 @@ end
 ---@return Task_Data
 TaskManager.CreateGenericTask = function(taskName, job, parentTask)
     ---@type Task_Data
-    local task = { taskName = taskName, taskData = {}, robotsTaskData = {}, state = "active", tasks = {}, currentTaskIndex = 0, job = job, parentTask = parentTask }
+    local task = { taskName = taskName, taskData = {}, robotsTaskData = {}, state = "active", plannedTasks = {}, currentTaskIndex = 0, job = job, parentTask = parentTask }
     return task
 end
 
 --- Called to make a generic Robot Task Data object by the specific task before it adds its bespoke elements to it. The return should be casted to the bespoke Task specific class.
 ---@param robot Robot
----@param currentTaskIndex int # The current task in the `tasks` list that is the active task for just this robot.
+---@param currentTaskIndex int # The current task in the `plannedTasks` list that is the active task for just this robot.
 ---@param task Task_Data # The Task that this robot specific data is for.
 ---@return Task_Data_Robot
 TaskManager.CreateGenericRobotTaskData = function(robot, currentTaskIndex, task)
@@ -91,7 +91,7 @@ end
 ---@param thisTask Task_Data
 ---@param robot Robot
 TaskManager.GenericTaskPropagateRemoveRobot = function(thisTask, robot)
-    for _, childTask in pairs(thisTask.tasks) do
+    for _, childTask in pairs(thisTask.plannedTasks) do
         MOD.Interfaces.Tasks[childTask.taskName]--[[@as Task_Interface]] .RemovingRobotFromTask(childTask, robot)
     end
 end
@@ -105,7 +105,7 @@ end
 --- Called by a task to let its child tasks know they are all being removed. The bespoke task will do any unique actions for it in addition to calling this.
 ---@param thisTask Task_Data
 TaskManager.GenericTaskPropagateRemove = function(thisTask)
-    for _, childTask in pairs(thisTask.tasks) do
+    for _, childTask in pairs(thisTask.plannedTasks) do
         MOD.Interfaces.Tasks[childTask.taskName]--[[@as Task_Interface]] .RemovingTask(childTask)
     end
 end
@@ -114,6 +114,7 @@ end
 ---@param primaryTask Task_Data
 ---@param robot Robot
 ---@return uint ticksToWait
+---@return ShowRobotState_NewRobotStateDetails|nil robotStateDetails # nil if there is no state being set by this Task
 TaskManager.ProgressPrimaryTask = function(primaryTask, robot)
     return MOD.Interfaces.Tasks[primaryTask.taskName]--[[@as Task_Interface]] .Progress(primaryTask, robot)
 end
