@@ -55,7 +55,7 @@ end
 GetWalkingPath.Progress = function(thisTask, robot, startPosition)
     local taskData = thisTask.taskData
 
-    -- Handle if this is the first Progress() for a robot.
+    -- Handle if this is the first Progress() for a specific robot.
     local robotTaskData = thisTask.robotsTaskData[robot]
     if robotTaskData == nil then
         ---@cast startPosition -nil

@@ -159,7 +159,7 @@ end
 WalkToLocation.RemovingRobotFromTask = function(thisTask, robot)
     -- Tidy up any renders that existed for the duration of the task.
     local robotTaskData = thisTask.robotsTaskData[robot]
-    if robotTaskData.pathToWalkDebugRenderIds ~= nil then
+    if robotTaskData ~= nil and robotTaskData.pathToWalkDebugRenderIds ~= nil then
         for _, renderId in pairs(robotTaskData.pathToWalkDebugRenderIds) do
             rendering.destroy(renderId)
         end

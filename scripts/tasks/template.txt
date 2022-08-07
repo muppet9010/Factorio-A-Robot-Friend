@@ -1,12 +1,114 @@
-local XXXX = {} ---@class XXXX : Task
+--[[
+    TEMPLATE NOTES
 
-XXXX.OnLoad = function()
-    MOD.Interfaces.Tasks.XXXX = XXXX.YYYY
+    Do a find and replace on XXXXX with the name of the Task, i.e. GetWalkingPath.
+    The few YYYYY references in ActivateJob() should be replaced with the name of the primary task of this job.
+
+    Some of these functions can have Job and Task specific arguments and parameters specified as well. See the JobManager and TaskManager for interface requirements.
+
+    Any comment starting with "TEMPLATE" is more of a suggestion for when using the template, rather than being part of the template itself.
+]]
+
+
+local ShowRobotState = require("scripts.common.show-robot-state")
+
+---@class Task_XXXXX_Data : Task_Data
+---@field taskData Task_XXXXX_BespokeData
+---@field robotsTaskData table<Robot, Task_XXXXX_Robot_BespokeData>
+
+---@class Task_XXXXX_BespokeData
+
+---@class Task_XXXXX_Robot_BespokeData : Task_Data_Robot
+---@field state "active"|"completed"
+
+local XXXXX = {} ---@class Task_XXXXX_Interface : Task_Interface
+XXXXX.taskName = "XXXXX"
+
+XXXXX._OnLoad = function()
+    MOD.Interfaces.Tasks.XXXXX = XXXXX
 end
 
----
-XXXX.YYYY = function()
+--- Called ONCE per Task to create the task when the first robot first reaches this task in the job.
+---@param job Job_Data # The job related to the lead task in this hierarchy.
+---@param parentTask? Task_Data # The parent Task or nil if this is a primary Task of a Job.
+---@return Task_XXXXX_Data
+XXXXX.ActivateTask = function(job, parentTask, targetLocation, surface)
+    local thisTask = MOD.Interfaces.TaskManager.CreateGenericTask(XXXXX.taskName, job, parentTask) ---@cast thisTask Task_XXXXX_Data
 
+    -- Store the task wide data.
+    thisTask.taskData = {
+    }
+
+    return thisTask
 end
 
-return XXXX
+--- Called to do work on the task by on_tick by each robot.
+---@param thisTask Task_XXXXX_Data
+---@param robot Robot
+---@return uint ticksToWait
+---@return ShowRobotState_NewRobotStateDetails|nil robotStateDetails # nil if there is no state being set by this Task
+XXXXX.Progress = function(thisTask, robot)
+    local taskData = thisTask.taskData
+
+    -- Handle if this is the very first robot to Progress() this Task.
+    if thisTask.currentTaskIndex == 0 then
+        -- TEMPLATE: Activate some/all tasks ?
+    end
+
+    -- TEMPLATE: If there's robot specific data or child tasks.
+    -- Handle if this is the first Progress() for a specific robot.
+    local robotTaskData = thisTask.robotsTaskData[robot]
+    if robotTaskData == nil then
+        -- Record robot specific details to this task.
+        robotTaskData = MOD.Interfaces.TaskManager.CreateGenericRobotTaskData(robot, thisTask.currentTaskIndex, thisTask) --[[@as Task_XXXXX_Robot_BespokeData]]
+        thisTask.robotsTaskData[robot] = robotTaskData
+
+
+    end
+
+
+    -- TEMPLATE: These are often returned from sub tasks Progress() functions, but can also be explicitly defined.
+    ---@type uint,ShowRobotState_NewRobotStateDetails
+    local ticksToWait, robotStateDetails = 0, { stateText = "Some state text", level = ShowRobotState.StateLevel.normal }
+
+    return ticksToWait, robotStateDetails
+end
+
+--- Called when a specific robot is being removed from a task.
+---@param thisTask Task_XXXXX_Data
+---@param robot Robot
+XXXXX.RemovingRobotFromTask = function(thisTask, robot)
+    -- Tidy up any robot specific stuff.
+    local robotTaskData = thisTask.robotsTaskData[robot]
+
+    -- Remove any robot specific task data.
+    thisTask.robotsTaskData[robot] = nil
+
+    MOD.Interfaces.TaskManager.GenericTaskPropagateRemoveRobot(thisTask, robot)
+end
+
+--- Called when a task is being removed and any task globals or ongoing activities need to be stopped.
+---@param thisTask Task_XXXXX_Data
+XXXXX.RemovingTask = function(thisTask)
+    -- Remove any per robot bits if the robot is still active.
+    for _, robotTaskData in pairs(thisTask.robotsTaskData) do
+        if robotTaskData.state == "active" then
+        end
+    end
+
+    MOD.Interfaces.TaskManager.GenericTaskPropagateRemove(thisTask)
+end
+
+--- Called when pausing a robot and so all of its activities within the this task and sub tasks need to pause.
+---@param thisTask Task_XXXXX_Data
+---@param robot Robot
+XXXXX.PausingRobotForTask = function(thisTask, robot)
+    -- If the robot was being actively used in some way stop it.
+    local robotTaskData = thisTask.robotsTaskData[robot]
+    if robotTaskData ~= nil and robotTaskData.state == "active" then
+    end
+
+    MOD.Interfaces.TaskManager.GenericTaskPropagatePausingRobot(thisTask, robot)
+end
+
+return XXXXX

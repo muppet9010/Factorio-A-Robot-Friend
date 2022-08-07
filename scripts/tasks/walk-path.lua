@@ -37,7 +37,7 @@ end
 ---@return ShowRobotState_NewRobotStateDetails|nil robotStateDetails # nil if there is no state being set by this Task
 WalkPath.Progress = function(thisTask, robot, pathToWalk)
 
-    -- Handle if this is the first Progress() for a robot.
+    -- Handle if this is the first Progress() for a specific robot.
     local robotTaskData = thisTask.robotsTaskData[robot]
     if robotTaskData == nil then
         ---@cast pathToWalk -nil
