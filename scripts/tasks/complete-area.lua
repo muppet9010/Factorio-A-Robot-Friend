@@ -1,6 +1,6 @@
 --[[
     Manages a collection of robots analysing the actions and materials needed for a given group of areas to "complete" it. Then they collect the required materials and go to the area to carry out the actions, repeating as required. Actions can include, building, mining, upgrading, rotating.
-    Takes in an array of areas to be completed. These can overlap and will be de-duped. Is to allow flexibility in selecting multiple smaller areas to be done while avoiding others, thus an odd overall shape to be completed.
+    Takes in an array of areas to be completed. These can overlap and will be deduped. Is to allow flexibility in selecting multiple smaller areas to be done while avoiding others, thus an odd overall shape to be completed.
 
     All robots are processed within this task as individuals as some sub tasks are looped over per robot until the total is done. This is a multi stage mix of combined and individual robot sub tasks.
 ]]

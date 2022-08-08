@@ -101,10 +101,10 @@ MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job1)
 
 
 
-Complete an area.
+Complete an area. Made up of 2 overlapping areas just to test it.
 
 /sc __a_robot_friend__
-local robotPosition, completeAreas = {x=2,y=2}, {{left_top = {x=10,y=-3}, right_bottom = {x=26,y=8}}}
+local robotPosition, completeAreas = {x=2,y=2}, { {left_top = {x=9,y=-4}, right_bottom = {x=17,y=7}}, {left_top = {x=15,y=-2}, right_bottom = {x=24,y=10}} }
 robotPosition = game.surfaces[1].find_non_colliding_position("character", robotPosition, 10, 0.2, false)
 local robot = MOD.Interfaces.RobotManager.CreateRobot(game.surfaces[1], robotPosition, game.get_player(1))
 local job = MOD.Interfaces.Jobs.CompleteArea.Create(1, game.surfaces[1], completeAreas, game.forces["player"])

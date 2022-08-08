@@ -96,7 +96,7 @@ RobotManager.ManageRobots = function(event)
             local newRobotStateDetails, ticksToWait
 
             if #robot.activeJobs > 0 then
-                -- Code Note: have to manually handle looping the active jobs as we remove entries from it while iterating. Its a priority list so the order matters and thus can't be a table key'd by Id.
+                -- Code Note: have to manually handle looping the active jobs as we remove entries from it while iterating and its an array, not dictionary. It's an array as it's a priority list so the order matters, and thus can't be a table key'd by Job Id.
                 local jobIndex = 1 ---@type uint
                 while jobIndex <= #robot.activeJobs do
                     local job = robot.activeJobs[jobIndex]
