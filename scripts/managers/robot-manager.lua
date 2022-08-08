@@ -78,7 +78,7 @@ RobotManager.AssignRobotToJob = function(robot, job)
 end
 
 --- Removes a job from a robot's list and tidies up any task state data related to it.
----@param jobIndex int # The order id of the job in the robots active tasks.
+---@param jobIndex uint # The order id of the job in the robots active tasks.
 ---@param robot Robot
 ---@param job Job_Data
 RobotManager.RemoveJobFromRobot = function(jobIndex, robot, job)
@@ -97,7 +97,7 @@ RobotManager.ManageRobots = function(event)
 
             if #robot.activeJobs > 0 then
                 -- Code Note: have to manually handle looping the active jobs as we remove entries from it while iterating. Its a priority list so the order matters and thus can't be a table key'd by Id.
-                local jobIndex = 1
+                local jobIndex = 1 ---@type uint
                 while jobIndex <= #robot.activeJobs do
                     local job = robot.activeJobs[jobIndex]
                     if job ~= nil then

@@ -1,3 +1,9 @@
+--[[
+    Makes a robot move down a provided path. Is an action task and does no issue correcting itself.
+
+    Each robot is processed fully separately to the others as there's no shared elements between robots in this task and no sub tasks.
+]]
+
 local ShowRobotState = require("scripts.common.show-robot-state")
 
 ---@class Task_WalkPath_Data : Task_Data
@@ -8,7 +14,7 @@ local ShowRobotState = require("scripts.common.show-robot-state")
 
 ---@class Task_WalkPath_Robot_BespokeData : Task_Data_Robot
 ---@field pathToWalk PathfinderWaypoint[]
----@field nodeTarget int
+---@field nodeTarget uint
 ---@field positionLastTick? MapPosition
 ---@field state "active"|"completed"|"stuck"
 

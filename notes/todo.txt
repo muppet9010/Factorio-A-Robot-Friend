@@ -23,3 +23,7 @@ Feature Enhancements:
         - Robot name: Allow for a generic server name list (mod setting) and also each player to be able to rename their robots individually.
         - Robot color: Allow players to set a color per robot.
         - Show the robots as colored dots on the map. I don't think I can make the names appear on the map and thus can't honour the Show Players option on the map (and minimap) view.
+    - Complete area:
+        - Handle tiles. Consider landfill and similar tiles before other tiles (i.e. concrete).
+        - Add options to job to allow filtering by selected types, i.e. power poles, roboports, landfill type tiles. Basically so you can do a priority build.
+        - Support cliffs and knowing that cliffs require cliff explosives. At present they are unhandled entirely and thus ignored. They should be prioritised and if the entity can't be built due to them the item dropped from that robots actions list. So that once the cliffs are blown up and the next cycle of checking is done they are picked up. ???

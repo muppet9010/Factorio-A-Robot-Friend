@@ -2,7 +2,7 @@
     TEMPLATE NOTES
 
     Do a find and replace on XXXXX with the name of the Job, i.e. MoveToLocation.
-    The few YYYYY references in ActivateJob() should be replaced with the name of the primary task of this job.
+    The few YYYYY references in ActivateJob() should be replaced with the name of the primary task of this job, generally the same as the job.
 
     Some of these functions can have Job and Task specific arguments and parameters specified as well. See the JobManager and TaskManager for interface requirements.
 ]]

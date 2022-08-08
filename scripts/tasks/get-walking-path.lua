@@ -1,3 +1,9 @@
+--[[
+    Finds a path between 2 points for a robot. Is an action task and does no issue correcting itself.
+
+    Each robot is processed fully separately to the others as there's no shared elements between robots in this task and no sub tasks.
+]]
+
 local Events = require("utility.manager-libraries.events")
 local ShowRobotState = require("scripts.common.show-robot-state")
 

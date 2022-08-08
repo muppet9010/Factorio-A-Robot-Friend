@@ -10,11 +10,12 @@
 ]]
 
 local MoveToLocation = require("scripts.jobs.move-to-location")
+local CompleteArea = require("scripts.jobs.complete-area")
 
 --- The generic characteristics of a Job Interface that all specific Job types must implement. Stored in MOD.Interfaces.Jobs.
 ---@class Job_Interface
 ---@field jobName string # The internal name of the job. Recorded in here to avoid having to hard code it all over the code.
----@field Create fun(playerIndex:uint): Job_Data # Called to create the job when it's initially added. Can take extra arguments after these default ones per specific Job type. FUTURE: these extra parameters will need to be defined in a searchable way for the GUI to find them, so part of the Job Interface.
+---@field Create fun(playerIndex:uint, ...): Job_Data # Called to create the job when it's initially added. Can take extra arguments after these default ones per specific Job type. FUTURE: these extra parameters will need to be defined in a searchable way for the GUI to find them, so part of the Job Interface.
 ---@field ActivateJob fun(job:Job_Data): Task_Data # Called when the job is first started by a robot. This triggers the job to make the first task and returns this task. The activation will change the job's state to "active" from "pending".
 ---@field Remove fun(job:Job_Data) # Called to remove the job when it's no longer wanted.
 ---@field Pause fun(job:Job_Data) # Called to pause the job and all of its activity. This will mean all robots sit idle on this job as this is intended as a temporary player action. NOT IMPLEMENTED.
@@ -49,6 +50,7 @@ JobManager._OnLoad = function()
     MOD.Interfaces.Jobs = MOD.Interfaces.Jobs or {} ---@class MOD_InternalInterfaces_Jobs # Used by all Jobs to register their public functions on by name (save/load safe).
     -- Call all jobs types.
     MoveToLocation._OnLoad()
+    CompleteArea._OnLoad()
 end
 
 --- Called by the specific Job to make a generic Job object and register it in global for persistence. It's then returned to the specific Job to add it's bespoke elements. The return should be casted to the bespoke Job specific class.

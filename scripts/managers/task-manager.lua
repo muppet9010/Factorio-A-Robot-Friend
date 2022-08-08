@@ -9,6 +9,9 @@
 local WalkPath = require("scripts.tasks.walk-path")
 local GetWalkingPath = require("scripts.tasks.get-walking-path")
 local WalkToLocation = require("scripts.tasks.walk-to-location")
+local CompleteArea = require("scripts.tasks.complete-area")
+local ScanAreasForActionsToComplete = require("scripts.tasks.scan-areas-for-actions-to-complete")
+
 
 --- The generic characteristics of a Task Interface that all instances must implement. Stored in MOD.Interfaces.Tasks and each task must register itself during OnLoad() with a key of its taskName and the value of its bespoke Task Interface object.
 ---@class Task_Interface
@@ -28,15 +31,15 @@ local WalkToLocation = require("scripts.tasks.walk-to-location")
 ---@field robotsTaskData table<Robot, Task_Data_Robot> # Any per robot data that the task needs to store about each robot goes in here. Each task will have its own BespokeData class for this.
 ---@field state "active"|"completed" # The state of the overall task. Some individual robots may be completed on an active task as recorded under the robotsTaskData.
 ---@field plannedTasks Task_Data[] # The planned child tasks of this task.
----@field currentTaskIndex int # The current task in the `tasks` list that is the active task. This is for all robots. Some individual robots will be on different current task as recorded under the robotsTaskData. Starts at 0 for a generic Task.
+---@field currentTaskIndex uint # The current task in the `tasks` list that is the active task. This is for all robots. Some individual robots will be on different current task as recorded under the robotsTaskData. Starts at 0 for a generic Task.
 ---@field job Job_Data # The job related to the lead task in this hierarchy.
----@field parentTask? Task_Data # The parent Task or nil if this is a primary Task of a Job.
+---@field parentTask? Task_Data # The parent Task or nil if this is a primary Task of a Job. Not currently used other than detecting when its nil, however, it does no real harm having at present.
 
 --- The generic characteristics of the robot specific Task Data that all Task instances must implement if they have per robot data.
 ---@class Task_Data_Robot
 ---@field robot Robot
 ---@field state "active"|"completed" # The state of this robot in this task. Some specific task types may add their own states per robot.
----@field currentTaskIndex int # The current task in the `tasks` list that is the active task for just this robot.
+---@field currentTaskIndex uint # The current task in the `tasks` list that is the active task for just this robot.
 ---@field task Task_Data # The Task that this robot specific data is for.
 
 local TaskManager = {} ---@class TaskManager
@@ -57,6 +60,8 @@ TaskManager._OnLoad = function()
     WalkPath._OnLoad()
     GetWalkingPath._OnLoad()
     WalkToLocation._OnLoad()
+    CompleteArea._OnLoad()
+    ScanAreasForActionsToComplete._OnLoad()
 end
 
 --- Called to make a generic Task object by the specific task before it adds its bespoke elements to it. This task is persisted in global via its hierarchy from the Job. The return should be casted to the bespoke Task specific class.
@@ -72,7 +77,7 @@ end
 
 --- Called to make a generic Robot Task Data object by the specific task before it adds its bespoke elements to it. The return should be casted to the bespoke Task specific class.
 ---@param robot Robot
----@param currentTaskIndex int # The current task in the `plannedTasks` list that is the active task for just this robot.
+---@param currentTaskIndex uint # The current task in the `plannedTasks` list that is the active task for just this robot.
 ---@param task Task_Data # The Task that this robot specific data is for.
 ---@return Task_Data_Robot
 TaskManager.CreateGenericRobotTaskData = function(robot, currentTaskIndex, task)

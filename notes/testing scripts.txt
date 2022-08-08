@@ -97,3 +97,15 @@ targetPosition1 = game.surfaces[1].find_non_colliding_position("character", targ
 local robot = MOD.Interfaces.RobotManager.CreateRobot(game.surfaces[1], robotPosition, game.get_player(1))
 local job1 = MOD.Interfaces.Jobs.MoveToLocation.Create(1, targetPosition1, game.surfaces[1])
 MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job1)
+
+
+
+
+Complete an area.
+
+/sc __a_robot_friend__
+local robotPosition, completeAreas = {x=2,y=2}, {{left_top = {x=10,y=-3}, right_bottom = {x=26,y=8}}}
+robotPosition = game.surfaces[1].find_non_colliding_position("character", robotPosition, 10, 0.2, false)
+local robot = MOD.Interfaces.RobotManager.CreateRobot(game.surfaces[1], robotPosition, game.get_player(1))
+local job = MOD.Interfaces.Jobs.CompleteArea.Create(1, game.surfaces[1], completeAreas, game.forces["player"])
+MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job)

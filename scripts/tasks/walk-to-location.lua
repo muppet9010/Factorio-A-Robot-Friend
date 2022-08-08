@@ -1,3 +1,9 @@
+--[[
+    Walks a robot to the target location by finding a path and then walking that path. If the path is blocked it tries to obtain an alternative path. Failure to find a path is a failure for the robot and it goes in to standby.
+
+    Each robot is processed fully separately to the others as both sub tasks are action tasks and there's no shared elements between robots in any task.
+]]
+
 local LoggingUtils = require("utility.helper-utils.logging-utils")
 local ShowRobotState = require("scripts.common.show-robot-state")
 

@@ -2,7 +2,6 @@
     TEMPLATE NOTES
 
     Do a find and replace on XXXXX with the name of the Task, i.e. GetWalkingPath.
-    The few YYYYY references in ActivateJob() should be replaced with the name of the primary task of this job.
 
     Some of these functions can have Job and Task specific arguments and parameters specified as well. See the JobManager and TaskManager for interface requirements.
 
@@ -32,7 +31,7 @@ end
 ---@param job Job_Data # The job related to the lead task in this hierarchy.
 ---@param parentTask? Task_Data # The parent Task or nil if this is a primary Task of a Job.
 ---@return Task_XXXXX_Data
-XXXXX.ActivateTask = function(job, parentTask, targetLocation, surface)
+XXXXX.ActivateTask = function(job, parentTask)
     local thisTask = MOD.Interfaces.TaskManager.CreateGenericTask(XXXXX.taskName, job, parentTask) ---@cast thisTask Task_XXXXX_Data
 
     -- Store the task wide data.
@@ -62,10 +61,7 @@ XXXXX.Progress = function(thisTask, robot)
         -- Record robot specific details to this task.
         robotTaskData = MOD.Interfaces.TaskManager.CreateGenericRobotTaskData(robot, thisTask.currentTaskIndex, thisTask) --[[@as Task_XXXXX_Robot_BespokeData]]
         thisTask.robotsTaskData[robot] = robotTaskData
-
-
     end
-
 
     -- TEMPLATE: These are often returned from sub tasks Progress() functions, but can also be explicitly defined.
     ---@type uint,ShowRobotState_NewRobotStateDetails
