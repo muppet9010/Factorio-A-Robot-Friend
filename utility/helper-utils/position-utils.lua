@@ -134,6 +134,7 @@ PositionUtils.ApplyBoundingBoxToPosition = function(centerPos, boundingBox, orie
     end
 end
 
+--- Round a number to set a set number of decimal places. This rounds rather than always floor/ceiling.
 ---@param pos MapPosition
 ---@param numberOfDecimalPlaces uint
 ---@return MapPosition
@@ -141,12 +142,18 @@ PositionUtils.RoundPosition = function(pos, numberOfDecimalPlaces)
     return { x = MathUtils.RoundNumberToDecimalPlaces(pos.x, numberOfDecimalPlaces), y = MathUtils.RoundNumberToDecimalPlaces(pos.y, numberOfDecimalPlaces) }
 end
 
+--- Gets the Chunk Position for a Map Position.
+---
+--- If called frequently should be done inline to avoid excessive function calls.
 ---@param pos MapPosition
 ---@return ChunkPosition
 PositionUtils.GetChunkPositionForTilePosition = function(pos)
     return { x = math_floor(pos.x / 32), y = math_floor(pos.y / 32) }
 end
 
+--- Gets the top left Map Position for a Chunk Position.
+---
+--- If called frequently should be done inline to avoid excessive function calls.
 ---@param chunkPos ChunkPosition
 ---@return MapPosition
 PositionUtils.GetLeftTopTilePositionForChunkPosition = function(chunkPos)

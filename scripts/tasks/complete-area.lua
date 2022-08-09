@@ -3,6 +3,14 @@
     Takes in an array of areas to be completed. These can overlap and will be deduped. Is to allow flexibility in selecting multiple smaller areas to be done while avoiding others, thus an odd overall shape to be completed.
 
     All robots are processed within this task as individuals as some sub tasks are looped over per robot until the total is done. This is a multi stage mix of combined and individual robot sub tasks.
+
+    Notes:
+        - By default players and robots have no trash slots.
+        - Activities are done 1 robot per chunk until all chunks are completed for that activity. Then the next activity is started by all robots.
+        - Order of activities:
+            - Deconstruct everything.
+            - Upgrade everything.
+            - Build everything.
 ]]
 
 local ShowRobotState = require("scripts.common.show-robot-state")
@@ -15,6 +23,7 @@ local ShowRobotState = require("scripts.common.show-robot-state")
 ---@field surface LuaSurface
 ---@field areasToComplete BoundingBox[]
 ---@field force LuaForce
+---@field scannedAreaData? Task_ScanAreasForActionsToComplete_BespokeData
 
 ---@class Task_CompleteArea_Robot_BespokeData : Task_Data_Robot
 ---@field state "active"|"completed"
@@ -70,10 +79,19 @@ CompleteArea.Progress = function(thisTask, robot)
         thisTask.robotsTaskData[robot] = robotTaskData
     end
 
-    -- TODO: need to track when area is fully assessed.
-    if 1 == 1 then
-        return MOD.Interfaces.Tasks.ScanAreasForActionsToComplete.Progress(thisTask.plannedTasks[robotTaskData.currentTaskIndex]--[[@as Task_ScanAreasForActionsToComplete_Data]] , robot)
+    -- Do the scanning task if we have no scanned data yet. All robots do this, but none store any personal data or state during it.
+    if taskData.scannedAreaData == nil then
+        local task_ScanAreasForActionsToComplete_Data = thisTask.plannedTasks[robotTaskData.currentTaskIndex] --[[@as Task_ScanAreasForActionsToComplete_Data]]
+        local ticksToWait, robotStateDetails = MOD.Interfaces.Tasks.ScanAreasForActionsToComplete.Progress(task_ScanAreasForActionsToComplete_Data, robot)
+        if task_ScanAreasForActionsToComplete_Data.state == "completed" then
+            taskData.scannedAreaData = task_ScanAreasForActionsToComplete_Data.taskData
+        end
+
+        --We always return on the robot that did some progression on this. The next robot cycle will the next step fresh.
+        return ticksToWait, robotStateDetails
     end
+
+    --TODO: head off to deconstruct anything in the way first (if needed). Then review scanned results and items the robots have and decide if we need to collect anything extra for any building.
 
 
     -- TEMPLATE: These are often returned from sub tasks Progress() functions, but can also be explicitly defined.
