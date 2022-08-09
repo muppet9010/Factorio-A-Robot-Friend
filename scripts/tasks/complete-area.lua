@@ -8,9 +8,9 @@
         - By default players and robots have no trash slots.
         - Activities are done 1 robot per chunk until all chunks are completed for that activity. Then the next activity is started by all robots.
         - Order of activities:
-            - Deconstruct everything.
-            - Upgrade everything.
-            - Build everything.
+            - Deconstruct everything. Clears the way for everything else.
+            - Upgrade everything. Makes use of items for doing rotations as these require 1 item to do, but are item neutral.
+            - Build everything. Should empty the inventories out.
 ]]
 
 local ShowRobotState = require("scripts.common.show-robot-state")
