@@ -260,11 +260,11 @@ end
 ---@param targetTick? uint
 ---@param actionFunction fun(tickEvents: UtilityScheduledEvent_ScheduledFunctionsTicksEventNames, targetEventName: string, targetInstanceId: string|number, tick?:uint):UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome|nil # function must return a single result and a table of results, both can be nil or populated.
 ---@return boolean|UtilityScheduledEvent_Information|nil result # the result type is based on the actionFunction passed in. However nil may be returned if the actionFunction finds no matching results for any reason.
----@return table results # a table of the results found or an empty table if nothing matching found.
+---@return UtilityScheduledEvent_Information[] results # a table of the results found or an empty table if nothing matching found.
 EventScheduler._ParseScheduledOnceEvents = function(targetEventName, targetInstanceId, targetTick, actionFunction)
     targetInstanceId = targetInstanceId or ""
     local result
-    local results = {}
+    local results = {} ---@type UtilityScheduledEvent_Information[]
     if global.UTILITYSCHEDULEDFUNCTIONS ~= nil then
         if targetTick == nil then
             for tick, tickEvents in pairs(global.UTILITYSCHEDULEDFUNCTIONS) do
@@ -272,7 +272,7 @@ EventScheduler._ParseScheduledOnceEvents = function(targetEventName, targetInsta
                 if outcome ~= nil then
                     result = outcome.result
                     if outcome.results ~= nil then
-                        table.insert(results, outcome.results)
+                        results[#results + 1] = outcome.results
                     end
                     if result then
                         break
@@ -286,7 +286,7 @@ EventScheduler._ParseScheduledOnceEvents = function(targetEventName, targetInsta
                 if outcome ~= nil then
                     result = outcome.result
                     if outcome.results ~= nil then
-                        table.insert(results, outcome.results)
+                        results[#results + 1] = outcome.results
                     end
                 end
             end
@@ -359,17 +359,17 @@ end
 ---@param targetInstanceId? string|number
 ---@param actionFunction fun(tickEvents: UtilityScheduledEvent_ScheduledFunctionsTicksEventNames, targetEventName: string, targetInstanceId: string|number, tick?:uint):UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome|nil # function must return a single result and a table of results, both can be nil or populated.
 ---@return boolean|UtilityScheduledEvent_Information|nil result # the result type is based on the actionFunction passed in. However nil may be returned if the actionFunction finds no matching results for any reason.
----@return table results # a table of the results found or an empty table if nothing matching found.
+---@return UtilityScheduledEvent_Information[] results # a table of the results found or an empty table if nothing matching found.
 EventScheduler._ParseScheduledEachTickEvents = function(targetEventName, targetInstanceId, actionFunction)
     targetInstanceId = targetInstanceId or ""
     local result
-    local results = {}
+    local results = {} ---@type UtilityScheduledEvent_Information[]
     if global.UTILITYSCHEDULEDFUNCTIONSPERTICK ~= nil then
         local outcome = actionFunction(global.UTILITYSCHEDULEDFUNCTIONSPERTICK, targetEventName, targetInstanceId)
         if outcome ~= nil then
             result = outcome.result
             if outcome.results ~= nil then
-                table.insert(results, outcome.results)
+                results[#results + 1] = outcome.results
             end
         end
     end

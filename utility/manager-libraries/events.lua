@@ -39,7 +39,7 @@ Events.RegisterHandlerEvent = function(eventName, handlerName, handlerFunction, 
     if MOD.eventIdHandlerNameToEventIdsListIndex[eventId] == nil or MOD.eventIdHandlerNameToEventIdsListIndex[eventId][handlerName] == nil then
         -- Is the first registering of this unique handler name for this event id.
         MOD.eventsById[eventId] = MOD.eventsById[eventId] or {}
-        table.insert(MOD.eventsById[eventId], { handlerName = handlerName, handlerFunction = handlerFunction })
+        MOD.eventsById[eventId][#MOD.eventsById[eventId] + 1] = { handlerName = handlerName, handlerFunction = handlerFunction }
         MOD.eventIdHandlerNameToEventIdsListIndex[eventId] = MOD.eventIdHandlerNameToEventIdsListIndex[eventId] or {}
         MOD.eventIdHandlerNameToEventIdsListIndex[eventId][handlerName] = #MOD.eventsById[eventId]
     else
@@ -61,7 +61,7 @@ Events.RegisterHandlerCustomInput = function(actionName, handlerName, handlerFun
     if MOD.eventActionNameHandlerNameToEventActionNamesListIndex[actionName] == nil or MOD.eventActionNameHandlerNameToEventActionNamesListIndex[actionName][handlerName] == nil then
         -- Is the first registering of this unique handler name for this action name.
         MOD.eventsByActionName[actionName] = MOD.eventsByActionName[actionName] or {}
-        table.insert(MOD.eventsByActionName[actionName], { handlerName = handlerName, handlerFunction = handlerFunction })
+        MOD.eventsByActionName[actionName][#MOD.eventsByActionName[actionName] + 1] = { handlerName = handlerName, handlerFunction = handlerFunction }
         MOD.eventActionNameHandlerNameToEventActionNamesListIndex[actionName] = MOD.eventActionNameHandlerNameToEventActionNamesListIndex[actionName] or {}
         MOD.eventActionNameHandlerNameToEventActionNamesListIndex[actionName][handlerName] = #MOD.eventsByActionName[actionName]
     else
@@ -203,7 +203,7 @@ Events._RegisterEvent = function(eventName, thisFilterName, thisFilterData)
                 for _, filterTable in pairs(MOD.eventFilters[eventId]--[[@as table<any, any>[][] # Not entirely sure on this, but it makes it happy and there isn't any Type Def for event filters from Debugger.]] ) do
                     filterTable[1].mode = "or"
                     for _, filterEntry in pairs(filterTable) do
-                        table.insert(filterData, filterEntry)
+                        filterData[#filterData + 1] = filterEntry
                     end
                 end
             end

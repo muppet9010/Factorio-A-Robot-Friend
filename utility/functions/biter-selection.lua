@@ -103,7 +103,7 @@ BiterSelection._CalculateSpecificBiterSelectionProbabilities = function(spawnerT
             else
                 weight = startSpawnPoint.weight
             end
-            table.insert(currentEvolutionProbabilities, { chance = weight, unitName = possibility.unit })
+            currentEvolutionProbabilities[#currentEvolutionProbabilities + 1] = { chance = weight, unitName = possibility.unit }
         end
     end
     currentEvolutionProbabilities = RandomChance.NormaliseChanceList(currentEvolutionProbabilities, "chance") ---@type UtilityBiterSelection_UnitChanceEntry[]
@@ -121,7 +121,7 @@ BiterSelection._CalculateSpecificWormForEvolution = function(evolution)
 
     local sortedTurrets = {} ---@type LuaEntityPrototype[]
     for _, turret in pairs(turrets) do
-        table.insert(sortedTurrets, turret)
+        sortedTurrets[#sortedTurrets + 1] = turret
     end
 
     table.sort(

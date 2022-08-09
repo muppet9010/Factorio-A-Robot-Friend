@@ -28,7 +28,7 @@ StringUtils.SplitStringOnCharactersToList = function(text, splitCharacters)
         phrase = string_match(phrase, "^()%s*$") and "" or string_match(phrase, "^%s*(.*%S)")
 
         if phrase ~= nil and phrase ~= "" then
-            table.insert(list, phrase)
+            list[#list + 1] = phrase
         end
     end
     return list

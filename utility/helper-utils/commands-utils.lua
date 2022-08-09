@@ -51,7 +51,7 @@ end
 ---@param parameterString string
 ---@return any[] arguments
 CommandsUtils.GetArgumentsFromCommand = function(parameterString)
-    local args = {}
+    local args = {} ---@type any[]
     if parameterString == nil or parameterString == "" or parameterString == " " then
         return args
     end
@@ -77,7 +77,7 @@ CommandsUtils.GetArgumentsFromCommand = function(parameterString)
                     openChar = char
                     closeChar = openCloseChars[openChar]
                     if currentString ~= "" then
-                        table.insert(args, CommandsUtils._StringToTypedObject(currentString))
+                        args[#args + 1] = CommandsUtils._StringToTypedObject(currentString)
                         currentString = ""
                     end
                 else
@@ -85,7 +85,7 @@ CommandsUtils.GetArgumentsFromCommand = function(parameterString)
                 end
             elseif not inQuotedString and char == " " then
                 if currentString ~= "" then
-                    table.insert(args, CommandsUtils._StringToTypedObject(currentString))
+                    args[#args + 1] = CommandsUtils._StringToTypedObject(currentString)
                     currentString = ""
                 end
             elseif inQuotedString then
@@ -94,7 +94,7 @@ CommandsUtils.GetArgumentsFromCommand = function(parameterString)
                 else
                     if char == closeChar and not prevCharEscape then
                         inQuotedString = false
-                        table.insert(args, CommandsUtils._StringToTypedObject(currentString))
+                        args[#args + 1] = CommandsUtils._StringToTypedObject(currentString)
                         currentString = ""
                     elseif char == closeChar and prevCharEscape then
                         prevCharEscape = false
@@ -116,14 +116,14 @@ CommandsUtils.GetArgumentsFromCommand = function(parameterString)
                     jsonSteppedIn = jsonSteppedIn - 1
                 else
                     inJson = false
-                    table.insert(args, CommandsUtils._StringToTypedObject(currentString))
+                    args[#args + 1] = CommandsUtils._StringToTypedObject(currentString)
                     currentString = ""
                 end
             end
         end
     end
     if currentString ~= "" then
-        table.insert(args, CommandsUtils._StringToTypedObject(currentString))
+        args[#args + 1] = CommandsUtils._StringToTypedObject(currentString)
     end
 
     return args

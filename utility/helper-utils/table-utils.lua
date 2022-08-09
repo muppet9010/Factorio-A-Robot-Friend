@@ -119,9 +119,9 @@ end
 ---@param aTable table<any,any>
 ---@return string|number[]
 TableUtils.TableKeyToArray = function(aTable)
-    local newArray = {}
+    local newArray = {} ---@type string|number[]
     for key in pairs(aTable) do
-        table.insert(newArray, key)
+        newArray[#newArray + 1] = key
     end
     return newArray
 end
@@ -222,22 +222,22 @@ end
 ---@param returnMultipleResults? boolean # Can return a single result (returnMultipleResults = false/nil) or a list of results (returnMultipleResults = true)
 ---@return string|number[] # table of keys.
 TableUtils.GetTableKeyWithValue = function(theTable, value, returnMultipleResults)
-    local keysFound = {}
+    local keysFound = {} ---@type string|number[]
     for k, v in pairs(theTable) do
         if type(value) ~= "table" then
             if v == value then
                 if not returnMultipleResults then
                     return k
                 end
-                table.insert(keysFound, k)
+                keysFound[#keysFound + 1] = k
             end
         else
             for _, valueInList in pairs(value) do
-                if v == value then
+                if v == valueInList then
                     if not returnMultipleResults then
                         return k
                     end
-                    table.insert(keysFound, k)
+                    keysFound[#keysFound + 1] = k
                 end
             end
         end
@@ -252,22 +252,22 @@ end
 ---@param returnMultipleResults? boolean # Can return a single result (returnMultipleResults = false/nil) or a list of results (returnMultipleResults = true)
 ---@return string|number[] # table of keys.
 TableUtils.GetTableKeyWithInnerKeyValue = function(theTable, innerKey, innerValue, returnMultipleResults)
-    local keysFound = {}
+    local keysFound = {} ---@type string|number[]
     for k, innerTable in pairs(theTable) do
         if type(innerValue) ~= "table" then
             if innerTable[innerKey] ~= nil and innerTable[innerKey] == innerValue then
                 if not returnMultipleResults then
                     return k
                 end
-                table.insert(keysFound, k)
+                keysFound[#keysFound + 1] = k
             end
         else
             for _, valueInList in pairs(innerValue) do
-                if innerTable[innerKey] ~= nil and innerTable[innerKey] == innerValue then
+                if innerTable[innerKey] ~= nil and innerTable[innerKey] == valueInList then
                     if not returnMultipleResults then
                         return k
                     end
-                    table.insert(keysFound, k)
+                    keysFound[#keysFound + 1] = k
                 end
             end
         end
@@ -282,14 +282,14 @@ end
 ---@param returnMultipleResults? boolean # Can return a single result (returnMultipleResults = false/nil) or a list of results (returnMultipleResults = true)
 ---@return table[] # table of values, which must be a table to have an inner key/value.
 TableUtils.GetTableValueWithInnerKeyValue = function(theTable, innerKey, innerValue, returnMultipleResults)
-    local valuesFound = {}
+    local valuesFound = {} ---@type table[]
     for _, innerTable in pairs(theTable) do
         if type(innerValue) ~= "table" then
             if innerTable[innerKey] ~= nil and innerTable[innerKey] == innerValue then
                 if not returnMultipleResults then
                     return innerTable
                 end
-                table.insert(valuesFound, innerTable)
+                valuesFound[#valuesFound + 1] = innerTable
             end
         else
             for _, valueInList in pairs(innerValue) do
@@ -297,7 +297,7 @@ TableUtils.GetTableValueWithInnerKeyValue = function(theTable, innerKey, innerVa
                     if not returnMultipleResults then
                         return innerTable
                     end
-                    table.insert(valuesFound, innerTable)
+                    valuesFound[#valuesFound + 1] = innerTable
                 end
             end
         end

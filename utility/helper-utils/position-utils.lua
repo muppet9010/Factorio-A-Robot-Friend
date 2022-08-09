@@ -351,10 +351,10 @@ end
 ---@param positionedBoundingBox BoundingBox
 ---@return MapPosition[]
 PositionUtils.CalculateTilesUnderPositionedBoundingBox = function(positionedBoundingBox)
-    local tiles = {}
+    local tiles = {} ---@type MapPosition[]
     for x = positionedBoundingBox.left_top.x, positionedBoundingBox.right_bottom.x do
         for y = positionedBoundingBox.left_top.y, positionedBoundingBox.right_bottom.y do
-            table.insert(tiles, { x = math_floor(x), y = math_floor(y) })
+            tiles[#tiles + 1] = { x = math_floor(x), y = math_floor(y) }
         end
     end
     return tiles

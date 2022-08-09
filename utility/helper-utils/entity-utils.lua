@@ -15,8 +15,9 @@ local PositionUtils = require("utility.helper-utils.position-utils")
 ---@param entitiesExcluded? LuaEntity[]
 ---@return table<int, LuaEntity>
 EntityUtils.ReturnAllObjectsInArea = function(surface, positionedBoundingBox, collisionBoxOnlyEntities, onlyForceAffected, onlyDestructible, onlyKillable, entitiesExcluded)
-    local entitiesFound, filteredEntitiesFound = surface.find_entities(positionedBoundingBox), {}
-    for k, entity in pairs(entitiesFound) do
+    local entitiesFound         = surface.find_entities(positionedBoundingBox)
+    local filteredEntitiesFound = {} ---@type table<int, LuaEntity>
+    for _, entity in pairs(entitiesFound) do
         if entity.valid then
             local entityExcluded = false
             if entitiesExcluded ~= nil and #entitiesExcluded > 0 then
@@ -32,7 +33,7 @@ EntityUtils.ReturnAllObjectsInArea = function(surface, positionedBoundingBox, co
                     if (not onlyDestructible) or (entity.destructible) then
                         if (not onlyKillable) or (entity.health ~= nil) then
                             if (not collisionBoxOnlyEntities) or (PositionUtils.IsBoundingBoxPopulated(entity.prototype.collision_box)) then
-                                table.insert(filteredEntitiesFound, entity)
+                                filteredEntitiesFound[#filteredEntitiesFound + 1] = entity
                             end
                         end
                     end

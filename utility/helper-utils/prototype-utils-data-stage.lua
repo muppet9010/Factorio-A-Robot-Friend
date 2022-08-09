@@ -144,12 +144,13 @@ PrototypeUtils.GetRecipeIngredientsAddedTogether = function(recipeIngredientHand
                 end
             end
         end
-        ingredientsTable[ingredientType] = {}
+        local ingredientTypeEntries = {}
         for name, count in pairs(ingredientsList) do
             if ingredientsList[name] > 0 then
-                table.insert(ingredientsTable[ingredientType], { name, count })
+                ingredientTypeEntries[#ingredientTypeEntries + 1] = { name, count }
             end
         end
+        ingredientsTable[ingredientType] = ingredientTypeEntries
     end
     return ingredientsTable
 end
@@ -179,6 +180,10 @@ PrototypeUtils.GetRecipeAttribute = function(recipe, attributeName, recipeCostTy
     return defaultValue -- may well be nil
 end
 
+--- Checks if a recipe has a specific named item in its results.
+---@param recipePrototype Prototype.Recipe
+---@param itemName string
+---@return boolean
 PrototypeUtils.DoesRecipeResultsIncludeItemName = function(recipePrototype, itemName)
     for _, recipeBase in pairs({ recipePrototype, recipePrototype.normal, recipePrototype.expensive }) do
         if recipeBase ~= nil then
@@ -192,10 +197,11 @@ PrototypeUtils.DoesRecipeResultsIncludeItemName = function(recipePrototype, item
     return false
 end
 
---[[
-    From the provided technology list remove all provided recipes from being unlocked that create an item that can place a given entity prototype.
-    Returns a table of the technologies affected or a blank table if no technologies are affected.
-]]
+--- From the provided technology list remove all provided recipes from being unlocked that create an item that can place a given entity prototype.
+---@param entityPrototype Prototype.Entity
+---@param recipes Prototype.Recipe[]
+---@param technologies Prototype.Technology[]
+---@return Prototype.Technology[] technologiesChanged # An array of the technologies affected or a blank array if no technologies are affected.
 PrototypeUtils.RemoveEntitiesRecipesFromTechnologies = function(entityPrototype, recipes, technologies)
     local technologiesChanged = {}
     local placedByItemName
@@ -212,7 +218,7 @@ PrototypeUtils.RemoveEntitiesRecipesFromTechnologies = function(entityPrototype,
                     for effectIndex, effect in pairs(technologyPrototype.effects) do
                         if effect.type == "unlock-recipe" and effect.recipe ~= nil and effect.recipe == recipePrototype.name then
                             table.remove(technologyPrototype.effects, effectIndex)
-                            table.insert(technologiesChanged, technologyPrototype)
+                            technologiesChanged[#technologiesChanged + 1] = technologyPrototype
                         end
                     end
                 end
@@ -223,11 +229,11 @@ PrototypeUtils.RemoveEntitiesRecipesFromTechnologies = function(entityPrototype,
 end
 
 --- Doesn't handle mipmaps at all presently. Also ignores any of the extra data in an icons table of "Types/IconData". Think this should just duplicate the target icons table entry.
----@param entityToClone table # Any entity prototype.
+---@param entityToClone Prototype.Entity
 ---@param newEntityName string
 ---@param subgroup string
 ---@param collisionMask CollisionMask
----@return table # A simple entity prototype.
+---@return Prototype.SimpleEntity
 PrototypeUtils.CreatePlacementTestEntityPrototype = function(entityToClone, newEntityName, subgroup, collisionMask)
     local clonedIcon = entityToClone.icon
     local clonedIconSize = entityToClone.icon_size
@@ -263,11 +269,21 @@ PrototypeUtils.CreatePlacementTestEntityPrototype = function(entityToClone, newE
     }
 end
 
+--- Create a copy of a prototype that is used for just finding where it can be placed on land, ignoring any obstacles/entities on the land. Returns just a simple entity for this task.
+---@param entityToClone Prototype.Entity
+---@param newEntityName string
+---@param subgroup string
+---@return Prototype.SimpleEntity
 PrototypeUtils.CreateLandPlacementTestEntityPrototype = function(entityToClone, newEntityName, subgroup)
     subgroup = subgroup or "other"
     return PrototypeUtils.CreatePlacementTestEntityPrototype(entityToClone, newEntityName, subgroup, { "water-tile", "colliding-with-tiles-only" })
 end
 
+--- Create a copy of a prototype that is used for just finding where it can be placed on water, ignoring any obstacles/entities in the water. Returns just a simple entity for this task.
+---@param entityToClone Prototype.Entity
+---@param newEntityName string
+---@param subgroup string
+---@return Prototype.SimpleEntity
 PrototypeUtils.CreateWaterPlacementTestEntityPrototype = function(entityToClone, newEntityName, subgroup)
     subgroup = subgroup or "other"
     return PrototypeUtils.CreatePlacementTestEntityPrototype(entityToClone, newEntityName, subgroup, { "ground-tile", "colliding-with-tiles-only" })

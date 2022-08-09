@@ -228,7 +228,7 @@ end
 ---@param tileMoisture double
 ---@return UtilityBiomeTrees_suitableTree[]
 BiomeTrees._SearchForSuitableTrees = function(tileData, tileTemp, tileMoisture)
-    local suitableTrees = {}
+    local suitableTrees = {} ---@type UtilityBiomeTrees_suitableTree[]
     local currentChance = 0
     -- Try to ensure we find a tree vaguely accurate. Start as accurate as possible and then become less precise.
     for accuracy = 1, 1.5, 0.1 do
@@ -265,7 +265,7 @@ BiomeTrees._SearchForSuitableTrees = function(tileData, tileTemp, tileMoisture)
                         chanceEnd = currentChance + tree.probability,
                         tree = tree
                     }
-                    table.insert(suitableTrees, treeEntry)
+                    suitableTrees[#suitableTrees + 1] = treeEntry
                     currentChance = treeEntry.chanceEnd
                 end
             end
@@ -327,7 +327,7 @@ end
 --- Gets the runtime tree data from the prototype data.
 ---@return UtilityBiomeTrees_TreeDetails[]
 BiomeTrees._GetTreeData = function()
-    local treeDataArray = {}
+    local treeDataArray = {} ---@type UtilityBiomeTrees_TreeDetails[]
     local treeData
     local environmentData = global.UTILITYBIOMETREES.environmentData
     local moistureRangeAttributeNames = global.UTILITYBIOMETREES.environmentData.moistureRangeAttributeNames
@@ -364,7 +364,7 @@ BiomeTrees._GetTreeData = function()
                 treeData.tags = environmentData.treesMetaData[prototype.name][1]
                 treeData.exclusivelyOnNamedTiles = environmentData.treesMetaData[prototype.name][2]
             end
-            table.insert(treeDataArray, treeData)
+            treeDataArray[#treeDataArray + 1] = treeData
         end
     end
 
@@ -379,15 +379,15 @@ end
 ---@param range2? UtilityBiomeTrees_valueRange[]
 ---@param tag? string
 BiomeTrees._AddTileDetails = function(tileDetails, tileName, type, range1, range2, tag)
-    local tempRanges = {}
-    local moistureRanges = {}
+    local tempRanges = {} ---@type UtilityBiomeTrees_valueRange[]
+    local moistureRanges = {} ---@type UtilityBiomeTrees_valueRange[]
     if range1 ~= nil then
-        table.insert(tempRanges, { range1[1][1] or 0, range1[2][1] or 0 })
-        table.insert(moistureRanges, { range1[1][2] or 0, range1[2][2] or 0 })
+        tempRanges[#tempRanges + 1] = { range1[1][1] or 0, range1[2][1] or 0 }
+        moistureRanges[#moistureRanges + 1] = { range1[1][2] or 0, range1[2][2] or 0 }
     end
     if range2 ~= nil then
-        table.insert(tempRanges, { range2[1][1] or 0, range2[2][1] or 0 })
-        table.insert(moistureRanges, { range2[1][2] or 0, range2[2][2] or 0 })
+        tempRanges[#tempRanges + 1] = { range2[1][1] or 0, range2[2][1] or 0 }
+        moistureRanges[#moistureRanges + 1] = { range2[1][2] or 0, range2[2][2] or 0 }
     end
     tileDetails[tileName] = { name = tileName, type = type, tempRanges = tempRanges, moistureRanges = moistureRanges, tag = tag } ---@type UtilityBiomeTrees_TileDetails
 end
