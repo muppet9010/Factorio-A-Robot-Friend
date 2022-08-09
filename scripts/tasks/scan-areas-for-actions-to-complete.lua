@@ -7,8 +7,6 @@
         - Upgrade: anything that is marked for upgrade on the robots force; fast replacing from 1 entity to another but also fast replacing an entity over itself to change its direction, but keep its other attributes, connections, etc. Will have an input item and sometimes an output item. A rotation only fast replace requires the placer to have another of said item and build it over the current one. This is better than deconstructing and rebuilding it, or rotating it, as it avoids the intermediate states that may be invalid or leave empty space in the map, etc. It is item input/output neutral however, but you have to start with the item and you get whatever is in the entity when done.
         - ghosts to build: any ghosts on the robots force.
 
-    Future: tiles not included at all.
-
     All robots are processed within this task as a collective. With each robot contributing some anonymised processing of the combined workload.
 
     FUTURE: this doesn't handle if things change during the looping anywhere. As an upgrade found during initial scan could be found missing at any later point where its data is accessed.
@@ -20,7 +18,6 @@ local math_floor = math.floor
 
 ---@class Task_ScanAreasForActionsToComplete_Data : Task_Data
 ---@field taskData Task_ScanAreasForActionsToComplete_BespokeData
----@field robotsTaskData table<Robot, Task_ScanAreasForActionsToComplete_Robot_BespokeData>
 
 ---@class Task_ScanAreasForActionsToComplete_BespokeData
 ---@field surface LuaSurface
@@ -73,9 +70,6 @@ local math_floor = math.floor
 ---@field builtByItemName? string # The name of the item type used to build it for the action type, or nil if no item is required for the action type.
 ---@field builtByItemCount? uint # The count of the item type used to build it for the action type, or nil if no item is required for the action type. Most are 1, but curved rails are more and some modded things could also be >1.
 
----@class Task_ScanAreasForActionsToComplete_Robot_BespokeData : Task_Data_Robot
----@field state "active"|"completed"
-
 local ScanAreasForActionsToComplete = {} ---@class Task_ScanAreasForActionsToComplete_Interface : Task_Interface
 ScanAreasForActionsToComplete.taskName = "ScanAreasForActionsToComplete"
 
@@ -86,8 +80,9 @@ ScanAreasForActionsToComplete.ActionType = {
     build = "build"
 }
 
-local EntitiesDedupedPerBatch = 1000 -- Just getting unit_number via API calls.
-local EntitiesHandledPerBatch = 100 -- Multiple API calls to get item types, etc.
+-- FUTURE: these need confirming as sensible values once testing on a larger blueprint and deconstruction tasks are done.
+local EntitiesDedupedPerBatch = 100 -- Just getting unit_number via API calls.
+local EntitiesHandledPerBatch = 10 -- Multiple API calls to get item types, etc.
 
 ScanAreasForActionsToComplete._OnLoad = function()
     MOD.Interfaces.Tasks.ScanAreasForActionsToComplete = ScanAreasForActionsToComplete
@@ -337,7 +332,7 @@ ScanAreasForActionsToComplete._ProcessDedupedTableToProcessedTable = function(ta
         end
 
         -- Record input and output items.
-        --TODO: should cache these results per entity name.
+        -- FUTURE: should cache these results per entity name.
         local minedProducts, requiredItem_name, requiredItem_count, requiredItemUsedPerAction
         if actionType == ScanAreasForActionsToComplete.ActionType.deconstruct then
             minedProducts = entity.prototype.mineable_properties.products
@@ -431,37 +426,26 @@ end
 ---@param thisTask Task_ScanAreasForActionsToComplete_Data
 ---@param robot Robot
 ScanAreasForActionsToComplete.RemovingRobotFromTask = function(thisTask, robot)
-    -- Tidy up any robot specific stuff.
-    local robotTaskData = thisTask.robotsTaskData[robot]
+    -- There is no robot specific activity to be stopped.
 
-    -- Remove any robot specific task data.
-    thisTask.robotsTaskData[robot] = nil
-
-    MOD.Interfaces.TaskManager.GenericTaskPropagateRemoveRobot(thisTask, robot)
+    -- There are no child tasks of this task.
 end
 
 --- Called when a task is being removed and any task globals or ongoing activities need to be stopped.
 ---@param thisTask Task_ScanAreasForActionsToComplete_Data
 ScanAreasForActionsToComplete.RemovingTask = function(thisTask)
-    -- Remove any per robot bits if the robot is still active.
-    for _, robotTaskData in pairs(thisTask.robotsTaskData) do
-        if robotTaskData.state == "active" then
-        end
-    end
+    -- There is no robot specific activity to be stopped.
 
-    MOD.Interfaces.TaskManager.GenericTaskPropagateRemove(thisTask)
+    -- There are no child tasks of this task.
 end
 
 --- Called when pausing a robot and so all of its activities within the this task and sub tasks need to pause.
 ---@param thisTask Task_ScanAreasForActionsToComplete_Data
 ---@param robot Robot
 ScanAreasForActionsToComplete.PausingRobotForTask = function(thisTask, robot)
-    -- If the robot was being actively used in some way stop it.
-    local robotTaskData = thisTask.robotsTaskData[robot]
-    if robotTaskData ~= nil and robotTaskData.state == "active" then
-    end
+    -- There is no robot specific activity to be stopped.
 
-    MOD.Interfaces.TaskManager.GenericTaskPropagatePausingRobot(thisTask, robot)
+    -- There are no child tasks of this task.
 end
 
 return ScanAreasForActionsToComplete

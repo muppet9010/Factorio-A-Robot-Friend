@@ -1,4 +1,4 @@
--- FUTURE: This should be a copy of the railway tunnel testing framework, but maybe tidied up a bit. Is all just temporary at present.
+-- WHEN MAKING: This should be a copy of the railway tunnel testing framework, but maybe tidied up a bit. Is all just temporary at present. Also look to make it a Utility with the better Sumneko support?
 
 local TestingManager = {} ---@class TestingManager
 

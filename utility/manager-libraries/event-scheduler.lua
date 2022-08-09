@@ -1,8 +1,8 @@
 --[[
     This event scheduler is used by calling the RegisterScheduler() function once in root of control.lua. You then call RegisterScheduledEventType() from the OnLoad stage for each function you want to register for future triggering. The triggering is then done by using the Once or Each Tick functions to add and remove registrations of functions and data against Factorio events. Each Tick events are optional for use when the function will be called for multiple ticks in a row with the same reference data.
 --]]
---
--- FUTURE TASK: make tests for this at end of file. Either have runnable via command and commented out or for pasting the whole file in to Demo Lua. Should check that the results all come back as expected for the various schedule add/remove/get/etc functions as I'd like to simplify the _ParseScheduledEachTickEvents() actionFunction response objects and their handling as was hard to document and messy.
+
+-- Make Automatic Testing: make tests for this at end of file. Either have runnable via command and commented out or for pasting the whole file in to Demo Lua. Should check that the results all come back as expected for the various schedule add/remove/get/etc functions as I'd like to simplify the _ParseScheduledEachTickEvents() actionFunction response objects and their handling as was hard to document and messy.
 
 local Events = require("utility.manager-libraries.events")
 local EventScheduler = {} ---@class Utility_EventScheduler
