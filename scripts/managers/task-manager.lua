@@ -11,6 +11,7 @@ local GetWalkingPath = require("scripts.tasks.get-walking-path")
 local WalkToLocation = require("scripts.tasks.walk-to-location")
 local CompleteArea = require("scripts.tasks.complete-area")
 local ScanAreasForActionsToComplete = require("scripts.tasks.scan-areas-for-actions-to-complete")
+local DeconstructEntitiesInChunkDetails = require("scripts.tasks.deconstruct-entities-in-chunk-details")
 
 
 --- The generic characteristics of a Task Interface that all instances must implement. Stored in MOD.Interfaces.Tasks and each task must register itself during OnLoad() with a key of its taskName and the value of its bespoke Task Interface object.
@@ -62,6 +63,7 @@ TaskManager._OnLoad = function()
     WalkToLocation._OnLoad()
     CompleteArea._OnLoad()
     ScanAreasForActionsToComplete._OnLoad()
+    DeconstructEntitiesInChunkDetails._OnLoad()
 end
 
 --- Called to make a generic Task object by the specific task before it adds its bespoke elements to it. This task is persisted in global via its hierarchy from the Job. The return should be casted to the bespoke Task specific class.

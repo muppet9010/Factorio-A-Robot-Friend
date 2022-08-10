@@ -85,13 +85,34 @@ CompleteArea.Progress = function(thisTask, robot)
         local ticksToWait, robotStateDetails = MOD.Interfaces.Tasks.ScanAreasForActionsToComplete.Progress(task_ScanAreasForActionsToComplete_Data, robot)
         if task_ScanAreasForActionsToComplete_Data.state == "completed" then
             taskData.scannedAreaData = task_ScanAreasForActionsToComplete_Data.taskData
+            thisTask.currentTaskIndex = thisTask.currentTaskIndex + 1
         end
 
         --We always return on the robot that did some progression on this. The next robot cycle will the next step fresh.
         return ticksToWait, robotStateDetails
     end
 
-    --TODO: head off to deconstruct anything in the way first (if needed). Then review scanned results and items the robots have and decide if we need to collect anything extra for any building.
+    -- Handle deconstruction if needed.
+    if #taskData.scannedAreaData.entitiesToBeDeconstructed > 0 then
+        -- If this is first time looking at deconstructing some entities then activate the Task.
+        if thisTask.plannedTasks[thisTask.currentTaskIndex] == nil then
+            local startingChunkPosition = CompleteArea._FindStartingChunk(taskData.scannedAreaData.sortedChunksByAxes)
+            thisTask.plannedTasks[thisTask.currentTaskIndex] = MOD.Interfaces.Tasks.DeconstructEntitiesInChunkDetails.ActivateTask(thisTask.job, thisTask, taskData.surface, taskData.scannedAreaData.chunksInCombinedAreas, taskData.scannedAreaData.entitiesToBeDeconstructed, startingChunkPosition)
+        end
+
+        -- Progress the data for each robot.
+        local task_DeconstructEntitiesInChunkDetails_Data = thisTask.plannedTasks[robotTaskData.currentTaskIndex] --[[@as Task_DeconstructEntitiesInChunkDetails_Data]]
+        local ticksToWait, robotStateDetails = MOD.Interfaces.Tasks.DeconstructEntitiesInChunkDetails.Progress(task_DeconstructEntitiesInChunkDetails_Data, robot)
+        if task_DeconstructEntitiesInChunkDetails_Data.state == "completed" then
+            --TODO: anything needs doing as the list will be empty and thus # will be 0.
+        end
+
+        --We always return on the robot that did some progression on this. The next robot cycle will the next step fresh.
+        return ticksToWait, robotStateDetails
+    end
+
+
+    --TODO: Review scanned results and items the robots have and decide if we need to collect anything extra for any building.
 
 
     -- TEMPLATE: These are often returned from sub tasks Progress() functions, but can also be explicitly defined.
@@ -99,6 +120,17 @@ CompleteArea.Progress = function(thisTask, robot)
     local ticksToWait, robotStateDetails = 0, { stateText = "Some state text", level = ShowRobotState.StateLevel.normal }
 
     return ticksToWait, robotStateDetails
+end
+
+--- Find the best starting chunk for the job.
+---@param sortedChunksByAxes Task_ScanAreasForActionsToComplete_SortedChunksByAxes
+---@return ChunkPosition StartingChunk
+CompleteArea._FindStartingChunk = function(sortedChunksByAxes)
+    -- For now just start in the chunk nearest spawn (0,0). There is a future entry to make this smart.
+    --- TODO: UP TO HERE
+    --if sortedChunksByAxes
+    local startingChunkPosition = sortedChunksByAxes
+    return startingChunkPosition
 end
 
 --- Called when a specific robot is being removed from a task.

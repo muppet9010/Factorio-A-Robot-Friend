@@ -14,6 +14,7 @@
 
 
 local ShowRobotState = require("scripts.common.show-robot-state")
+local StringUtils = require("utility.helper-utils.string-utils")
 local math_floor = math.floor
 
 ---@class Task_ScanAreasForActionsToComplete_Data : Task_Data
@@ -44,16 +45,18 @@ local math_floor = math.floor
 ---@field requiredInputItems table<string, uint> @ Item name to count of items needed as input to build and upgrade. Includes at least 1 of each item that needs manipulating as you need an item to do the manipulation, even though its item neutral.
 ---@field guaranteedOutputItems table<string, uint> @ Item name to count of items we are guaranteed to get. This ignores things in chests, machines, etc, as they are only known once they entities have been mined.
 ---
----@field chunksInCombinedAreas Task_ScanAreasForActionsToComplete_ChunkXValues # A table of the chunk X values to chunk Y values to chunk details. A way to allow us to "iterate" the chunks and map out the connected chunks. We will assume that you can walk between touching chunks for this high level planning.
+---@field chunksInCombinedAreas Task_ScanAreasForActionsToComplete_ChunksInCombinedAreas # A table of the chunk X values to chunk Y values to chunk details. A way to allow us to lookup the chunks and map out the connected chunks.
+---@field sortedChunksByAxes Task_ScanAreasForActionsToComplete_SortedChunksByAxes # A sorted array of lowest chunk X value and lowest chunk Y values to chunk details. A way to allow us to "iterate" the chunks on a given axis and to easily find the limits of the axis values.
 
 ---@alias Task_ScanAreasForActionsToComplete_EntitiesRaw table<uint, table<uint, LuaEntity>> @ An array per area of the raw entities found needing to be handled for their specific action type. The keys are sequential index numbers that will become gappy when processed dow to being an empty single depth table.
 ---@alias Task_ScanAreasForActionsToComplete_EntitiesDeduped table<uint|string, LuaEntity> @ A single table of all the raw entities (deduped) across all areas needing to be handled for their specific action type. Keyed by the entities unit_number or its name and position as a string.
 
----@alias Task_ScanAreasForActionsToComplete_ChunkXValues table<uint, Task_ScanAreasForActionsToComplete_ChunkYValues>
----@alias Task_ScanAreasForActionsToComplete_ChunkYValues table<uint, Task_ScanAreasForActionsToComplete_ChunkDetails>
+---@alias Task_ScanAreasForActionsToComplete_ChunksInCombinedAreas table<uint, table<uint, Task_ScanAreasForActionsToComplete_ChunkDetails>> # A table of ChunkDetails keyed by the chunks X and then Y value within the combined areas.
+---@alias Task_ScanAreasForActionsToComplete_SortedChunksByAxes table<uint, table<uint, Task_ScanAreasForActionsToComplete_ChunkDetails>> # A sorted array of ChunkDetails within the combined areas that is walkable.
 
 ---@class Task_ScanAreasForActionsToComplete_ChunkDetails
 ---@field chunkPosition ChunkPosition
+---@field chunkPositionString string # A string of the chunk position. Used by other tasks making use of this data set.
 ---@field toBeDeconstructedEntityDetails table<uint, Task_ScanAreasForActionsToComplete_EntityDetails> # Keyed by the Id of the entity details. These Id keys list will be very gappy.
 ---@field toBeUpgradedTypes table<string, table<uint, Task_ScanAreasForActionsToComplete_EntityDetails>> # Grouped by the entity item used to upgrade it first and then keyed by the Id of the entity details. These Id keys list will be very gappy.
 ---@field toBeBuiltTypes table<string, table<uint, Task_ScanAreasForActionsToComplete_EntityDetails>> # Grouped by the entity item type used to build it first and then keyed by the Id of the entity details. These Id keys list will be very gappy.
@@ -249,6 +252,19 @@ ScanAreasForActionsToComplete.Progress = function(thisTask, robot)
     end
     taskData._requiredManipulateItems = {}
 
+    -- Make a sorted lookup of the chunksInCombinedAreas lists to be lowest to highest. As they are their created order, which is based on which chunks happened to have different action type activities in each.
+    local sortedChunks = {} ---@type table<uint, table>
+    for _, yValues in pairs(taskData.chunksInCombinedAreas) do
+        local chunks = {} ---@type table<uint, Task_ScanAreasForActionsToComplete_ChunkDetails>
+        for _, chunkDetails in pairs(yValues) do
+            chunks[#chunks + 1--[[@as uint]] ] = chunkDetails
+        end
+        table.sort(chunks, function(a, b) return a.chunkPosition.y < b.chunkPosition.y end)
+        sortedChunks[#sortedChunks + 1--[[@as uint]] ] = chunks
+    end
+    table.sort(sortedChunks, function(a, b) return a[1].chunkPosition.x < b[1].chunkPosition.x end) -- As all the entries within the outer table have the same X value we can just get the first ones X value for sorting.
+    taskData.sortedChunksByAxes = sortedChunks
+
     -- If a robot has reached this far then it has just finished the job, but it will still need to completing it's thinking it started this second.
     thisTask.state = "completed"
 
@@ -312,6 +328,7 @@ ScanAreasForActionsToComplete._ProcessDedupedTableToProcessedTable = function(ta
 
         -- Get the ChunkDetails for this chunk or make it if needed.
         local chunkXValue, chunkYValue = math_floor(entity_position.x / 32)--[[@as uint]] , math_floor(entity_position.y / 32) --[[@as uint]]
+        local chunkPosition = { x = chunkXValue, y = chunkYValue }
         local chunkYList = taskData.chunksInCombinedAreas[chunkXValue]
         if chunkYList == nil then
             -- This X value column of chunks hasn't been recorded yet, so create it.
@@ -323,7 +340,8 @@ ScanAreasForActionsToComplete._ProcessDedupedTableToProcessedTable = function(ta
             -- A chunk for this Y value of the X value hasn't been recorded yet, so create it.
             ---@type Task_ScanAreasForActionsToComplete_ChunkDetails
             chunkDetails = {
-                chunkPosition = { x = chunkXValue, y = chunkYValue },
+                chunkPosition = chunkPosition,
+                chunkPositionString = StringUtils.FormatPositionToString(chunkPosition),
                 toBeDeconstructedEntityDetails = {},
                 toBeUpgradedTypes = {},
                 toBeBuiltTypes = {}

@@ -138,7 +138,6 @@ WalkPath.Progress = function(thisTask, robot, pathToWalk)
     -- Move towards the target node if we're not going the right direction all ready. This is a persistent command until the walking_state is overridden.
     robot.entity.walking_state = { walking = true, direction = walkDirection }
 
-
     ---@type ShowRobotState_NewRobotStateDetails
     local robotStateDetails = { stateText = "Walking the path", level = ShowRobotState.StateLevel.normal }
 
