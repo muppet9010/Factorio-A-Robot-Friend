@@ -12,7 +12,7 @@ local ShowRobotState = require("scripts.common.show-robot-state")
 ---@field surface LuaSurface
 ---@field force LuaForce
 ---@field master LuaPlayer
----@field activeJobs Job_Data[] # Ordered by priority (top first).
+---@field activeJobs Job_Details[] # Ordered by priority (top first).
 ---@field state "active"|"standby"
 ---@field jobBusyUntilTick uint # The tick the robot is busy until on the current job. 0 is not busy. Effectively sleeping the robot from work until then.
 ---@field stateRenderedText? ShowRobotState_RobotStateRenderedText
@@ -72,7 +72,7 @@ end
 
 --- Assigns a job to a robot at the end of its active job list. Doesn't activate any tasks until the robot starts wanting to do the job.
 ---@param robot Robot
----@param job Job_Data
+---@param job Job_Details
 RobotManager.AssignRobotToJob = function(robot, job)
     robot.activeJobs[#robot.activeJobs + 1] = job
 end
@@ -80,7 +80,7 @@ end
 --- Removes a job from a robot's list and tidies up any task state data related to it.
 ---@param jobIndex uint # The order id of the job in the robots active tasks.
 ---@param robot Robot
----@param job Job_Data
+---@param job Job_Details
 RobotManager.RemoveJobFromRobot = function(jobIndex, robot, job)
     MOD.Interfaces.JobManager.RemoveRobotFromJob(robot, job)
     table.remove(robot.activeJobs, jobIndex)
@@ -133,7 +133,7 @@ end
 
 --- Removes a job from a robot's list as the job has been completed and the tasks removed.
 ---@param robot Robot
----@param jobCompleted Job_Data
+---@param jobCompleted Job_Details
 RobotManager.NotifyRobotJobIsCompleted = function(robot, jobCompleted)
     for key, jobInList in pairs(robot.activeJobs) do
         if jobInList == jobCompleted then

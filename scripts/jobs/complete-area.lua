@@ -1,7 +1,7 @@
----@class Job_CompleteArea_Data : Job_Data
----@field jobData Job_CompleteArea_BespokeData
+---@class Job_CompleteArea_Data : Job_Details
+---@field jobData Job_CompleteArea_JobData
 
----@class Job_CompleteArea_BespokeData
+---@class Job_CompleteArea_JobData
 ---@field surface LuaSurface
 ---@field areasToComplete BoundingBox[]
 ---@field force LuaForce

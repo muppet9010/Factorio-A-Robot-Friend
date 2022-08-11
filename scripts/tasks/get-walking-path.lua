@@ -7,15 +7,15 @@
 local Events = require("utility.manager-libraries.events")
 local ShowRobotState = require("scripts.common.show-robot-state")
 
----@class Task_GetWalkingPath_Data : Task_Data
----@field taskData Task_GetWalkingPath_BespokeData
----@field robotsTaskData table<Robot, Task_GetWalkingPath_Robot_BespokeData>
+---@class Task_GetWalkingPath_Data : Task_Details
+---@field taskData Task_GetWalkingPath_TaskData
+---@field robotsTaskData table<Robot, Task_GetWalkingPath_Robot_TaskData>
 
----@class Task_GetWalkingPath_BespokeData
+---@class Task_GetWalkingPath_TaskData
 ---@field endPosition MapPosition
 ---@field surface LuaSurface
 
----@class Task_GetWalkingPath_Robot_BespokeData : Task_Data_Robot
+---@class Task_GetWalkingPath_Robot_TaskData : TaskData_Robot
 ---@field startPosition MapPosition
 ---@field pathRequestId uint
 ---@field pathFound? PathfinderWaypoint[]
@@ -26,7 +26,7 @@ GetWalkingPath.taskName = "GetWalkingPath"
 
 GetWalkingPath._CreateGlobals = function()
     global.Tasks.GetWalkingPath = global.Tasks.GetWalkingPath or {} ---@class Global_Task_GetWalkingPath
-    global.Tasks.GetWalkingPath.pathRequests = global.Tasks.GetWalkingPath.pathRequests or {} ---@type table<uint, Task_GetWalkingPath_Robot_BespokeData> # Keyed by the path request id.
+    global.Tasks.GetWalkingPath.pathRequests = global.Tasks.GetWalkingPath.pathRequests or {} ---@type table<uint, Task_GetWalkingPath_Robot_TaskData> # Keyed by the path request id.
 end
 
 GetWalkingPath._OnLoad = function()
@@ -35,8 +35,8 @@ GetWalkingPath._OnLoad = function()
 end
 
 --- Called ONCE per Task to create the task when the first robot first reaches this task in the job.
----@param job Job_Data # The job related to the lead task in this hierarchy.
----@param parentTask? Task_Data # The parent Task or nil if this is a primary Task of a Job.
+---@param job Job_Details # The job related to the lead task in this hierarchy.
+---@param parentTask? Task_Details # The parent Task or nil if this is a primary Task of a Job.
 ---@param endPosition MapPosition
 ---@param surface LuaSurface
 ---@return Task_GetWalkingPath_Data
@@ -67,7 +67,7 @@ GetWalkingPath.Progress = function(thisTask, robot, startPosition)
         ---@cast startPosition -nil
 
         -- Record robot specific details to this task.
-        robotTaskData = MOD.Interfaces.TaskManager.CreateGenericRobotTaskData(robot, thisTask.currentTaskIndex, thisTask) --[[@as Task_GetWalkingPath_Robot_BespokeData]]
+        robotTaskData = MOD.Interfaces.TaskManager.CreateGenericRobotTaskData(robot, thisTask.currentTaskIndex, thisTask) --[[@as Task_GetWalkingPath_Robot_TaskData]]
         thisTask.robotsTaskData[robot] = robotTaskData
         robotTaskData.startPosition = startPosition
 

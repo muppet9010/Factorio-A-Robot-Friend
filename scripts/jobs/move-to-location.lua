@@ -1,7 +1,7 @@
----@class Job_MoveToLocation_Data : Job_Data
----@field jobData Job_MoveToLocation_BespokeData
+---@class Job_MoveToLocation_Data : Job_Details
+---@field jobData Job_MoveToLocation_JobData
 
----@class Job_MoveToLocation_BespokeData
+---@class Job_MoveToLocation_JobData
 ---@field targetLocation MapPosition
 ---@field surface LuaSurface
 

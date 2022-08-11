@@ -8,10 +8,10 @@
 ]]
 
 
----@class Job_XXXXX_Data : Job_Data
----@field jobData Job_XXXXX_BespokeData
+---@class Job_XXXXX_Data : Job_Details
+---@field jobData Job_XXXXX_JobData
 
----@class Job_XXXXX_BespokeData
+---@class Job_XXXXX_JobData
 
 local XXXXX = {} ---@class Job_XXXXX_Interface : Job_Interface
 XXXXX.jobName = "XXXXX"

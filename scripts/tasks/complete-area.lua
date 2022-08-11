@@ -17,17 +17,17 @@ local ShowRobotState = require("scripts.common.show-robot-state")
 local PositionUtils = require("utility.helper-utils.position-utils")
 local TableUtils = require("utility.helper-utils.table-utils")
 
----@class Task_CompleteArea_Data : Task_Data
----@field taskData Task_CompleteArea_BespokeData
----@field robotsTaskData table<Robot, Task_CompleteArea_Robot_BespokeData>
+---@class Task_CompleteArea_Data : Task_Details
+---@field taskData Task_CompleteArea_TaskData
+---@field robotsTaskData table<Robot, Task_CompleteArea_Robot_TaskData>
 
----@class Task_CompleteArea_BespokeData
+---@class Task_CompleteArea_TaskData
 ---@field surface LuaSurface
 ---@field areasToComplete BoundingBox[]
 ---@field force LuaForce
----@field scannedAreaData? Task_ScanAreasForActionsToComplete_BespokeData
+---@field scannedAreaData? Task_ScanAreasForActionsToComplete_TaskData
 
----@class Task_CompleteArea_Robot_BespokeData : Task_Data_Robot
+---@class Task_CompleteArea_Robot_TaskData : TaskData_Robot
 ---@field state "active"|"completed"
 
 local CompleteArea = {} ---@class Task_CompleteArea_Interface : Task_Interface
@@ -38,8 +38,8 @@ CompleteArea._OnLoad = function()
 end
 
 --- Called ONCE per Task to create the task when the first robot first reaches this task in the job.
----@param job Job_Data # The job related to the lead task in this hierarchy.
----@param parentTask? Task_Data # The parent Task or nil if this is a primary Task of a Job.
+---@param job Job_Details # The job related to the lead task in this hierarchy.
+---@param parentTask? Task_Details # The parent Task or nil if this is a primary Task of a Job.
 ---@param surface LuaSurface
 ---@param areasToComplete BoundingBox[]
 ---@param force LuaForce
@@ -76,7 +76,7 @@ CompleteArea.Progress = function(thisTask, robot)
     local robotTaskData = thisTask.robotsTaskData[robot]
     if robotTaskData == nil then
         -- Record robot specific details to this task.
-        robotTaskData = MOD.Interfaces.TaskManager.CreateGenericRobotTaskData(robot, thisTask.currentTaskIndex, thisTask) --[[@as Task_CompleteArea_Robot_BespokeData]]
+        robotTaskData = MOD.Interfaces.TaskManager.CreateGenericRobotTaskData(robot, thisTask.currentTaskIndex, thisTask) --[[@as Task_CompleteArea_Robot_TaskData]]
         thisTask.robotsTaskData[robot] = robotTaskData
     end
 
@@ -138,9 +138,9 @@ CompleteArea._FindStartingChunk = function(chunksInCombinedAreas)
     local shortestDistance, nearestChunk, thisDistance, thisChunkDetails
     local spawnChunkPos = { x = 0, y = 0 }
     for _, xValue in pairs({ chunksInCombinedAreas.minXValue, chunksInCombinedAreas.maxXValue }) do
-        local xChunkDetails = chunksInCombinedAreas.xChunks[xValue]
-        for _, yValue in pairs({ xChunkDetails.minYValue, xChunkDetails.maxYValue }) do
-            thisChunkDetails = xChunkDetails.yChunks[yValue]
+        local chunkXObject = chunksInCombinedAreas.xChunks[xValue]
+        for _, yValue in pairs({ chunkXObject.minYValue, chunkXObject.maxYValue }) do
+            thisChunkDetails = chunkXObject.yChunks[yValue]
             thisDistance = PositionUtils.GetDistance(thisChunkDetails.chunkPosition, spawnChunkPos)
             if shortestDistance == nil or thisDistance < shortestDistance then
                 shortestDistance = thisDistance

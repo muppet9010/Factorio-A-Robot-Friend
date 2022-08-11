@@ -6,13 +6,13 @@
 
 local ShowRobotState = require("scripts.common.show-robot-state")
 
----@class Task_WalkPath_Data : Task_Data
----@field taskData Task_WalkPath_BespokeData
----@field robotsTaskData table<Robot, Task_WalkPath_Robot_BespokeData>
+---@class Task_WalkPath_Data : Task_Details
+---@field taskData Task_WalkPath_TaskData
+---@field robotsTaskData table<Robot, Task_WalkPath_Robot_TaskData>
 
----@class Task_WalkPath_BespokeData
+---@class Task_WalkPath_TaskData
 
----@class Task_WalkPath_Robot_BespokeData : Task_Data_Robot
+---@class Task_WalkPath_Robot_TaskData : TaskData_Robot
 ---@field pathToWalk PathfinderWaypoint[]
 ---@field nodeTarget uint
 ---@field positionLastTick? MapPosition
@@ -26,8 +26,8 @@ WalkPath._OnLoad = function()
 end
 
 --- Called ONCE per Task to create the task when the first robot first reaches this task in the job.
----@param job Job_Data # The job related to the lead task in this hierarchy.
----@param parentTask? Task_Data # The parent Task or nil if this is a primary Task of a Job.
+---@param job Job_Details # The job related to the lead task in this hierarchy.
+---@param parentTask? Task_Details # The parent Task or nil if this is a primary Task of a Job.
 ---@return Task_WalkPath_Data
 WalkPath.ActivateTask = function(job, parentTask)
     local thisTask = MOD.Interfaces.TaskManager.CreateGenericTask(WalkPath.taskName, job, parentTask) ---@cast thisTask Task_WalkPath_Data
@@ -49,7 +49,7 @@ WalkPath.Progress = function(thisTask, robot, pathToWalk)
         ---@cast pathToWalk -nil
 
         -- Record robot specific details to this task.
-        robotTaskData = MOD.Interfaces.TaskManager.CreateGenericRobotTaskData(robot, thisTask.currentTaskIndex, thisTask) --[[@as Task_WalkPath_Robot_BespokeData]]
+        robotTaskData = MOD.Interfaces.TaskManager.CreateGenericRobotTaskData(robot, thisTask.currentTaskIndex, thisTask) --[[@as Task_WalkPath_Robot_TaskData]]
         thisTask.robotsTaskData[robot] = robotTaskData
         robotTaskData.pathToWalk = pathToWalk
         robotTaskData.nodeTarget = 1

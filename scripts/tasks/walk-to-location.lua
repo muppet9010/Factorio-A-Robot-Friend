@@ -7,15 +7,15 @@
 local LoggingUtils = require("utility.helper-utils.logging-utils")
 local ShowRobotState = require("scripts.common.show-robot-state")
 
----@class Task_WalkToLocation_Data : Task_Data
----@field taskData Task_WalkToLocation_BespokeData
----@field robotsTaskData table<Robot, Task_WalkToLocation_Robot_BespokeData>
+---@class Task_WalkToLocation_Data : Task_Details
+---@field taskData Task_WalkToLocation_TaskData
+---@field robotsTaskData table<Robot, Task_WalkToLocation_Robot_TaskData>
 
----@class Task_WalkToLocation_BespokeData
+---@class Task_WalkToLocation_TaskData
 ---@field targetLocation MapPosition
 ---@field surface LuaSurface
 
----@class Task_WalkToLocation_Robot_BespokeData : Task_Data_Robot
+---@class Task_WalkToLocation_Robot_TaskData : TaskData_Robot
 ---@field pathToWalk? PathfinderWaypoint[]
 ---@field pathToWalkDebugRenderIds? uint64[]
 ---@field state "active"|"completed"|"noPath"
@@ -28,8 +28,8 @@ WalkToLocation._OnLoad = function()
 end
 
 --- Called ONCE per Task to create the task when the first robot first reaches this task in the job.
----@param job Job_Data # The job related to the lead task in this hierarchy.
----@param parentTask? Task_Data # The parent Task or nil if this is a primary Task of a Job.
+---@param job Job_Details # The job related to the lead task in this hierarchy.
+---@param parentTask? Task_Details # The parent Task or nil if this is a primary Task of a Job.
 ---@param targetLocation MapPosition
 ---@param surface LuaSurface
 ---@return Task_WalkToLocation_Data
@@ -65,7 +65,7 @@ WalkToLocation.Progress = function(thisTask, robot)
     local robotTaskData = thisTask.robotsTaskData[robot]
     if robotTaskData == nil then
         -- Record robot specific details to this task.
-        robotTaskData = MOD.Interfaces.TaskManager.CreateGenericRobotTaskData(robot, thisTask.currentTaskIndex, thisTask) --[[@as Task_WalkToLocation_Robot_BespokeData]]
+        robotTaskData = MOD.Interfaces.TaskManager.CreateGenericRobotTaskData(robot, thisTask.currentTaskIndex, thisTask) --[[@as Task_WalkToLocation_Robot_TaskData]]
         thisTask.robotsTaskData[robot] = robotTaskData
 
         -- Call the first task Progress() and return its wait.

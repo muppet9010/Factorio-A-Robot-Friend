@@ -13,12 +13,13 @@
 
 local ShowRobotState = require("scripts.common.show-robot-state")
 local StringUtils = require("utility.helper-utils.string-utils")
+local MathUtils = require("utility.helper-utils.math-utils")
 local math_floor = math.floor
 
----@class Task_ScanAreasForActionsToComplete_Data : Task_Data
----@field taskData Task_ScanAreasForActionsToComplete_BespokeData
+---@class Task_ScanAreasForActionsToComplete_Data : Task_Details
+---@field taskData Task_ScanAreasForActionsToComplete_TaskData
 
----@class Task_ScanAreasForActionsToComplete_BespokeData
+---@class Task_ScanAreasForActionsToComplete_TaskData
 ---@field surface LuaSurface
 ---@field areasToComplete BoundingBox[]
 ---@field force LuaForce
@@ -49,14 +50,15 @@ local math_floor = math.floor
 ---@alias Task_ScanAreasForActionsToComplete_EntitiesDeduped table<uint|string, LuaEntity> @ A single table of all the raw entities (deduped) across all areas needing to be handled for their specific action type. Keyed by the entities unit_number or its name and position as a string.
 
 ---@class Task_ScanAreasForActionsToComplete_ChunksInCombinedAreas # Is effectively the XChunks class, as no parent object with extra meta data is needed.
----@field minXValue int
----@field maxXValue int
----@field xChunks table<int, Task_ScanAreasForActionsToComplete_ChunksInCombinedAreas_YChunks> # A table of X values that have included chunks within them. This can be a gappy list.
---table<uint, table<uint, Task_ScanAreasForActionsToComplete_ChunkDetails>> # A table of ChunkDetails keyed by the chunks X and then Y value within the combined areas.
+---@field minXValue int # The lowest X chunk position value in the xChunks table.
+---@field maxXValue int # The highest X chunk position value in the xChunks table.
+---@field minYValueAcrossAllXValues int # The lowest Y chunk position value across all of the X chunk tables. Just to save iterating them all each time to find it.
+---@field maxYValueAcrossAllXValues int # The highest Y chunk position value across all of the X chunk tables. Just to save iterating them all each time to find it.
+---@field xChunks table<int, Task_ScanAreasForActionsToComplete_ChunksInCombinedAreas_XChunkObject> # A table of X values that have included chunks within them. This can be a gappy list.
 
----@class Task_ScanAreasForActionsToComplete_ChunksInCombinedAreas_YChunks
----@field minYValue int
----@field maxYValue int
+---@class Task_ScanAreasForActionsToComplete_ChunksInCombinedAreas_XChunkObject
+---@field minYValue int # The lowest Y chunk position value in the yChunks table.
+---@field maxYValue int # The highest Y chunk position value in the yChunks table.
 ---@field yChunks table<int, Task_ScanAreasForActionsToComplete_ChunkDetails>  # A table of Y values that have included chunks within them. This can be a gappy list.
 
 ---@class Task_ScanAreasForActionsToComplete_ChunkDetails
@@ -97,8 +99,8 @@ ScanAreasForActionsToComplete._OnLoad = function()
 end
 
 --- Called ONCE per Task to create the task when the first robot first reaches this task in the job.
----@param job Job_Data # The job related to the lead task in this hierarchy.
----@param parentTask? Task_Data # The parent Task or nil if this is a primary Task of a Job.
+---@param job Job_Details # The job related to the lead task in this hierarchy.
+---@param parentTask? Task_Details # The parent Task or nil if this is a primary Task of a Job.
 ---@param surface LuaSurface
 ---@param areasToComplete BoundingBox[]
 ---@param force LuaForce
@@ -132,8 +134,10 @@ ScanAreasForActionsToComplete.ActivateTask = function(job, parentTask, surface, 
         guaranteedOutputItems = {},
         chunksInCombinedAreas = {
             xChunks = {},
-            minXValue = nil,
-            maxXValue = nil
+            minXValue = MathUtils.intMax, -- Start at highest possible value so first new value is always lower.
+            maxXValue = MathUtils.intMin, -- Start at lowest possible value so first new value is always higher.
+            minYValueAcrossAllXValues = MathUtils.intMax, -- Start at highest possible value so first new value is always lower.
+            maxYValueAcrossAllXValues = MathUtils.intMin -- Start at lowest possible value so first new value is always higher.
         }
     }
 
@@ -300,7 +304,7 @@ ScanAreasForActionsToComplete._DedupeRawTableToDedupedTable = function(rawTable,
 end
 
 --- Process some of a table of deduped results TaskData in to a the final TaskData table.
----@param taskData Task_ScanAreasForActionsToComplete_BespokeData
+---@param taskData Task_ScanAreasForActionsToComplete_TaskData
 ---@param actionType Task_ScanAreasForActionsToComplete_ActionType
 ---@param entitiesHandled uint # How many entities this robot has already handled.
 ---@return uint entitiesHandled
@@ -330,14 +334,14 @@ ScanAreasForActionsToComplete._ProcessDedupedTableToProcessedTable = function(ta
             -- This X value column of chunks hasn't been recorded yet, so create it.
             taskData.chunksInCombinedAreas.xChunks[chunkXValue] = {
                 yChunks = {},
-                minYValue = nil,
-                maxYValue = nil
+                minYValue = MathUtils.intMax, -- Start at highest possible value so first new value is always lower.
+                maxYValue = MathUtils.intMin -- Start at lowest possible value so first new value is always higher.
             }
             chunkXObject = taskData.chunksInCombinedAreas.xChunks[chunkXValue]
-            if taskData.chunksInCombinedAreas.minXValue == nil or taskData.chunksInCombinedAreas.minXValue > chunkXValue then
+            if taskData.chunksInCombinedAreas.minXValue > chunkXValue then
                 taskData.chunksInCombinedAreas.minXValue = chunkXValue
             end
-            if taskData.chunksInCombinedAreas.maxXValue == nil or taskData.chunksInCombinedAreas.maxXValue < chunkXValue then
+            if taskData.chunksInCombinedAreas.maxXValue < chunkXValue then
                 taskData.chunksInCombinedAreas.maxXValue = chunkXValue
             end
         end
@@ -352,11 +356,17 @@ ScanAreasForActionsToComplete._ProcessDedupedTableToProcessedTable = function(ta
                 toBeBuiltTypes = {}
             }
             chunkDetails = chunkXObject.yChunks[chunkYValue]
-            if chunkXObject.minYValue == nil or chunkXObject.minYValue > chunkYValue then
+            if chunkXObject.minYValue > chunkYValue then
                 chunkXObject.minYValue = chunkYValue
+                if taskData.chunksInCombinedAreas.minYValueAcrossAllXValues > chunkYValue then
+                    taskData.chunksInCombinedAreas.minYValueAcrossAllXValues = chunkYValue
+                end
             end
-            if chunkXObject.maxYValue == nil or chunkXObject.maxYValue < chunkYValue then
+            if chunkXObject.maxYValue < chunkYValue then
                 chunkXObject.maxYValue = chunkYValue
+                if taskData.chunksInCombinedAreas.maxYValueAcrossAllXValues < chunkYValue then
+                    taskData.chunksInCombinedAreas.maxYValueAcrossAllXValues = chunkYValue
+                end
             end
         end
 
