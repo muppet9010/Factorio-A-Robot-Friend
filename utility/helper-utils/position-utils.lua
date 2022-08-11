@@ -361,8 +361,8 @@ PositionUtils.CalculateTilesUnderPositionedBoundingBox = function(positionedBoun
 end
 
 -- Gets the distance between the 2 positions.
----@param pos1 MapPosition
----@param pos2 MapPosition
+---@param pos1 MapPosition|ChunkPosition
+---@param pos2 MapPosition|ChunkPosition
 ---@return double # is inherently a positive number.
 PositionUtils.GetDistance = function(pos1, pos2)
     return (((pos1.x - pos2.x) ^ 2) + ((pos1.y - pos2.y) ^ 2)) ^ 0.5

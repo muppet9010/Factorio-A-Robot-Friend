@@ -18,7 +18,6 @@ local ShowRobotState = require("scripts.common.show-robot-state")
 ---@class Task_XXXXX_BespokeData
 
 ---@class Task_XXXXX_Robot_BespokeData : Task_Data_Robot
----@field state "active"|"completed"
 
 local XXXXX = {} ---@class Task_XXXXX_Interface : Task_Interface
 XXXXX.taskName = "XXXXX"

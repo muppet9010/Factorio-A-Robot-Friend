@@ -14,6 +14,8 @@
 ]]
 
 local ShowRobotState = require("scripts.common.show-robot-state")
+local PositionUtils = require("utility.helper-utils.position-utils")
+local TableUtils = require("utility.helper-utils.table-utils")
 
 ---@class Task_CompleteArea_Data : Task_Data
 ---@field taskData Task_CompleteArea_BespokeData
@@ -97,7 +99,7 @@ CompleteArea.Progress = function(thisTask, robot)
         -- If this is first time looking at deconstructing some entities then activate the Task.
         if thisTask.plannedTasks[thisTask.currentTaskIndex] == nil then
             local startingChunkPosition = CompleteArea._FindStartingChunk(taskData.scannedAreaData.sortedChunksByAxes)
-            thisTask.plannedTasks[thisTask.currentTaskIndex] = MOD.Interfaces.Tasks.DeconstructEntitiesInChunkDetails.ActivateTask(thisTask.job, thisTask, taskData.surface, taskData.scannedAreaData.chunksInCombinedAreas, taskData.scannedAreaData.entitiesToBeDeconstructed, startingChunkPosition)
+            thisTask.plannedTasks[thisTask.currentTaskIndex] = MOD.Interfaces.Tasks.DeconstructEntitiesInChunkDetails.ActivateTask(thisTask.job, thisTask, taskData.surface, taskData.scannedAreaData.chunksInCombinedAreas, taskData.scannedAreaData.entitiesToBeDeconstructed, startingChunkPosition, TableUtils.DeepCopy(taskData.scannedAreaData.sortedChunksByAxes))
         end
 
         -- Progress the data for each robot.
@@ -126,11 +128,26 @@ end
 ---@param sortedChunksByAxes Task_ScanAreasForActionsToComplete_SortedChunksByAxes
 ---@return ChunkPosition StartingChunk
 CompleteArea._FindStartingChunk = function(sortedChunksByAxes)
-    -- For now just start in the chunk nearest spawn (0,0). There is a future entry to make this smart.
-    --- TODO: UP TO HERE
-    --if sortedChunksByAxes
-    local startingChunkPosition = sortedChunksByAxes
-    return startingChunkPosition
+    -- For now just start in the chunk nearest spawn (0,0). There is a future entry to make this smart. We check all of the outer chunks for this as we don't want to start in the middle
+    ---@type double, Task_ScanAreasForActionsToComplete_ChunkDetails, double, Task_ScanAreasForActionsToComplete_ChunkDetails
+    local shortestDistance, nearestChunk, thisDistance, thisChunkDetails
+    local spawnChunkPos = { x = 0, y = 0 }
+    for _, chunksY in pairs(sortedChunksByAxes) do
+        thisChunkDetails = chunksY[1] ---@type Task_ScanAreasForActionsToComplete_ChunkDetails # Needed to stop Sumneko getting confused when broken code is used elsewhere.
+        thisDistance = PositionUtils.GetDistance(thisChunkDetails.chunkPosition, spawnChunkPos)
+        if shortestDistance == nil or thisDistance < shortestDistance then
+            shortestDistance = thisDistance
+            nearestChunk = thisChunkDetails
+        end
+        thisChunkDetails = chunksY[#chunksY] ---@type Task_ScanAreasForActionsToComplete_ChunkDetails # Needed to stop Sumneko getting confused when broken code is used elsewhere.
+        thisDistance = PositionUtils.GetDistance(thisChunkDetails.chunkPosition, spawnChunkPos)
+        if shortestDistance == nil or thisDistance < shortestDistance then
+            shortestDistance = thisDistance
+            nearestChunk = thisChunkDetails
+        end
+    end
+
+    return nearestChunk.chunkPosition
 end
 
 --- Called when a specific robot is being removed from a task.

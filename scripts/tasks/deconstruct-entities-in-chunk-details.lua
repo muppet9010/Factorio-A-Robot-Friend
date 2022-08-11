@@ -12,10 +12,12 @@ local ShowRobotState = require("scripts.common.show-robot-state")
 ---@class Task_DeconstructEntitiesInChunkDetails_BespokeData
 ---@field surface LuaSurface
 ---@field chunkDetailsByAxis Task_ScanAreasForActionsToComplete_ChunksInCombinedAreas
----@field entitiesToBeDeconstructed table<uint, Task_ScanAreasForActionsToComplete_EntityDetails>
+---@field entitiesToBeDeconstructed table<uint, Task_ScanAreasForActionsToComplete_EntityDetails> # The main list of entities to be deconstructed that is used by things outside of this task. So remove entries from it as we do them.
+---@field startingChunkPosition ChunkPosition
+---@field sortedDeconstructionChunksList Task_ScanAreasForActionsToComplete_SortedChunksByAxes # A list we can empty as the deconstruction task is processed.
 
 ---@class Task_DeconstructEntitiesInChunkDetails_Robot_BespokeData : Task_Data_Robot
----@field state "active"|"completed"
+---@field assignedChunk Task_ScanAreasForActionsToComplete_ChunkDetails
 
 local DeconstructEntitiesInChunkDetails = {} ---@class Task_DeconstructEntitiesInChunkDetails_Interface : Task_Interface
 DeconstructEntitiesInChunkDetails.taskName = "DeconstructEntitiesInChunkDetails"
@@ -31,8 +33,9 @@ end
 ---@param chunkDetailsByAxis Task_ScanAreasForActionsToComplete_ChunksInCombinedAreas
 ---@param startingChunkPosition ChunkPosition
 ---@param entitiesToBeDeconstructed table<uint, Task_ScanAreasForActionsToComplete_EntityDetails>
+---@param sortedDeconstructionChunksList Task_ScanAreasForActionsToComplete_SortedChunksByAxes # A list we can empty as the deconstruction task is processed.
 ---@return Task_DeconstructEntitiesInChunkDetails_Data
-DeconstructEntitiesInChunkDetails.ActivateTask = function(job, parentTask, surface, chunkDetailsByAxis, entitiesToBeDeconstructed, startingChunkPosition)
+DeconstructEntitiesInChunkDetails.ActivateTask = function(job, parentTask, surface, chunkDetailsByAxis, entitiesToBeDeconstructed, startingChunkPosition, sortedDeconstructionChunksList)
     local thisTask = MOD.Interfaces.TaskManager.CreateGenericTask(DeconstructEntitiesInChunkDetails.taskName, job, parentTask) ---@cast thisTask Task_DeconstructEntitiesInChunkDetails_Data
 
     -- Store the task wide data.
@@ -40,7 +43,8 @@ DeconstructEntitiesInChunkDetails.ActivateTask = function(job, parentTask, surfa
         surface = surface,
         chunkDetailsByAxis = chunkDetailsByAxis,
         entitiesToBeDeconstructed = entitiesToBeDeconstructed,
-        startingChunkPosition = startingChunkPosition
+        startingChunkPosition = startingChunkPosition,
+        sortedDeconstructionChunksList = sortedDeconstructionChunksList
     }
 
     return thisTask
@@ -62,9 +66,16 @@ DeconstructEntitiesInChunkDetails.Progress = function(thisTask, robot)
         thisTask.robotsTaskData[robot] = robotTaskData
     end
 
-    -- TODO: if the robot doesn't have a chunk to work on assign it one. If it had one before find it one near by, otherwise find it one nearest the startingChunk.
+    -- If the robot doesn't have a chunk to work on or the chunk has nothing left to deconstruct assign it one. If it had one before find it one near by, otherwise find it one nearest the startingChunk.
+    if robotTaskData.assignedChunk == nil or #robotTaskData.assignedChunk.toBeDeconstructedEntityDetails == 0 then
+        local startSearchingChunkPosition = robotTaskData.assignedChunk and robotTaskData.assignedChunk.chunkPosition or taskData.startingChunkPosition
+
+        --TODO UP TO HERE
+    end
 
     -- TODO: if the robot has a chunk to work on continue processing it
+
+    -- TODO: if the robot has completed everything on this chunk then mark the chunk as done for deconstruction
 
     ---@type uint,ShowRobotState_NewRobotStateDetails
     local ticksToWait, robotStateDetails = 0, { stateText = "Some state text", level = ShowRobotState.StateLevel.normal }
