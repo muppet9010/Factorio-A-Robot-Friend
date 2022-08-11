@@ -111,7 +111,7 @@ WalkToLocation.Progress = function(thisTask, robot)
                 return 0, robotStateDetails
             end
 
-            -- Record the path ready for the robot to call progress in future ticks and utilise the result.
+            -- Record the path for the robot to use in future calls of Progress().
             robotTaskData.pathToWalk = getWalkingPathTask_robotTaskData.pathFound
 
             -- Draw the path in the game as a one off if the debug setting is enabled.

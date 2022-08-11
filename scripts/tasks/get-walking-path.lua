@@ -71,30 +71,14 @@ GetWalkingPath.Progress = function(thisTask, robot, startPosition)
         thisTask.robotsTaskData[robot] = robotTaskData
         robotTaskData.startPosition = startPosition
 
-        --[[
-        FUTURE: should play around with these values and see what impact they have.
-        Need to check pathfinder going through dense and difficult areas, not just simple open and blocky areas.
-
-        path_resolution_modifier values:
-            - -1 and below is bad as it can sometimes get stuck on things as it would path in 2-3 tile jumps, so I think 0 is a better start.
-            - 0 is right for simple areas as this seems to be whole tiles, but it fails on close buildings (like biters do).
-            - 2 can't do furnace staggered walls, as can't find the gaps in them, so not much better over 0 really.
-            - 3 gets between close buildings (staggered furnace wall), but is very jagged, so would need either the path or movement control smoothing to try and remove the jittery-ness.
-
-        with `prefer_straight_paths` enabled it removes the jitter in the path, but tends to have odd detours even if the distance covered is the same (looks odd).
-
-        The highest path_resolution_modifier gives best results, but takes ages to calculate. So ideally want something quick initially and then detect any big detours and re-do that bit of the path with a detailed one (with possible smoothing still).
-
-        This really needs a whole series of test setups and recording the different routes through.
-    ]]
         -- Left as detailed with jittery movement, but able to find tight paths for now.
         local pathRequestId = taskData.surface.request_path({
             bounding_box = robot.entity.prototype.collision_box, -- Could be cached, but actually called very rarely, so no real benefit.
-            collision_mask = robot.entity.prototype.collision_mask, -- Could be cached, but actually called very rarely, so no real benefit. FUTURE: May be some of these options we want as non default?
+            collision_mask = robot.entity.prototype.collision_mask, -- Could be cached, but actually called very rarely, so no real benefit.
             start = startPosition,
             goal = taskData.endPosition,
             force = robot.force,
-            radius = 0.0, -- FUTURE: this probably wants to be higher to allow us just getting close enough for what we want to do. Maybe it should be specified as part of when the parent task calls in. With a default of close like this. When it was at a value of 1.0 the pathfinder would sometimes suggest pathing in to a blocking entity right next to the target location and mining it. At 0 while it requires the target position to be reachable, it does avoid this oddity.
+            radius = 0.0, -- Stops it pathing to where we have to mine something to reach. As we only pass in valid standing locations to try and path too currently.
             can_open_gates = true,
             entity_to_ignore = robot.entity, -- has to be the entity itself as otherwise it blocks its own path request.
             pathfind_flags = {

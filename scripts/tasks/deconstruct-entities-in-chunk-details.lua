@@ -1,6 +1,9 @@
 --[[
     Manages robots deconstructing the entities in a ChunkDetails list. Takes the output of ScanAreasForActionsToComplete and updates it as it progresses it.
-    Only 1 robot will be assigned to a chunk at a time.
+    Basic logic is being used for now:
+        - Have only 1 robot assigned to a single chunk at a time.
+        - The robot will do everything it can within that chunk before moving on.
+        - Next chunk will be the nearest one that it can do something for, while favouring chunks on the edge of the combined areas if 2 are found at same chunk distance.
 ]]
 
 local ShowRobotState = require("scripts.common.show-robot-state")
@@ -14,7 +17,6 @@ local ShowRobotState = require("scripts.common.show-robot-state")
 ---@field chunkDetailsByAxis Task_ScanAreasForActionsToComplete_ChunksInCombinedAreas
 ---@field entitiesToBeDeconstructed table<uint, Task_ScanAreasForActionsToComplete_EntityDetails> # The main list of entities to be deconstructed that is used by things outside of this task. So remove entries from it as we do them.
 ---@field startingChunkPosition ChunkPosition
----@field sortedDeconstructionChunksList Task_ScanAreasForActionsToComplete_SortedChunksByAxes # A list we can empty as the deconstruction task is processed.
 
 ---@class Task_DeconstructEntitiesInChunkDetails_Robot_BespokeData : Task_Data_Robot
 ---@field assignedChunk Task_ScanAreasForActionsToComplete_ChunkDetails
@@ -33,9 +35,8 @@ end
 ---@param chunkDetailsByAxis Task_ScanAreasForActionsToComplete_ChunksInCombinedAreas
 ---@param startingChunkPosition ChunkPosition
 ---@param entitiesToBeDeconstructed table<uint, Task_ScanAreasForActionsToComplete_EntityDetails>
----@param sortedDeconstructionChunksList Task_ScanAreasForActionsToComplete_SortedChunksByAxes # A list we can empty as the deconstruction task is processed.
 ---@return Task_DeconstructEntitiesInChunkDetails_Data
-DeconstructEntitiesInChunkDetails.ActivateTask = function(job, parentTask, surface, chunkDetailsByAxis, entitiesToBeDeconstructed, startingChunkPosition, sortedDeconstructionChunksList)
+DeconstructEntitiesInChunkDetails.ActivateTask = function(job, parentTask, surface, chunkDetailsByAxis, entitiesToBeDeconstructed, startingChunkPosition)
     local thisTask = MOD.Interfaces.TaskManager.CreateGenericTask(DeconstructEntitiesInChunkDetails.taskName, job, parentTask) ---@cast thisTask Task_DeconstructEntitiesInChunkDetails_Data
 
     -- Store the task wide data.
@@ -43,8 +44,7 @@ DeconstructEntitiesInChunkDetails.ActivateTask = function(job, parentTask, surfa
         surface = surface,
         chunkDetailsByAxis = chunkDetailsByAxis,
         entitiesToBeDeconstructed = entitiesToBeDeconstructed,
-        startingChunkPosition = startingChunkPosition,
-        sortedDeconstructionChunksList = sortedDeconstructionChunksList
+        startingChunkPosition = startingChunkPosition
     }
 
     return thisTask

@@ -72,7 +72,6 @@ CompleteArea.Progress = function(thisTask, robot)
         thisTask.currentTaskIndex = 1
     end
 
-    -- TEMPLATE: If there's robot specific data or child tasks.
     -- Handle if this is the first Progress() for a specific robot.
     local robotTaskData = thisTask.robotsTaskData[robot]
     if robotTaskData == nil then
@@ -90,6 +89,11 @@ CompleteArea.Progress = function(thisTask, robot)
             thisTask.currentTaskIndex = thisTask.currentTaskIndex + 1
         end
 
+        -- Update all robots as they are now at a minimum of 2.
+        for _, robotTaskData in pairs(thisTask.robotsTaskData) do
+            robotTaskData.currentTaskIndex = thisTask.currentTaskIndex
+        end
+
         --We always return on the robot that did some progression on this. The next robot cycle will the next step fresh.
         return ticksToWait, robotStateDetails
     end
@@ -98,8 +102,8 @@ CompleteArea.Progress = function(thisTask, robot)
     if #taskData.scannedAreaData.entitiesToBeDeconstructed > 0 then
         -- If this is first time looking at deconstructing some entities then activate the Task.
         if thisTask.plannedTasks[thisTask.currentTaskIndex] == nil then
-            local startingChunkPosition = CompleteArea._FindStartingChunk(taskData.scannedAreaData.sortedChunksByAxes)
-            thisTask.plannedTasks[thisTask.currentTaskIndex] = MOD.Interfaces.Tasks.DeconstructEntitiesInChunkDetails.ActivateTask(thisTask.job, thisTask, taskData.surface, taskData.scannedAreaData.chunksInCombinedAreas, taskData.scannedAreaData.entitiesToBeDeconstructed, startingChunkPosition, TableUtils.DeepCopy(taskData.scannedAreaData.sortedChunksByAxes))
+            local startingChunkPosition = CompleteArea._FindStartingChunk(taskData.scannedAreaData.chunksInCombinedAreas)
+            thisTask.plannedTasks[thisTask.currentTaskIndex] = MOD.Interfaces.Tasks.DeconstructEntitiesInChunkDetails.ActivateTask(thisTask.job, thisTask, taskData.surface, taskData.scannedAreaData.chunksInCombinedAreas, taskData.scannedAreaData.entitiesToBeDeconstructed, startingChunkPosition)
         end
 
         -- Progress the data for each robot.
@@ -107,6 +111,7 @@ CompleteArea.Progress = function(thisTask, robot)
         local ticksToWait, robotStateDetails = MOD.Interfaces.Tasks.DeconstructEntitiesInChunkDetails.Progress(task_DeconstructEntitiesInChunkDetails_Data, robot)
         if task_DeconstructEntitiesInChunkDetails_Data.state == "completed" then
             --TODO: anything needs doing as the list will be empty and thus # will be 0.
+            -- Expect to need to push on all robots current task index as well as the jobs.
         end
 
         --We always return on the robot that did some progression on this. The next robot cycle will the next step fresh.
@@ -125,25 +130,22 @@ CompleteArea.Progress = function(thisTask, robot)
 end
 
 --- Find the best starting chunk for the job.
----@param sortedChunksByAxes Task_ScanAreasForActionsToComplete_SortedChunksByAxes
+---@param chunksInCombinedAreas Task_ScanAreasForActionsToComplete_ChunksInCombinedAreas
 ---@return ChunkPosition StartingChunk
-CompleteArea._FindStartingChunk = function(sortedChunksByAxes)
-    -- For now just start in the chunk nearest spawn (0,0). There is a future entry to make this smart. We check all of the outer chunks for this as we don't want to start in the middle
+CompleteArea._FindStartingChunk = function(chunksInCombinedAreas)
+    -- For now just start in an outer "corner" chunk nearest spawn (0,0).
     ---@type double, Task_ScanAreasForActionsToComplete_ChunkDetails, double, Task_ScanAreasForActionsToComplete_ChunkDetails
     local shortestDistance, nearestChunk, thisDistance, thisChunkDetails
     local spawnChunkPos = { x = 0, y = 0 }
-    for _, chunksY in pairs(sortedChunksByAxes) do
-        thisChunkDetails = chunksY[1] ---@type Task_ScanAreasForActionsToComplete_ChunkDetails # Needed to stop Sumneko getting confused when broken code is used elsewhere.
-        thisDistance = PositionUtils.GetDistance(thisChunkDetails.chunkPosition, spawnChunkPos)
-        if shortestDistance == nil or thisDistance < shortestDistance then
-            shortestDistance = thisDistance
-            nearestChunk = thisChunkDetails
-        end
-        thisChunkDetails = chunksY[#chunksY] ---@type Task_ScanAreasForActionsToComplete_ChunkDetails # Needed to stop Sumneko getting confused when broken code is used elsewhere.
-        thisDistance = PositionUtils.GetDistance(thisChunkDetails.chunkPosition, spawnChunkPos)
-        if shortestDistance == nil or thisDistance < shortestDistance then
-            shortestDistance = thisDistance
-            nearestChunk = thisChunkDetails
+    for _, xValue in pairs({ chunksInCombinedAreas.minXValue, chunksInCombinedAreas.maxXValue }) do
+        local xChunkDetails = chunksInCombinedAreas.xChunks[xValue]
+        for _, yValue in pairs({ xChunkDetails.minYValue, xChunkDetails.maxYValue }) do
+            thisChunkDetails = xChunkDetails.yChunks[yValue]
+            thisDistance = PositionUtils.GetDistance(thisChunkDetails.chunkPosition, spawnChunkPos)
+            if shortestDistance == nil or thisDistance < shortestDistance then
+                shortestDistance = thisDistance
+                nearestChunk = thisChunkDetails
+            end
         end
     end
 

@@ -8,8 +8,6 @@
         - ghosts to build: any ghosts on the robots force.
 
     All robots are processed within this task as a collective. With each robot contributing some anonymised processing of the combined workload.
-
-    FUTURE: this doesn't handle if things change during the looping anywhere. As an upgrade found during initial scan could be found missing at any later point where its data is accessed.
 ]]
 
 
@@ -45,14 +43,21 @@ local math_floor = math.floor
 ---@field requiredInputItems table<string, uint> @ Item name to count of items needed as input to build and upgrade. Includes at least 1 of each item that needs manipulating as you need an item to do the manipulation, even though its item neutral.
 ---@field guaranteedOutputItems table<string, uint> @ Item name to count of items we are guaranteed to get. This ignores things in chests, machines, etc, as they are only known once they entities have been mined.
 ---
----@field chunksInCombinedAreas Task_ScanAreasForActionsToComplete_ChunksInCombinedAreas # A table of the chunk X values to chunk Y values to chunk details. A way to allow us to lookup the chunks and map out the connected chunks.
----@field sortedChunksByAxes Task_ScanAreasForActionsToComplete_SortedChunksByAxes # A sorted array of lowest chunk X value and lowest chunk Y values to chunk details. A way to allow us to "iterate" the chunks on a given axis and to easily find the limits of the axis values.
+---@field chunksInCombinedAreas Task_ScanAreasForActionsToComplete_ChunksInCombinedAreas # An object with the included chunks grouped by their x and y values.
 
 ---@alias Task_ScanAreasForActionsToComplete_EntitiesRaw table<uint, table<uint, LuaEntity>> @ An array per area of the raw entities found needing to be handled for their specific action type. The keys are sequential index numbers that will become gappy when processed dow to being an empty single depth table.
 ---@alias Task_ScanAreasForActionsToComplete_EntitiesDeduped table<uint|string, LuaEntity> @ A single table of all the raw entities (deduped) across all areas needing to be handled for their specific action type. Keyed by the entities unit_number or its name and position as a string.
 
----@alias Task_ScanAreasForActionsToComplete_ChunksInCombinedAreas table<uint, table<uint, Task_ScanAreasForActionsToComplete_ChunkDetails>> # A table of ChunkDetails keyed by the chunks X and then Y value within the combined areas.
----@alias Task_ScanAreasForActionsToComplete_SortedChunksByAxes table<uint, table<uint, Task_ScanAreasForActionsToComplete_ChunkDetails>> # A sorted array of ChunkDetails within the combined areas that is walkable.
+---@class Task_ScanAreasForActionsToComplete_ChunksInCombinedAreas # Is effectively the XChunks class, as no parent object with extra meta data is needed.
+---@field minXValue int
+---@field maxXValue int
+---@field xChunks table<int, Task_ScanAreasForActionsToComplete_ChunksInCombinedAreas_YChunks> # A table of X values that have included chunks within them. This can be a gappy list.
+--table<uint, table<uint, Task_ScanAreasForActionsToComplete_ChunkDetails>> # A table of ChunkDetails keyed by the chunks X and then Y value within the combined areas.
+
+---@class Task_ScanAreasForActionsToComplete_ChunksInCombinedAreas_YChunks
+---@field minYValue int
+---@field maxYValue int
+---@field yChunks table<int, Task_ScanAreasForActionsToComplete_ChunkDetails>  # A table of Y values that have included chunks within them. This can be a gappy list.
 
 ---@class Task_ScanAreasForActionsToComplete_ChunkDetails
 ---@field chunkPosition ChunkPosition
@@ -83,7 +88,7 @@ ScanAreasForActionsToComplete.ActionType = {
     build = "build"
 }
 
--- FUTURE: these need confirming as sensible values once testing on a larger blueprint and deconstruction tasks are done.
+-- Initial values that amy need tweaking once testing on a larger blueprint and deconstruction tasks are done.
 local EntitiesDedupedPerBatch = 100 -- Just getting unit_number via API calls.
 local EntitiesHandledPerBatch = 10 -- Multiple API calls to get item types, etc.
 
@@ -125,7 +130,11 @@ ScanAreasForActionsToComplete.ActivateTask = function(job, parentTask, surface, 
         _requiredManipulateItems = {},
         requiredInputItems = {},
         guaranteedOutputItems = {},
-        chunksInCombinedAreas = {}
+        chunksInCombinedAreas = {
+            xChunks = {},
+            minXValue = nil,
+            maxXValue = nil
+        }
     }
 
     return thisTask
@@ -252,19 +261,6 @@ ScanAreasForActionsToComplete.Progress = function(thisTask, robot)
     end
     taskData._requiredManipulateItems = {}
 
-    -- Make a sorted lookup of the chunksInCombinedAreas lists to be lowest to highest. As they are their created order, which is based on which chunks happened to have different action type activities in each.
-    local sortedChunks = {} ---@type table<uint, table>
-    for _, yValues in pairs(taskData.chunksInCombinedAreas) do
-        local chunks = {} ---@type table<uint, Task_ScanAreasForActionsToComplete_ChunkDetails>
-        for _, chunkDetails in pairs(yValues) do
-            chunks[#chunks + 1--[[@as uint]] ] = chunkDetails
-        end
-        table.sort(chunks, function(a, b) return a.chunkPosition.y < b.chunkPosition.y end)
-        sortedChunks[#sortedChunks + 1--[[@as uint]] ] = chunks
-    end
-    table.sort(sortedChunks, function(a, b) return a[1].chunkPosition.x < b[1].chunkPosition.x end) -- As all the entries within the outer table have the same X value we can just get the first ones X value for sorting.
-    taskData.sortedChunksByAxes = sortedChunks
-
     -- If a robot has reached this far then it has just finished the job, but it will still need to completing it's thinking it started this second.
     thisTask.state = "completed"
 
@@ -327,30 +323,44 @@ ScanAreasForActionsToComplete._ProcessDedupedTableToProcessedTable = function(ta
         local entity_position, entity_name, entity_type = entity.position, entity.name, entity.type
 
         -- Get the ChunkDetails for this chunk or make it if needed.
-        local chunkXValue, chunkYValue = math_floor(entity_position.x / 32)--[[@as uint]] , math_floor(entity_position.y / 32) --[[@as uint]]
+        local chunkXValue, chunkYValue = math_floor(entity_position.x / 32), math_floor(entity_position.y / 32)
         local chunkPosition = { x = chunkXValue, y = chunkYValue }
-        local chunkYList = taskData.chunksInCombinedAreas[chunkXValue]
-        if chunkYList == nil then
+        local chunkXObject = taskData.chunksInCombinedAreas.xChunks[chunkXValue]
+        if chunkXObject == nil then
             -- This X value column of chunks hasn't been recorded yet, so create it.
-            taskData.chunksInCombinedAreas[chunkXValue] = {}
-            chunkYList = taskData.chunksInCombinedAreas[chunkXValue]
+            taskData.chunksInCombinedAreas.xChunks[chunkXValue] = {
+                yChunks = {},
+                minYValue = nil,
+                maxYValue = nil
+            }
+            chunkXObject = taskData.chunksInCombinedAreas.xChunks[chunkXValue]
+            if taskData.chunksInCombinedAreas.minXValue == nil or taskData.chunksInCombinedAreas.minXValue > chunkXValue then
+                taskData.chunksInCombinedAreas.minXValue = chunkXValue
+            end
+            if taskData.chunksInCombinedAreas.maxXValue == nil or taskData.chunksInCombinedAreas.maxXValue < chunkXValue then
+                taskData.chunksInCombinedAreas.maxXValue = chunkXValue
+            end
         end
-        local chunkDetails = chunkYList[chunkYValue]
+        local chunkDetails = chunkXObject.yChunks[chunkYValue]
         if chunkDetails == nil then
             -- A chunk for this Y value of the X value hasn't been recorded yet, so create it.
-            ---@type Task_ScanAreasForActionsToComplete_ChunkDetails
-            chunkDetails = {
+            chunkXObject.yChunks[chunkYValue] = {
                 chunkPosition = chunkPosition,
                 chunkPositionString = StringUtils.FormatPositionToString(chunkPosition),
                 toBeDeconstructedEntityDetails = {},
                 toBeUpgradedTypes = {},
                 toBeBuiltTypes = {}
             }
-            chunkYList[chunkYValue] = chunkDetails
+            chunkDetails = chunkXObject.yChunks[chunkYValue]
+            if chunkXObject.minYValue == nil or chunkXObject.minYValue > chunkYValue then
+                chunkXObject.minYValue = chunkYValue
+            end
+            if chunkXObject.maxYValue == nil or chunkXObject.maxYValue < chunkYValue then
+                chunkXObject.maxYValue = chunkYValue
+            end
         end
 
         -- Record input and output items.
-        -- FUTURE: should cache these results per entity name.
         local minedProducts, requiredItem_name, requiredItem_count, requiredItemUsedPerAction
         if actionType == ScanAreasForActionsToComplete.ActionType.deconstruct then
             minedProducts = entity.prototype.mineable_properties.products

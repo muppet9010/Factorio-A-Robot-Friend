@@ -1,34 +1,90 @@
+Bugs
+====
+
+
+
+Next
+===
+
 Make simple build blueprint job with dummy tasks for getting items. To test framework as much as anything. Just give the robots the needed items as part of the job.
 I think any adhoc tasks can be recorded under the Robot Task Data for the task and be done just in that Task's Progress function(). They won't appear to outside views and the Progress() can pass the final state back up the chain, i.e. pre-fix it.
 
 
 
-Core things to include:
-    - Forces being deleted and merged. We cache them in Robot.
-    - Robot entities dying, we need to update our cache of them and track their corpses. Also want to handle a robot entity becoming invalid at a high level of Progress() to avoid every task having to use UPS checking .valid every tick.
-    - Robot standby and job paused:
-        - This has been partially started to handle no-path errors. But at present we just pause the robot and its tasks and leave it in this state.
-        - Robots need to support having their task in a job paused and the robot told to do something else, i.e. robot gets attacked so needs to defend itself. I want to get the framework in for this in a simple format early.
-        - Being able to pause and resume jobs. Will need to propagate to the robots and tasks ?
-        - Add a way for players to set their own and other player's robots in to a "standby" mode. In standby the robot doesn't perform any jobs and will stand idle. As players can't change other player's robots or jobs, but they can use standby to stop anything they deem as damaging/bad. Any player can return the robot to active state.
-    - Automated testing including lots of removing and breaking things mid and post tests. As I added very few nil checks during initial coding.
+Core Enhancements
+=================
+
+Robot
+-----
+
+- Forces being deleted and merged. We cache them in Robot.
+- Robot entities dying, we need to update our cache of them and track their corpses. Also want to handle a robot entity becoming invalid at a high level of Progress() to avoid every task having to use UPS checking .valid every tick.
+- Robot personalisation:
+    - Robot name: Allow for a generic server name list (mod setting) and also each player to be able to rename their robots individually.
+    - Robot color: Allow players to set a color per robot.
+    - Show the robots as colored dots on the map. I don't think I can make the names appear on the map and thus can't honour the Show Players option on the map (and minimap) view.
+
+Pausing robots and jobs
+-----------------------
+
+- This has been partially started to handle no-path errors. But at present we just pause the robot and its tasks and leave it in this state.
+- Robots need to support having their task in a job paused and the robot told to do something else, i.e. robot gets attacked so needs to defend itself. I want to get the framework in for this in a simple format early.
+- Being able to pause and resume jobs. Will need to propagate to the robots and tasks ?
+- Add a way for players to set their own and other player's robots in to a "standby" mode. In standby the robot doesn't perform any jobs and will stand idle. As players can't change other player's robots or jobs, but they can use standby to stop anything they deem as damaging/bad. Any player can return the robot to active state.
+
+Job Management
+--------------
+
+- All extra job creation parameters will need to be defined in a searchable way for the GUI to find them, so part of the Job Interface.
+
+Automatic testing
+-----------------
+
+- Automated testing including lots of removing and breaking things mid and post tests. As I added very few nil checks during initial coding.
 
 
-Feature Enhancements:
-    - Walking to location:
-        - Detect railway and either try to path around or stop just before it, look both ways and then cross when safe. If not safe for X time place a signal and wire it up to be red, then cross safely.
-        - Look at FUTURE note in path request. Need to try and use light touch paths for long distance and detailed paths for short difficult bits. Likely have to smooth things somewhere to stop the robot jerking around too much. Running in to things and glancing off is fine as long as it doesn't get stuck.
-        - The current path_resolution_modifier of 3 can have issues with rocks and off grid items close together sometimes. In one test case they could path in 1 direction, but not the other.
-    - Robot personalisation:
-        - Robot name: Allow for a generic server name list (mod setting) and also each player to be able to rename their robots individually.
-        - Robot color: Allow players to set a color per robot.
-        - Show the robots as colored dots on the map. I don't think I can make the names appear on the map and thus can't honour the Show Players option on the map (and minimap) view.
-    - Complete area:
-        - General:
-            - Try to have some smarter logic for the starting corner of the combined area for the actions to be done from. Currently just starts top left. Maybe should be nearest corner to a base storage area or some other general center point.
-            - Establish a rally point in a chunk next to the starting corner chunk. Robots should path to here from outside the completing area and then be given an active chunk for their duties. To avoid robots far off causing odd delays in job progress and opens the door to more natural driving an train usage logic in future. Will also mean that the moving to the general job site is handled by standard move logic, but moving around the job internally between chunks can be locked down to just walking and spiders.
-        - Scan Area For Actions:
-            - Handle tiles. Consider landfill and similar tiles before other tiles (i.e. concrete). Landfill should be post deconstruct, but before manipulation tasks. Flooring tiles should be after everything else.
-            - Add options to job to allow filtering by selected types, i.e. power poles, roboports, landfill type tiles. Basically so you can do a priority build.
-            - Support cliffs and knowing that cliffs require cliff explosives. At present they are unhandled entirely and thus ignored. They should be prioritised and if the entity can't be built due to them the item dropped from that robots actions list. So that once the cliffs are blown up and the next cycle of checking is done they are picked up. ???
-        - Deconstruct Entities in Chunk Details:
+
+Feature Enhancements
+====================
+
+Walking to location
+-------------------
+
+- General:
+    - Detect railway and either try to path around or stop just before it, look both ways and then cross when safe. If not safe for X time place a signal and wire it up to be red, then cross safely.
+- Get Walking Path:
+    - Need to try and use light touch paths for long distance and detailed paths for short difficult bits. Likely have to smooth things somewhere to stop the robot jerking around too much. Running in to things and glancing off is fine as long as it doesn't get stuck.
+    - The current path_resolution_modifier of 3 can have issues with rocks and off grid items close together sometimes. In one test case they could path in 1 direction, but not the other.
+    - There may be some changes to the collision mask we want to make to make our pathfinder usage better. Review options and consider.
+    - The arrival radius is currently set to 0 to make sure we reach our target. However, we probably want this passed in and to be based on why we are walking somewhere. As a default this probably wants to be higher to allow us just getting close enough for what we want to do. Maybe it should be specified as part of when the parent task calls in. With a default of close like this. When it was at a value of 1.0 the pathfinder would sometimes suggest pathing in to a blocking entity right next to the target location and mining it. At 0 while it requires the target position to be reachable, it does avoid this oddity.
+    - Observations and notes:
+        - Should play around with these values and see what impact they have.
+        - Need to check pathfinder going through dense and difficult areas, not just simple open and blocky areas.
+        - path_resolution_modifier values:
+            - -1 and below is bad as it can sometimes get stuck on things as it would path in 2-3 tile jumps, so I think 0 is a better start.
+            - 0 is right for simple areas as this seems to be whole tiles, but it fails on close buildings (like biters do).
+            - 2 can't do furnace staggered walls, as can't find the gaps in them, so not much better over 0 really.
+            - 3 gets between close buildings (staggered furnace wall), but is very jagged, so would need either the path or movement control smoothing to try and remove the jittery-ness.
+        - With `prefer_straight_paths` enabled it removes the jitter in the path, but tends to have odd detours even if the distance covered is the same (looks odd).
+        - The highest path_resolution_modifier gives best results, but takes ages to calculate. So ideally want something quick initially and then detect any big detours and re-do that bit of the path with a detailed one (with possible smoothing still).
+        - This really needs a whole series of test setups and recording the different routes through.
+
+Complete area
+-------------
+- General:
+    - Try to have some smarter logic for the starting corner of the combined area for the actions to be done from. Currently just starts top left. Maybe should be nearest corner to a base storage area or some other general center point.
+    - Establish a rally point in a chunk next to the starting corner chunk. Robots should path to here from outside the completing area and then be given an active chunk for their duties. To avoid robots far off causing odd delays in job progress and opens the door to more natural driving an train usage logic in future. Will also mean that the moving to the general job site is handled by standard move logic, but moving around the job internally between chunks can be locked down to just walking and spiders.
+    - Have some planning of chunks to be done order. We get rectangles as the jobs details so should be able to work progressively through them maybe?
+    - A more joined up approach to actions should be done, rather than just each action in turn. This will require:
+        - Using the rally point as a local storage area.
+        - Reviewing if we are deconstructing machines or chests as if we expect to get buildable items during this we should wait for deconstruction to be complete before planning required items, i.e. moving a mall will likely get a lot of build items.
+        - Robots bringing the total required items to the storage area and leaving them there.
+        - Taking deconstructed stuff to the storage area.
+        - Being assigned a series of connected/near chunks to build/upgrade and getting all of the items for those chunks. Optimising multiple robots for large construction areas.
+- Scan Area For Actions:
+    - Handle tiles. Consider landfill and similar tiles before other tiles (i.e. concrete). Landfill should be post deconstruct, but before manipulation tasks. Flooring tiles should be after everything else.
+    - Add options to job to allow filtering by selected types, i.e. power poles, roboports, landfill type tiles. Basically so you can do a priority build.
+    - Support cliffs and knowing that cliffs require cliff explosives. At present they are unhandled entirely and thus ignored. They should be prioritised and if the entity can't be built due to them the item dropped from that robots actions list. So that once the cliffs are blown up and the next cycle of checking is done they are picked up. ???
+    - Currently doesn't handle if things change during the looping anywhere. As an upgrade found during initial scan could be found missing at any later point where its data is accessed. If something is found missing (invalid) we just need to remove it from the lists.
+    - Should look at caching the minable properties and items to build rather than obtaining them every time.
+- Deconstruct Entities in Chunk Details:
