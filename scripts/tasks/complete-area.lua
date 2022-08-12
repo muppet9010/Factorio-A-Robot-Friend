@@ -17,7 +17,7 @@ local ShowRobotState = require("scripts.common.show-robot-state")
 local PositionUtils = require("utility.helper-utils.position-utils")
 local TableUtils = require("utility.helper-utils.table-utils")
 
----@class Task_CompleteArea_Data : Task_Details
+---@class Task_CompleteArea_Details : Task_Details
 ---@field taskData Task_CompleteArea_TaskData
 ---@field robotsTaskData table<Robot, Task_CompleteArea_Robot_TaskData>
 
@@ -43,9 +43,9 @@ end
 ---@param surface LuaSurface
 ---@param areasToComplete BoundingBox[]
 ---@param force LuaForce
----@return Task_CompleteArea_Data
+---@return Task_CompleteArea_Details
 CompleteArea.ActivateTask = function(job, parentTask, surface, areasToComplete, force)
-    local thisTask = MOD.Interfaces.TaskManager.CreateGenericTask(CompleteArea.taskName, job, parentTask) ---@cast thisTask Task_CompleteArea_Data
+    local thisTask = MOD.Interfaces.TaskManager.CreateGenericTask(CompleteArea.taskName, job, parentTask) ---@cast thisTask Task_CompleteArea_Details
 
     -- Store the task wide data.
     thisTask.taskData = {
@@ -58,7 +58,7 @@ CompleteArea.ActivateTask = function(job, parentTask, surface, areasToComplete, 
 end
 
 --- Called to do work on the task by on_tick by each robot.
----@param thisTask Task_CompleteArea_Data
+---@param thisTask Task_CompleteArea_Details
 ---@param robot Robot
 ---@return uint ticksToWait
 ---@return ShowRobotState_NewRobotStateDetails|nil robotStateDetails # nil if there is no state being set by this Task
@@ -82,10 +82,10 @@ CompleteArea.Progress = function(thisTask, robot)
 
     -- Do the scanning task if we have no scanned data yet. All robots do this, but none store any personal data or state during it.
     if taskData.scannedAreaData == nil then
-        local task_ScanAreasForActionsToComplete_Data = thisTask.plannedTasks[robotTaskData.currentTaskIndex] --[[@as Task_ScanAreasForActionsToComplete_Data]]
-        local ticksToWait, robotStateDetails = MOD.Interfaces.Tasks.ScanAreasForActionsToComplete.Progress(task_ScanAreasForActionsToComplete_Data, robot)
-        if task_ScanAreasForActionsToComplete_Data.state == "completed" then
-            taskData.scannedAreaData = task_ScanAreasForActionsToComplete_Data.taskData
+        local task_ScanAreasForActionsToComplete_Details = thisTask.plannedTasks[robotTaskData.currentTaskIndex] --[[@as Task_ScanAreasForActionsToComplete_Details]]
+        local ticksToWait, robotStateDetails = MOD.Interfaces.Tasks.ScanAreasForActionsToComplete.Progress(task_ScanAreasForActionsToComplete_Details, robot)
+        if task_ScanAreasForActionsToComplete_Details.state == "completed" then
+            taskData.scannedAreaData = task_ScanAreasForActionsToComplete_Details.taskData
             thisTask.currentTaskIndex = thisTask.currentTaskIndex + 1
         end
 
@@ -107,9 +107,9 @@ CompleteArea.Progress = function(thisTask, robot)
         end
 
         -- Progress the data for each robot.
-        local task_DeconstructEntitiesInChunkDetails_Data = thisTask.plannedTasks[robotTaskData.currentTaskIndex] --[[@as Task_DeconstructEntitiesInChunkDetails_Data]]
-        local ticksToWait, robotStateDetails = MOD.Interfaces.Tasks.DeconstructEntitiesInChunkDetails.Progress(task_DeconstructEntitiesInChunkDetails_Data, robot)
-        if task_DeconstructEntitiesInChunkDetails_Data.state == "completed" then
+        local task_DeconstructEntitiesInChunkDetails_Details = thisTask.plannedTasks[robotTaskData.currentTaskIndex] --[[@as Task_DeconstructEntitiesInChunkDetails_Details]]
+        local ticksToWait, robotStateDetails = MOD.Interfaces.Tasks.DeconstructEntitiesInChunkDetails.Progress(task_DeconstructEntitiesInChunkDetails_Details, robot)
+        if task_DeconstructEntitiesInChunkDetails_Details.state == "completed" then
             --TODO: anything needs doing as the list will be empty and thus # will be 0.
             -- Expect to need to push on all robots current task index as well as the jobs.
         end
@@ -153,7 +153,7 @@ CompleteArea._FindStartingChunk = function(chunksInCombinedAreas)
 end
 
 --- Called when a specific robot is being removed from a task.
----@param thisTask Task_CompleteArea_Data
+---@param thisTask Task_CompleteArea_Details
 ---@param robot Robot
 CompleteArea.RemovingRobotFromTask = function(thisTask, robot)
     -- Tidy up any robot specific stuff.
@@ -166,7 +166,7 @@ CompleteArea.RemovingRobotFromTask = function(thisTask, robot)
 end
 
 --- Called when a task is being removed and any task globals or ongoing activities need to be stopped.
----@param thisTask Task_CompleteArea_Data
+---@param thisTask Task_CompleteArea_Details
 CompleteArea.RemovingTask = function(thisTask)
     -- Remove any per robot bits if the robot is still active.
     for _, robotTaskData in pairs(thisTask.robotsTaskData) do
@@ -178,7 +178,7 @@ CompleteArea.RemovingTask = function(thisTask)
 end
 
 --- Called when pausing a robot and so all of its activities within the this task and sub tasks need to pause.
----@param thisTask Task_CompleteArea_Data
+---@param thisTask Task_CompleteArea_Details
 ---@param robot Robot
 CompleteArea.PausingRobotForTask = function(thisTask, robot)
     -- If the robot was being actively used in some way stop it.

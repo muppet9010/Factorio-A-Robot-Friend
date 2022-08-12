@@ -4,11 +4,13 @@
 
 local Events = require("utility.manager-libraries.events")
 local ShowRobotState = require("scripts.common.show-robot-state")
+local PrototypeAttributes = require("utility.functions.prototype-attributes")
 
 --- The global object for the robot.
 ---@class Robot
 ---@field id uint
 ---@field entity? LuaEntity
+---@field entity_name string
 ---@field surface LuaSurface
 ---@field force LuaForce
 ---@field master LuaPlayer
@@ -20,6 +22,7 @@ local ShowRobotState = require("scripts.common.show-robot-state")
 ---@field nameRenderId uint64 # The render Id of the robots name tag.
 ---@field color Color # The color of the robot, affects its entity and things that expect opacity.
 ---@field fontColor Color # The color of the robot with no opacity, used for fonts.
+---@field miningDistance uint
 
 local RobotManager = {} ---@class RobotManager
 
@@ -41,11 +44,15 @@ end
 ---@param master LuaPlayer
 ---@return Robot
 RobotManager.CreateRobot = function(surface, position, master)
+    local force = master.force --[[@as LuaForce]]
+    local entityName = "character" -- Hard coded for now.
+
     ---@type Robot
     local robot = {
         id = global.RobotManager.nextRobotId,
+        entity_name = entityName,
         surface = surface,
-        force = master.force --[[@as LuaForce]] ,
+        force = force,
         master = master,
         activeJobs = {},
         state = "active",
@@ -53,11 +60,13 @@ RobotManager.CreateRobot = function(surface, position, master)
     }
 
     -- Create the robot's entity.
-    local entity = robot.surface.create_entity({ name = "character", position = position, force = "player" })
-    if entity == nil then
+    robot.entity = robot.surface.create_entity({ name = entityName, position = position, force = force })
+    if robot.entity == nil then
         error("failed to create robot entity")
     end
-    robot.entity = entity
+
+    -- Get the robots action distances from its type.
+    robot.miningDistance = PrototypeAttributes.GetAttribute(PrototypeAttributes.PrototypeTypes.entity, entityName, "reach_distance") --[[@as uint]] + force.character_reach_distance_bonus
 
     -- Robot personalisation.
     RobotManager.UpdateColor(robot, master.color)

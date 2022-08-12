@@ -379,6 +379,26 @@ PositionUtils.GetDistanceSingleAxis = function(pos1, pos2, axis)
     return math_abs(pos1[axis] - pos2[axis])
 end
 
+--- Gets the nearest thing in a list based on the distance to its position, defined by its positionFieldName. Selects the first one found if multiple are of equal distance.
+---@param startPosition MapPosition|ChunkPosition
+---@param list table<any,table>
+---@param positionFieldName string # The field name in each entry in the `list` table that has the position.
+---@return table nearestThing
+---@return any nearestThingsKeyInList
+PositionUtils.GetNearest = function(startPosition, list, positionFieldName)
+    local nearestThing, nearestThingsKey, distance
+    local nearestDistance = MathUtils.doubleMax
+    for key, thing in pairs(list) do
+        -- Copied from PositionUtils.GetDistance().
+        distance = (((startPosition.x - thing[positionFieldName].x) ^ 2) + ((startPosition.y - thing[positionFieldName].y) ^ 2)) ^ 0.5
+        if distance < nearestDistance then
+            nearestThing = thing
+            nearestThingsKey = key
+        end
+    end
+    return nearestThing, nearestThingsKey
+end
+
 -- Returns the offset for the first position in relation to the second position.
 ---@param newPosition MapPosition
 ---@param basePosition MapPosition

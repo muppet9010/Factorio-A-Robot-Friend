@@ -1,4 +1,4 @@
----@class Job_MoveToLocation_Data : Job_Details
+---@class Job_MoveToLocation_Details : Job_Details
 ---@field jobData Job_MoveToLocation_JobData
 
 ---@class Job_MoveToLocation_JobData
@@ -16,9 +16,9 @@ end
 ---@param playerIndex uint
 ---@param targetLocation MapPosition
 ---@param surface LuaSurface
----@return Job_MoveToLocation_Data
+---@return Job_MoveToLocation_Details
 MoveToLocation.Create = function(playerIndex, targetLocation, surface)
-    local job = MOD.Interfaces.JobManager.CreateGenericJob(MoveToLocation.jobName, playerIndex, "MoveToLocation") ---@cast job Job_MoveToLocation_Data
+    local job = MOD.Interfaces.JobManager.CreateGenericJob(MoveToLocation.jobName, playerIndex, "MoveToLocation") ---@cast job Job_MoveToLocation_Details
 
     -- Store the target data.
     job.jobData = {
@@ -30,8 +30,8 @@ MoveToLocation.Create = function(playerIndex, targetLocation, surface)
 end
 
 --- Called when the job is actively started by a robot.
----@param job Job_MoveToLocation_Data
----@return Task_WalkToLocation_Data
+---@param job Job_MoveToLocation_Details
+---@return Task_WalkToLocation_Details
 MoveToLocation.ActivateJob = function(job)
     local primaryTask = MOD.Interfaces.Tasks.WalkToLocation.ActivateTask(job, nil, job.jobData.targetLocation, job.jobData.surface) -- This will be a MoveToLocation task in future, but for now just hard code it to WalkToLocation to avoid a pointless task level, as robots can only walk at present.
 
@@ -41,7 +41,7 @@ MoveToLocation.ActivateJob = function(job)
 end
 
 --- Called to remove the job when it's no longer wanted.
----@param job Job_MoveToLocation_Data
+---@param job Job_MoveToLocation_Details
 MoveToLocation.Remove = function(job)
     error("Not implemented")
     -- Not done anything for this jobs specific global or its own data. Should a deleted job not keep some of its details and be moved to a deleted list in case of mistake?
@@ -51,13 +51,13 @@ MoveToLocation.Remove = function(job)
 end
 
 --- Called to pause the job and all of its activity.
----@param job Job_MoveToLocation_Data
+---@param job Job_MoveToLocation_Details
 MoveToLocation.Pause = function(job)
     error("Not implemented")
 end
 
 --- Called to resume a previously paused job.
----@param job Job_MoveToLocation_Data
+---@param job Job_MoveToLocation_Details
 MoveToLocation.Resume = function(job)
     error("Not implemented")
 end

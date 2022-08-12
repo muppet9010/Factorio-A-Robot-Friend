@@ -1,5 +1,6 @@
 --[[
-    Manages a collection of robots analysing the actions and materials needed for a given group of areas to "complete" it. Returns a list of the actions by type to be done. Plus the number of items needed to complete everything and the guaranteed items to be returned by any deconstruction. The number of items gained by deconstruction will only be known post deconstruction as chests and machines can have things in them.
+    Manages a collection of robots analysing the actions and materials needed for a given group of areas to "complete" it.
+    It captures and generates a list of the actions by type to be done. Plus the number of items needed to complete everything and the guaranteed items to be returned by any deconstruction. The number of items gained by deconstruction will only be known post deconstruction as chests and machines can have things in them. See the non private (non "_") fields in the taskData (class Task_ScanAreasForActionsToComplete_TaskData).
     Takes in an array of areas to be completed. These can overlap and will be deduped. Is to allow flexibility in selecting multiple smaller areas to be done while avoiding others, thus an odd overall shape to be completed.
 
     Action types:
@@ -14,9 +15,10 @@
 local ShowRobotState = require("scripts.common.show-robot-state")
 local StringUtils = require("utility.helper-utils.string-utils")
 local MathUtils = require("utility.helper-utils.math-utils")
+local PrototypeAttributes = require("utility.functions.prototype-attributes")
 local math_floor = math.floor
 
----@class Task_ScanAreasForActionsToComplete_Data : Task_Details
+---@class Task_ScanAreasForActionsToComplete_Details : Task_Details
 ---@field taskData Task_ScanAreasForActionsToComplete_TaskData
 
 ---@class Task_ScanAreasForActionsToComplete_TaskData
@@ -104,9 +106,9 @@ end
 ---@param surface LuaSurface
 ---@param areasToComplete BoundingBox[]
 ---@param force LuaForce
----@return Task_ScanAreasForActionsToComplete_Data
+---@return Task_ScanAreasForActionsToComplete_Details
 ScanAreasForActionsToComplete.ActivateTask = function(job, parentTask, surface, areasToComplete, force)
-    local thisTask = MOD.Interfaces.TaskManager.CreateGenericTask(ScanAreasForActionsToComplete.taskName, job, parentTask) ---@cast thisTask Task_ScanAreasForActionsToComplete_Data
+    local thisTask = MOD.Interfaces.TaskManager.CreateGenericTask(ScanAreasForActionsToComplete.taskName, job, parentTask) ---@cast thisTask Task_ScanAreasForActionsToComplete_Details
 
     -- Store the task wide data.
     thisTask.taskData = {
@@ -145,7 +147,7 @@ ScanAreasForActionsToComplete.ActivateTask = function(job, parentTask, surface, 
 end
 
 --- Called to do work on the task by on_tick by each robot.
----@param thisTask Task_ScanAreasForActionsToComplete_Data
+---@param thisTask Task_ScanAreasForActionsToComplete_Details
 ---@param robot Robot
 ---@return uint ticksToWait
 ---@return ShowRobotState_NewRobotStateDetails|nil robotStateDetails # nil if there is no state being set by this Task
@@ -373,7 +375,7 @@ ScanAreasForActionsToComplete._ProcessDedupedTableToProcessedTable = function(ta
         -- Record input and output items.
         local minedProducts, requiredItem_name, requiredItem_count, requiredItemUsedPerAction
         if actionType == ScanAreasForActionsToComplete.ActionType.deconstruct then
-            minedProducts = entity.prototype.mineable_properties.products
+            minedProducts = PrototypeAttributes.GetAttribute(PrototypeAttributes.PrototypeTypes.entity, entity_name, "mineable_properties")--[[@as LuaEntityPrototype.mineable_properties]] .products
         elseif actionType == ScanAreasForActionsToComplete.ActionType.upgrade then
             -- Based on if this is a true upgrade or a rotate.
             local upgradeTargetPrototype = entity.get_upgrade_target() ---@cast upgradeTargetPrototype -nil
@@ -392,7 +394,7 @@ ScanAreasForActionsToComplete._ProcessDedupedTableToProcessedTable = function(ta
                 -- Is an actual upgrade to change entity types.
 
                 -- Record the inputs and output items.
-                minedProducts = entity.prototype.mineable_properties.products
+                minedProducts = PrototypeAttributes.GetAttribute(PrototypeAttributes.PrototypeTypes.entity, entity_name, "mineable_properties")--[[@as LuaEntityPrototype.mineable_properties]] .products
                 requiredItemUsedPerAction = true
             end
 
@@ -400,8 +402,9 @@ ScanAreasForActionsToComplete._ProcessDedupedTableToProcessedTable = function(ta
             entity_name = upgradeTargetPrototype_name
             entity_type = upgradeTargetPrototype_type
         elseif actionType == ScanAreasForActionsToComplete.ActionType.build then
-            if entity.prototype.items_to_place_this ~= nil then
-                local requiredItems = entity.prototype.items_to_place_this[1] -- Same as construction bots, just use the first one.
+            local itemsToPlaceThis = PrototypeAttributes.GetAttribute(PrototypeAttributes.PrototypeTypes.entity, entity_name, "items_to_place_this") --[[@as SimpleItemStack[]? ]]
+            if itemsToPlaceThis ~= nil then
+                local requiredItems = itemsToPlaceThis[1] -- Same as construction bots, just use the first one.
                 requiredItem_name, requiredItem_count = requiredItems.name, requiredItems.count
                 requiredItemUsedPerAction = true
             end
@@ -461,7 +464,7 @@ ScanAreasForActionsToComplete._ProcessDedupedTableToProcessedTable = function(ta
 end
 
 --- Called when a specific robot is being removed from a task.
----@param thisTask Task_ScanAreasForActionsToComplete_Data
+---@param thisTask Task_ScanAreasForActionsToComplete_Details
 ---@param robot Robot
 ScanAreasForActionsToComplete.RemovingRobotFromTask = function(thisTask, robot)
     -- There is no robot specific activity to be stopped.
@@ -470,7 +473,7 @@ ScanAreasForActionsToComplete.RemovingRobotFromTask = function(thisTask, robot)
 end
 
 --- Called when a task is being removed and any task globals or ongoing activities need to be stopped.
----@param thisTask Task_ScanAreasForActionsToComplete_Data
+---@param thisTask Task_ScanAreasForActionsToComplete_Details
 ScanAreasForActionsToComplete.RemovingTask = function(thisTask)
     -- There is no robot specific activity to be stopped.
 
@@ -478,7 +481,7 @@ ScanAreasForActionsToComplete.RemovingTask = function(thisTask)
 end
 
 --- Called when pausing a robot and so all of its activities within the this task and sub tasks need to pause.
----@param thisTask Task_ScanAreasForActionsToComplete_Data
+---@param thisTask Task_ScanAreasForActionsToComplete_Details
 ---@param robot Robot
 ScanAreasForActionsToComplete.PausingRobotForTask = function(thisTask, robot)
     -- There is no robot specific activity to be stopped.

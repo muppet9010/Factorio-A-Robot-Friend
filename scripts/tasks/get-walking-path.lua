@@ -6,8 +6,9 @@
 
 local Events = require("utility.manager-libraries.events")
 local ShowRobotState = require("scripts.common.show-robot-state")
+local PrototypeAttributes = require("utility.functions.prototype-attributes")
 
----@class Task_GetWalkingPath_Data : Task_Details
+---@class Task_GetWalkingPath_Details : Task_Details
 ---@field taskData Task_GetWalkingPath_TaskData
 ---@field robotsTaskData table<Robot, Task_GetWalkingPath_Robot_TaskData>
 
@@ -39,9 +40,9 @@ end
 ---@param parentTask? Task_Details # The parent Task or nil if this is a primary Task of a Job.
 ---@param endPosition MapPosition
 ---@param surface LuaSurface
----@return Task_GetWalkingPath_Data
+---@return Task_GetWalkingPath_Details
 GetWalkingPath.ActivateTask = function(job, parentTask, endPosition, surface)
-    local thisTask = MOD.Interfaces.TaskManager.CreateGenericTask(GetWalkingPath.taskName, job, parentTask) ---@cast thisTask Task_GetWalkingPath_Data
+    local thisTask = MOD.Interfaces.TaskManager.CreateGenericTask(GetWalkingPath.taskName, job, parentTask) ---@cast thisTask Task_GetWalkingPath_Details
 
     -- Store the task wide data.
     thisTask.taskData = {
@@ -53,7 +54,7 @@ GetWalkingPath.ActivateTask = function(job, parentTask, endPosition, surface)
 end
 
 --- Called to do work on the task by on_tick by each robot.
----@param thisTask Task_GetWalkingPath_Data
+---@param thisTask Task_GetWalkingPath_Details
 ---@param robot Robot
 ---@param startPosition? MapPosition # Only needed on first Progress() for each robot.
 ---@return uint ticksToWait
@@ -73,8 +74,9 @@ GetWalkingPath.Progress = function(thisTask, robot, startPosition)
 
         -- Left as detailed with jittery movement, but able to find tight paths for now.
         local pathRequestId = taskData.surface.request_path({
-            bounding_box = robot.entity.prototype.collision_box, -- Could be cached, but actually called very rarely, so no real benefit.
-            collision_mask = robot.entity.prototype.collision_mask, -- Could be cached, but actually called very rarely, so no real benefit.
+
+            bounding_box = PrototypeAttributes.GetAttribute(PrototypeAttributes.PrototypeTypes.entity, robot.entity_name, "collision_box"),
+            collision_mask = PrototypeAttributes.GetAttribute(PrototypeAttributes.PrototypeTypes.entity, robot.entity_name, "collision_mask"),
             start = startPosition,
             goal = taskData.endPosition,
             force = robot.force,
@@ -117,7 +119,7 @@ GetWalkingPath._OnPathRequestFinished = function(event)
 end
 
 --- Called when a specific robot is being removed from a task.
----@param thisTask Task_GetWalkingPath_Data
+---@param thisTask Task_GetWalkingPath_Details
 ---@param robot Robot
 GetWalkingPath.RemovingRobotFromTask = function(thisTask, robot)
     -- Remove any pending path request object in the global for this robot. This will mean any outstanding path requests are ignored when they return.
@@ -133,7 +135,7 @@ GetWalkingPath.RemovingRobotFromTask = function(thisTask, robot)
 end
 
 --- Called when a task is being removed and any task globals or ongoing activities need to be stopped.
----@param thisTask Task_GetWalkingPath_Data
+---@param thisTask Task_GetWalkingPath_Details
 GetWalkingPath.RemovingTask = function(thisTask)
     -- Remove any pending path request objects in the global for all robots in this task. This will mean any outstanding path requests are ignored when they return.
     for _, robotTaskData in pairs(thisTask.robotsTaskData) do
@@ -146,7 +148,7 @@ GetWalkingPath.RemovingTask = function(thisTask)
 end
 
 --- Called when pausing a robot and so all of its activities within the this task and sub tasks need to pause.
----@param thisTask Task_GetWalkingPath_Data
+---@param thisTask Task_GetWalkingPath_Details
 ---@param robot Robot
 GetWalkingPath.PausingRobotForTask = function(thisTask, robot)
     -- Nothing unique this task needs to do.

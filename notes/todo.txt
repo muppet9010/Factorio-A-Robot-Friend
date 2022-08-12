@@ -86,5 +86,4 @@ Complete area
     - Add options to job to allow filtering by selected types, i.e. power poles, roboports, landfill type tiles. Basically so you can do a priority build.
     - Support cliffs and knowing that cliffs require cliff explosives. At present they are unhandled entirely and thus ignored. They should be prioritised and if the entity can't be built due to them the item dropped from that robots actions list. So that once the cliffs are blown up and the next cycle of checking is done they are picked up. ???
     - Currently doesn't handle if things change during the looping anywhere. As an upgrade found during initial scan could be found missing at any later point where its data is accessed. If something is found missing (invalid) we just need to remove it from the lists.
-    - Should look at caching the minable properties and items to build rather than obtaining them every time.
 - Deconstruct Entities in Chunk Details:

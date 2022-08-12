@@ -1,4 +1,4 @@
----@class Job_CompleteArea_Data : Job_Details
+---@class Job_CompleteArea_Details : Job_Details
 ---@field jobData Job_CompleteArea_JobData
 
 ---@class Job_CompleteArea_JobData
@@ -18,9 +18,9 @@ end
 ---@param surface LuaSurface
 ---@param areasToComplete BoundingBox[]
 ---@param force LuaForce
----@return Job_CompleteArea_Data
+---@return Job_CompleteArea_Details
 CompleteArea.Create = function(playerIndex, surface, areasToComplete, force)
-    local job = MOD.Interfaces.JobManager.CreateGenericJob(CompleteArea.jobName, playerIndex, "CompleteArea") ---@cast job Job_CompleteArea_Data
+    local job = MOD.Interfaces.JobManager.CreateGenericJob(CompleteArea.jobName, playerIndex, "CompleteArea") ---@cast job Job_CompleteArea_Details
 
     -- Store the target data.
     job.jobData = {
@@ -33,8 +33,8 @@ CompleteArea.Create = function(playerIndex, surface, areasToComplete, force)
 end
 
 --- Called when the job is actively started by a robot.
----@param job Job_CompleteArea_Data
----@return Task_CompleteArea_Data
+---@param job Job_CompleteArea_Details
+---@return Task_CompleteArea_Details
 CompleteArea.ActivateJob = function(job)
     local primaryTask = MOD.Interfaces.Tasks.CompleteArea.ActivateTask(job, nil, job.jobData.surface, job.jobData.areasToComplete, job.jobData.force)
 
@@ -44,7 +44,7 @@ CompleteArea.ActivateJob = function(job)
 end
 
 --- Called to remove the job when it's no longer wanted.
----@param job Job_CompleteArea_Data
+---@param job Job_CompleteArea_Details
 CompleteArea.Remove = function(job)
     error("Not implemented")
 
@@ -53,13 +53,13 @@ CompleteArea.Remove = function(job)
 end
 
 --- Called to pause the job and all of its activity.
----@param job Job_CompleteArea_Data
+---@param job Job_CompleteArea_Details
 CompleteArea.Pause = function(job)
     error("Not implemented")
 end
 
 --- Called to resume a previously paused job.
----@param job Job_CompleteArea_Data
+---@param job Job_CompleteArea_Details
 CompleteArea.Resume = function(job)
     error("Not implemented")
 end

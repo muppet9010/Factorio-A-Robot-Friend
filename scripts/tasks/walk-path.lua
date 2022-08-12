@@ -6,7 +6,7 @@
 
 local ShowRobotState = require("scripts.common.show-robot-state")
 
----@class Task_WalkPath_Data : Task_Details
+---@class Task_WalkPath_Details : Task_Details
 ---@field taskData Task_WalkPath_TaskData
 ---@field robotsTaskData table<Robot, Task_WalkPath_Robot_TaskData>
 
@@ -28,15 +28,15 @@ end
 --- Called ONCE per Task to create the task when the first robot first reaches this task in the job.
 ---@param job Job_Details # The job related to the lead task in this hierarchy.
 ---@param parentTask? Task_Details # The parent Task or nil if this is a primary Task of a Job.
----@return Task_WalkPath_Data
+---@return Task_WalkPath_Details
 WalkPath.ActivateTask = function(job, parentTask)
-    local thisTask = MOD.Interfaces.TaskManager.CreateGenericTask(WalkPath.taskName, job, parentTask) ---@cast thisTask Task_WalkPath_Data
+    local thisTask = MOD.Interfaces.TaskManager.CreateGenericTask(WalkPath.taskName, job, parentTask) ---@cast thisTask Task_WalkPath_Details
 
     return thisTask
 end
 
 --- Called to do work on the task by on_tick by each robot.
----@param thisTask Task_WalkPath_Data
+---@param thisTask Task_WalkPath_Details
 ---@param robot Robot
 ---@param pathToWalk? PathfinderWaypoint[] # Only needed on first Progress() for each robot.
 ---@return uint ticksToWait
@@ -145,7 +145,7 @@ WalkPath.Progress = function(thisTask, robot, pathToWalk)
 end
 
 --- Called when a specific robot is being removed from a task.
----@param thisTask Task_WalkPath_Data
+---@param thisTask Task_WalkPath_Details
 ---@param robot Robot
 WalkPath.RemovingRobotFromTask = function(thisTask, robot)
     -- If the robot was being actively walked it will need its walking_state reset so they don't continue uncontrolled.
@@ -161,7 +161,7 @@ WalkPath.RemovingRobotFromTask = function(thisTask, robot)
 end
 
 --- Called when a task is being removed and any task globals or ongoing activities need to be stopped.
----@param thisTask Task_WalkPath_Data
+---@param thisTask Task_WalkPath_Details
 WalkPath.RemovingTask = function(thisTask)
     -- Any robots which were being active walked will need their walking_state reset so they don't continue uncontrolled.
     for _, robotTaskData in pairs(thisTask.robotsTaskData) do
@@ -174,7 +174,7 @@ WalkPath.RemovingTask = function(thisTask)
 end
 
 --- Called when pausing a robot and so all of its activities within the this task and sub tasks need to pause.
----@param thisTask Task_WalkPath_Data
+---@param thisTask Task_WalkPath_Details
 ---@param robot Robot
 WalkPath.PausingRobotForTask = function(thisTask, robot)
     -- If the robot was being actively walked it will need its walking_state reset so they don't continue uncontrolled.

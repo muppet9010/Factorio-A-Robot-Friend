@@ -7,7 +7,7 @@
 local LoggingUtils = require("utility.helper-utils.logging-utils")
 local ShowRobotState = require("scripts.common.show-robot-state")
 
----@class Task_WalkToLocation_Data : Task_Details
+---@class Task_WalkToLocation_Details : Task_Details
 ---@field taskData Task_WalkToLocation_TaskData
 ---@field robotsTaskData table<Robot, Task_WalkToLocation_Robot_TaskData>
 
@@ -32,9 +32,9 @@ end
 ---@param parentTask? Task_Details # The parent Task or nil if this is a primary Task of a Job.
 ---@param targetLocation MapPosition
 ---@param surface LuaSurface
----@return Task_WalkToLocation_Data
+---@return Task_WalkToLocation_Details
 WalkToLocation.ActivateTask = function(job, parentTask, targetLocation, surface)
-    local thisTask = MOD.Interfaces.TaskManager.CreateGenericTask(WalkToLocation.taskName, job, parentTask) ---@cast thisTask Task_WalkToLocation_Data
+    local thisTask = MOD.Interfaces.TaskManager.CreateGenericTask(WalkToLocation.taskName, job, parentTask) ---@cast thisTask Task_WalkToLocation_Details
 
     -- Store the task wide data.
     thisTask.taskData = {
@@ -46,7 +46,7 @@ WalkToLocation.ActivateTask = function(job, parentTask, targetLocation, surface)
 end
 
 --- Called to do work on the task by on_tick by each robot.
----@param thisTask Task_WalkToLocation_Data
+---@param thisTask Task_WalkToLocation_Details
 ---@param robot Robot
 ---@return uint ticksToWait
 ---@return ShowRobotState_NewRobotStateDetails|nil robotStateDetails # nil if there is no state being set by this Task
@@ -69,7 +69,7 @@ WalkToLocation.Progress = function(thisTask, robot)
         thisTask.robotsTaskData[robot] = robotTaskData
 
         -- Call the first task Progress() and return its wait.
-        return MOD.Interfaces.Tasks.GetWalkingPath.Progress(thisTask.plannedTasks[robotTaskData.currentTaskIndex]--[[@as Task_GetWalkingPath_Data]] , robot, robot.entity.position)
+        return MOD.Interfaces.Tasks.GetWalkingPath.Progress(thisTask.plannedTasks[robotTaskData.currentTaskIndex]--[[@as Task_GetWalkingPath_Details]] , robot, robot.entity.position)
     end
 
     -------------------------------------------------------------------------------
@@ -78,7 +78,7 @@ WalkToLocation.Progress = function(thisTask, robot)
 
     -- If this Task hasn't process a found path yet.
     if robotTaskData.pathToWalk == nil then
-        local getWalkingPathTask = thisTask.plannedTasks[robotTaskData.currentTaskIndex] --[[@as Task_GetWalkingPath_Data]]
+        local getWalkingPathTask = thisTask.plannedTasks[robotTaskData.currentTaskIndex] --[[@as Task_GetWalkingPath_Details]]
         local getWalkingPathTask_taskData = getWalkingPathTask.taskData
         local getWalkingPathTask_robotTaskData = getWalkingPathTask.robotsTaskData[robot]
 
@@ -128,7 +128,7 @@ WalkToLocation.Progress = function(thisTask, robot)
     end
 
     -- Walk the path as we have one at this point.
-    local walkPathTask = thisTask.plannedTasks[robotTaskData.currentTaskIndex] --[[@as Task_WalkPath_Data]]
+    local walkPathTask = thisTask.plannedTasks[robotTaskData.currentTaskIndex] --[[@as Task_WalkPath_Details]]
     local ticksToWait, robotStateDetails = MOD.Interfaces.Tasks.WalkPath.Progress(walkPathTask, robot, robotTaskData.pathToWalk)
     local walkPathTask_robotTaskData = walkPathTask.robotsTaskData[robot]
 
@@ -160,7 +160,7 @@ WalkToLocation.Progress = function(thisTask, robot)
 end
 
 --- Called when a specific robot is being removed from a task.
----@param thisTask Task_WalkToLocation_Data
+---@param thisTask Task_WalkToLocation_Details
 ---@param robot Robot
 WalkToLocation.RemovingRobotFromTask = function(thisTask, robot)
     -- Tidy up any renders that existed for the duration of the task.
@@ -178,7 +178,7 @@ WalkToLocation.RemovingRobotFromTask = function(thisTask, robot)
 end
 
 --- Called when a task is being removed and any task globals or ongoing activities need to be stopped.
----@param thisTask Task_WalkToLocation_Data
+---@param thisTask Task_WalkToLocation_Details
 WalkToLocation.RemovingTask = function(thisTask)
     -- Nothing unique this task needs to do.
 
@@ -186,7 +186,7 @@ WalkToLocation.RemovingTask = function(thisTask)
 end
 
 --- Called when pausing a robot and so all of its activities within the this task and sub tasks need to pause.
----@param thisTask Task_WalkToLocation_Data
+---@param thisTask Task_WalkToLocation_Details
 ---@param robot Robot
 WalkToLocation.PausingRobotForTask = function(thisTask, robot)
     -- Nothing unique this task needs to do.

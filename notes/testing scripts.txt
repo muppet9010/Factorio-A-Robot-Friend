@@ -101,7 +101,7 @@ MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job1)
 
 
 
-Complete an area. Made up of 2 overlapping areas just to test it.
+Complete an area. Made up of 2 separate areas, but that have connected chunks.
 
 /sc __a_robot_friend__
 local robotPosition, completeAreas = {x=15,y=-30}, { {left_top = {x=21,y=-30}, right_bottom = {x=31,y=-26}}, {left_top = {x=56,y=-37}, right_bottom = {x=73,y=-26}} }
