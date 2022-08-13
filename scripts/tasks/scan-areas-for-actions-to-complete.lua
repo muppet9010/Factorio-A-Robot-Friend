@@ -93,8 +93,8 @@ ScanAreasForActionsToComplete.ActionType = {
 }
 
 -- Initial values that amy need tweaking once testing on a larger blueprint and deconstruction tasks are done.
-local EntitiesDedupedPerBatch = 100 -- Just getting unit_number via API calls.
-local EntitiesHandledPerBatch = 10 -- Multiple API calls to get item types, etc.
+local EntitiesDedupedPerBatch = 1000 -- Just getting unit_number via API calls.
+local EntitiesHandledPerBatch = 100 -- Multiple API calls to get item types, etc.
 
 ScanAreasForActionsToComplete._OnLoad = function()
     MOD.Interfaces.Tasks.ScanAreasForActionsToComplete = ScanAreasForActionsToComplete

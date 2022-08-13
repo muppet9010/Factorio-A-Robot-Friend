@@ -23,6 +23,7 @@ local PrototypeAttributes = require("utility.functions.prototype-attributes")
 ---@field color Color # The color of the robot, affects its entity and things that expect opacity.
 ---@field fontColor Color # The color of the robot with no opacity, used for fonts.
 ---@field miningDistance uint
+---@field miningSpeed double
 
 local RobotManager = {} ---@class RobotManager
 
@@ -65,8 +66,10 @@ RobotManager.CreateRobot = function(surface, position, master)
         error("failed to create robot entity")
     end
 
-    -- Get the robots action distances from its type.
-    robot.miningDistance = PrototypeAttributes.GetAttribute(PrototypeAttributes.PrototypeTypes.entity, entityName, "reach_distance") --[[@as uint]] + force.character_reach_distance_bonus
+    -- Get the robots speed and action distances from its type. This will need updating upon either character entity or force bonus changes.
+    -- Maybe per player bonuses should affect their robots, rather than me getting the character bonus for the robot entity itself?
+    robot.miningDistance = PrototypeAttributes.GetAttribute(PrototypeAttributes.PrototypeTypes.entity, entityName, "reach_distance") --[[@as uint]] + robot.entity.character_reach_distance_bonus + force.character_reach_distance_bonus
+    robot.miningSpeed = PrototypeAttributes.GetAttribute(PrototypeAttributes.PrototypeTypes.entity, entityName, "mining_speed") --[[@as uint]] + robot.entity.character_mining_speed_modifier * (1 + force.manual_mining_speed_modifier)
 
     -- Robot personalisation.
     RobotManager.UpdateColor(robot, master.color)

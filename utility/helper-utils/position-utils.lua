@@ -394,6 +394,7 @@ PositionUtils.GetNearest = function(startPosition, list, positionFieldName)
         if distance < nearestDistance then
             nearestThing = thing
             nearestThingsKey = key
+            nearestDistance = distance
         end
     end
     return nearestThing, nearestThingsKey

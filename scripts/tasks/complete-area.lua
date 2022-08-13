@@ -99,7 +99,7 @@ CompleteArea.Progress = function(thisTask, robot)
     end
 
     -- Handle deconstruction if needed.
-    if #taskData.scannedAreaData.entitiesToBeDeconstructed > 0 then
+    if next(taskData.scannedAreaData.entitiesToBeDeconstructed) ~= nil then
         -- If this is first time looking at deconstructing some entities then activate the Task.
         if thisTask.plannedTasks[thisTask.currentTaskIndex] == nil then
             local startingChunkPosition = CompleteArea._FindStartingChunk(taskData.scannedAreaData.chunksInCombinedAreas)
@@ -110,11 +110,10 @@ CompleteArea.Progress = function(thisTask, robot)
         local task_DeconstructEntitiesInChunkDetails_Details = thisTask.plannedTasks[robotTaskData.currentTaskIndex] --[[@as Task_DeconstructEntitiesInChunkDetails_Details]]
         local ticksToWait, robotStateDetails = MOD.Interfaces.Tasks.DeconstructEntitiesInChunkDetails.Progress(task_DeconstructEntitiesInChunkDetails_Details, robot)
 
-        -- TODO: this is never hit when everything is deconstructed???
+        -- Handle if this task is completed.
         if task_DeconstructEntitiesInChunkDetails_Details.state == "completed" then
-            --TODO: anything needs doing as the list will be empty and thus # will be 0.
+            -- TODO: anything needs doing as the list will be empty and thus # will be 0.
             -- Expect to need to push on all robots current task index as well as the jobs.
-            error("deconstructing complete")
         end
 
         --We always return on the robot that did some progression on this. The next robot cycle will the next step fresh.
@@ -122,12 +121,13 @@ CompleteArea.Progress = function(thisTask, robot)
     end
 
 
-    --TODO: Review scanned results and items the robots have and decide if we need to collect anything extra for any building.
+
+    -- TODO: Review scanned results and items the robots have and decide if we need to collect anything extra for any building.
 
 
     -- TEMPLATE: These are often returned from sub tasks Progress() functions, but can also be explicitly defined.
     ---@type uint,ShowRobotState_NewRobotStateDetails
-    local ticksToWait, robotStateDetails = 0, { stateText = "Some state text", level = ShowRobotState.StateLevel.normal }
+    local ticksToWait, robotStateDetails = 0, { stateText = "All done honest...", level = ShowRobotState.StateLevel.normal }
 
     return ticksToWait, robotStateDetails
 end

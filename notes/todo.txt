@@ -14,8 +14,13 @@ Look at any task and job details and data that should be private fields and not 
 
 Do tasks really return an option state details text? or do we need to add an intentional "nothing" flag. Feels weird having to handle a nil value in a task that is looking at a sub tasks state text to prefix it.
 
+Look at the deconstruction loop:
+    - Decide on some standard wait times and make them global variables.
+    - Review if the code flow is really right. It's been written from a nothing start, but it feels weird flowing off the end of some logic just to wait a tick before starting the next cycle to think about the next thing to do. Excess loops is UPS wasting, but consider code readability and ease of following.
+
+Do a performance review of current code to see if anything stands out as a bad concept. My guess is any low tick waits.
+
 Make simple build blueprint job with dummy tasks for getting items. To test framework as much as anything. Just give the robots the needed items as part of the job.
-I think any adhoc tasks can be recorded under the Robot Task Data for the task and be done just in that Task's Progress function(). They won't appear to outside views and the Progress() can pass the final state back up the chain, i.e. pre-fix it.
 
 
 
@@ -31,6 +36,7 @@ Robot
     - Robot name: Allow for a generic server name list (mod setting) and also each player to be able to rename their robots individually.
     - Robot color: Allow players to set a color per robot.
     - Show the robots as colored dots on the map. I don't think I can make the names appear on the map and thus can't honour the Show Players option on the map (and minimap) view.
+- Robot and force speeds and distances for actions. At present I use the robots and the forces, should I use the players instead of robot. At present I get them when the robot is made, but don't monitor anything for changes during the game.
 
 Pausing robots and jobs
 -----------------------
