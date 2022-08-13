@@ -61,7 +61,7 @@ local math_floor = math.floor
 ---@class Task_ScanAreasForActionsToComplete_ChunksInCombinedAreas_XChunkObject
 ---@field minYValue int # The lowest Y chunk position value in the yChunks table.
 ---@field maxYValue int # The highest Y chunk position value in the yChunks table.
----@field yChunks table<int, Task_ScanAreasForActionsToComplete_ChunkDetails>  # A table of Y values that have included chunks within them. This can be a gappy list.
+---@field yChunks table<int, Task_ScanAreasForActionsToComplete_ChunkDetails> # A table of Y values that have included chunks within them. This can be a gappy list.
 
 ---@class Task_ScanAreasForActionsToComplete_ChunkDetails
 ---@field chunkPosition ChunkPosition

@@ -72,7 +72,7 @@ DeconstructEntitiesInChunkDetails.ActivateTask = function(job, parentTask, surfa
         startingChunkPosition = startingChunkPosition,
         robotAssignedChunks = {}
     }
-
+    local x = chunkDetailsByAxis.xChunks[1]
     -- Populate the chunk deconstruction states list with all the chunks that need things doing.
     local chunksState = thisTask.taskData.chunksState
     for _, xChunkObject in pairs(chunkDetailsByAxis.xChunks) do
