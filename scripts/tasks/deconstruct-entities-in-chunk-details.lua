@@ -5,6 +5,7 @@
         - Have only 1 robot assigned to a single chunk at a time.
         - The robot will do everything it can within that chunk before moving on.
         - Next chunk will be the nearest one that it can do something for, while favouring chunks on the edge of the combined areas if 2 are found at same chunk distance.
+        - The robot will path to within range of the nearest target, mine it, then look for a new nearest target and path if needed. This is simplest logic, but may cause a lot of stuttered moving/mining if targets are close together (i.e. in a line away from the robot).
 
     Mining will be done by calling the LuaControl.mine_entity API function to instantly mine the target. The robot will then wait for the mining time to expire before it looks for another action. Use of this instant mine over setting the mining state is mainly to avoid issues if the target entity is removed another way, the robot is moved by being on a belt or killed. The effect should be the same, but the code is just much simpler.
 ]]
@@ -29,6 +30,7 @@ local math_ceil = math.ceil
 ---@field assignedChunkDetails Task_ScanAreasForActionsToComplete_ChunkDetails
 ---@field assignedChunkState Task_DeconstructEntitiesInChunkDetails_ChunkState
 ---@field currentTarget Task_ScanAreasForActionsToComplete_EntityDetails
+---@field robotWalkingTask? Task_WalkToLocation_Details # A robot specific task to walk to a given location to get to its current target. This is semi invisible to the the current task as a whole. Will be truly unique walking target per robot per instance.
 
 ---@class Task_DeconstructEntitiesInChunkDetails_ChunkState
 ---@field positionString string # The Id of this in the table.
@@ -114,12 +116,13 @@ DeconstructEntitiesInChunkDetails.Progress = function(thisTask, robot)
             -- If no robot has an active chunk its working on, then the job is done as we couldn't find a new one.
             local aChunkIsStillActive = false
             for _, chunksState in pairs(taskData.chunksState) do
-                if chunksState ~= DeconstructEntitiesInChunkDetails.ChunkStates.completed then
+                if chunksState.state ~= DeconstructEntitiesInChunkDetails.ChunkStates.completed then
                     aChunkIsStillActive = true
                     break
                 end
             end
             if not aChunkIsStillActive then
+                -- TODO: is this ever reached?
                 thisTask.state = "completed"
                 return 60, { stateText = "Thinking about post deconstructing tasks", level = ShowRobotState.StateLevel.normal }
             end
@@ -154,10 +157,11 @@ DeconstructEntitiesInChunkDetails.Progress = function(thisTask, robot)
         end
     end
 
-    -- Check if we can mine the target from our current position.
-    if PositionUtils.GetDistance(robot_position, robotTaskData.currentTarget.position) <= robot.miningDistance then
+    -- Check if we can mine the target from our current position and we are not currently walking there.
+    if robotTaskData.robotWalkingTask == nil and PositionUtils.GetDistance(robot_position, robotTaskData.currentTarget.position) <= robot.miningDistance then
         -- In reach so can mine it now and then sleep.
-        local mineTime = math_ceil(PrototypeAttributes.GetAttribute(PrototypeAttributes.PrototypeTypes.entity, robotTaskData.currentTarget.entity_name, "mineable_properties")--[[@as LuaEntityPrototype.mineable_properties]] .mining_time) --[[@as uint # We can safely just cast this in reality. ]]
+        local mineTime = math_ceil(PrototypeAttributes.GetAttribute(PrototypeAttributes.PrototypeTypes.entity, robotTaskData.currentTarget.entity_name, "mineable_properties")--[[@as LuaEntityPrototype.mineable_properties]] .mining_time * 60) --[[@as uint # We can safely just cast this in reality. ]]
+        if global.Settings.Debug.fastDeconstruct then mineTime = mineTime / 10 end
 
         local minedItemsAllFittedInInventory = robot.entity.mine_entity(robotTaskData.currentTarget.entity, false)
         if minedItemsAllFittedInInventory == false then
@@ -172,10 +176,27 @@ DeconstructEntitiesInChunkDetails.Progress = function(thisTask, robot)
         robotTaskData.currentTarget = nil
         return mineTime, { stateText = "Deconstructing target", level = ShowRobotState.StateLevel.normal }
     else
-        -- Out of reach so need to move towards it.
+        -- Out of reach so need to move towards it. Or if walking complete this so that the task ends neatly.
 
-        -- TODO: do a path request and then follow it. Should try to move "near" the target and if that fails then further away. Will need enhancements to the path finder.
-        -- TODO: the path request and following it can just be stored in the robot data. As it will be unique to each robot and we will have this task manage the state texts.
+        -- The path request and following it can just be stored in the robot data. As it will be unique to each robot and we will have this task manage the state texts.
+        if robotTaskData.robotWalkingTask == nil then
+            robotTaskData.robotWalkingTask = MOD.Interfaces.Tasks.WalkToLocation.ActivateTask(thisTask.job, thisTask.parentTask, robotTaskData.currentTarget.position, taskData.surface, robot.miningDistance - 1)
+        end
+        local ticksToWait, robotStateDetails = MOD.Interfaces.Tasks.WalkToLocation.Progress(robotTaskData.robotWalkingTask, robot)
+        if robotStateDetails == nil then
+            -- TODO: main TODO about if we should really return nil state details due to this as feels odd code.
+            robotStateDetails = { stateText = "Unknown State", level = ShowRobotState.StateLevel.warning }
+        end
+        robotStateDetails.stateText = "Pathing to deconstruction target: " .. robotStateDetails.stateText
+
+        -- If the walking task is complete then kill the task and clear it so we know we have reached our destination.
+        if robotTaskData.robotWalkingTask.robotsTaskData[robot].state == "completed" then
+            MOD.Interfaces.Tasks.WalkToLocation.RemovingTask(robotTaskData.robotWalkingTask)
+            robotTaskData.robotWalkingTask = nil
+            robotStateDetails = { stateText = "Pathing to deconstruction target: reached destination", level = ShowRobotState.StateLevel.normal }
+        end
+
+        return ticksToWait, robotStateDetails
     end
 end
 
@@ -211,7 +232,7 @@ DeconstructEntitiesInChunkDetails.FindChunkForRobot = function(robotTaskData, ta
     local centerXPosition, centerYPosition = startSearchingChunkPosition.x, startSearchingChunkPosition.y
     local xPosition, yPosition, xChunkObject, foundChunk
     local maxDistanceAcrossIncludedChunks = math.max((taskData.chunkDetailsByAxis.maxXValue - taskData.chunkDetailsByAxis.minXValue), (taskData.chunkDetailsByAxis.maxYValueAcrossAllXValues - taskData.chunkDetailsByAxis.minYValueAcrossAllXValues))
-    while distanceToCheck < maxDistanceAcrossIncludedChunks do
+    while distanceToCheck <= maxDistanceAcrossIncludedChunks do
         for xMod = 0 + xIteratorPrimary, 0 - xIteratorPrimary, 0 - xIteratorPrimary do
             xPosition = centerXPosition + (xMod * distanceToCheck)
             if xPosition >= taskData.chunkDetailsByAxis.minXValue and xPosition <= taskData.chunkDetailsByAxis.maxXValue then
@@ -245,6 +266,8 @@ DeconstructEntitiesInChunkDetails.RemovingRobotFromTask = function(thisTask, rob
     -- Tidy up any robot specific stuff.
     local robotTaskData = thisTask.robotsTaskData[robot]
 
+    --TODO: per robot walk tasks.
+
     -- Remove any robot specific task data.
     thisTask.robotsTaskData[robot] = nil
 
@@ -254,6 +277,8 @@ end
 --- Called when a task is being removed and any task globals or ongoing activities need to be stopped.
 ---@param thisTask Task_DeconstructEntitiesInChunkDetails_Details
 DeconstructEntitiesInChunkDetails.RemovingTask = function(thisTask)
+    --TODO: per robot walk tasks.
+
     -- Remove any per robot bits if the robot is still active.
     for _, robotTaskData in pairs(thisTask.robotsTaskData) do
         if robotTaskData.state == "active" then
@@ -267,6 +292,8 @@ end
 ---@param thisTask Task_DeconstructEntitiesInChunkDetails_Details
 ---@param robot Robot
 DeconstructEntitiesInChunkDetails.PausingRobotForTask = function(thisTask, robot)
+    --TODO: per robot walk tasks.
+
     -- If the robot was being actively used in some way stop it.
     local robotTaskData = thisTask.robotsTaskData[robot]
     if robotTaskData ~= nil and robotTaskData.state == "active" then

@@ -14,6 +14,7 @@ local ShowRobotState = require("scripts.common.show-robot-state")
 ---@class Task_WalkToLocation_TaskData
 ---@field targetLocation MapPosition
 ---@field surface LuaSurface
+---@field closenessToTargetLocation double
 
 ---@class Task_WalkToLocation_Robot_TaskData : TaskData_Robot
 ---@field pathToWalk? PathfinderWaypoint[]
@@ -32,14 +33,16 @@ end
 ---@param parentTask? Task_Details # The parent Task or nil if this is a primary Task of a Job.
 ---@param targetLocation MapPosition
 ---@param surface LuaSurface
+---@param closenessToTargetLocation double # How close we need the path to get to the targetLocation
 ---@return Task_WalkToLocation_Details
-WalkToLocation.ActivateTask = function(job, parentTask, targetLocation, surface)
+WalkToLocation.ActivateTask = function(job, parentTask, targetLocation, surface, closenessToTargetLocation)
     local thisTask = MOD.Interfaces.TaskManager.CreateGenericTask(WalkToLocation.taskName, job, parentTask) ---@cast thisTask Task_WalkToLocation_Details
 
     -- Store the task wide data.
     thisTask.taskData = {
         targetLocation = targetLocation,
         surface = surface,
+        closenessToTargetLocation = closenessToTargetLocation
     }
 
     return thisTask
@@ -56,7 +59,7 @@ WalkToLocation.Progress = function(thisTask, robot)
     -- Handle if this is the very first robot to Progress() this Task.
     if thisTask.currentTaskIndex == 0 then
         -- Activate both tasks initially as there's no meaningful variation in the second task based on the first tasks output.
-        thisTask.plannedTasks[#thisTask.plannedTasks + 1] = MOD.Interfaces.Tasks.GetWalkingPath.ActivateTask(thisTask.job, thisTask, taskData.targetLocation, taskData.surface)
+        thisTask.plannedTasks[#thisTask.plannedTasks + 1] = MOD.Interfaces.Tasks.GetWalkingPath.ActivateTask(thisTask.job, thisTask, taskData.targetLocation, taskData.surface, taskData.closenessToTargetLocation)
         thisTask.plannedTasks[#thisTask.plannedTasks + 1] = MOD.Interfaces.Tasks.WalkPath.ActivateTask(thisTask.job, thisTask)
         thisTask.currentTaskIndex = 1
     end

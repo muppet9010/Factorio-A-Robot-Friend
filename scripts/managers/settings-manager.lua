@@ -7,6 +7,7 @@ SettingsManager._CreateGlobals = function()
     global.Settings.Debug = global.Settings.Debug or {} ---@class Global_Settings_Debug
     global.Settings.Debug.showPathWalking = true ---@type boolean # Just hardcode for now.
     global.Settings.Debug.showCompleteAreas = true ---@type boolean # Just hardcode for now.
+    global.Settings.Debug.fastDeconstruct = true ---@type boolean # Just hardcode for now.
 end
 
 return SettingsManager

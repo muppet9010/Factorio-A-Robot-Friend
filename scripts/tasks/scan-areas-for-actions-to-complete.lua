@@ -184,8 +184,8 @@ ScanAreasForActionsToComplete.Progress = function(thisTask, robot)
             taskData._entitiesToBeDeconstructed_raw[#taskData._entitiesToBeDeconstructed_raw + 1--[[@as uint]] ] = taskData.surface.find_entities_filtered({ area = area, force = taskData.force, to_be_deconstructed = true })
         end
         for _, area in pairs(taskData.areasToComplete) do
-            -- These are marked for deconstruction by any force and may belong to the robots force and thus included already in _entitiesToBeDeconstructed_raw.
-            taskData._natureToBeDeconstructed_raw[#taskData._natureToBeDeconstructed_raw + 1--[[@as uint]] ] = taskData.surface.find_entities_filtered({ area = area, type = { "tree", "rock" }, to_be_deconstructed = true })
+            -- These are marked for deconstruction by any force and may belong to the robots force and thus included already in _entitiesToBeDeconstructed_raw. Simple-entity is a stand-in for "rock". It might need better filter logic in future, although not sure how to further filter it either here or in post checking.
+            taskData._natureToBeDeconstructed_raw[#taskData._natureToBeDeconstructed_raw + 1--[[@as uint]] ] = taskData.surface.find_entities_filtered({ area = area, type = { "tree", "simple-entity" }, to_be_deconstructed = true })
         end
         for _, area in pairs(taskData.areasToComplete) do
             taskData._entitiesToBeUpgraded_raw[#taskData._entitiesToBeUpgraded_raw + 1--[[@as uint]] ] = taskData.surface.find_entities_filtered({ area = area, force = taskData.force, to_be_upgraded = true })
@@ -414,8 +414,10 @@ ScanAreasForActionsToComplete._ProcessDedupedTableToProcessedTable = function(ta
         if minedProducts ~= nil then
             for _, minedProduct in pairs(minedProducts) do
                 -- This is intended to capture the standard player buildable type entity being mined/replaced. Rather than resource rock mining, etc.
-                if minedProduct.probability == 1 and minedProduct.amount >= 1 then
-                    taskData.guaranteedOutputItems[minedProduct.name] = (taskData.guaranteedOutputItems[minedProduct.name] or 0) + math.floor(minedProduct.amount)
+                -- Get either the guaranteed amount or the minimum amount or 0.
+                local itemQuantity = minedProduct.amount ~= nil and minedProduct.amount or minedProduct.amount_min ~= nil and minedProduct.amount_min or 0
+                if minedProduct.probability == 1 and itemQuantity > 0 then
+                    taskData.guaranteedOutputItems[minedProduct.name] = (taskData.guaranteedOutputItems[minedProduct.name] or 0) + math.floor(itemQuantity)
                 end
             end
         end

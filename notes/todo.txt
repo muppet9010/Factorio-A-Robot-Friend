@@ -6,6 +6,14 @@ Bugs
 Next
 ===
 
+Separate out the functions we register in to MOD.Interfaces in to public and internal. Public is for calling by other classes (JobManager calling TaskManager), Internal is for calling within the class (i.e. a bespoke task calling TaskManager).
+
+Decide if I am using definitive enums or just alias of strings. As I seem to use a mix of both currently for status's and similar things. I think alias of enum is simpler for just strings. And use enums for more complicated data structures?
+
+Look at any task and job details and data that should be private fields and not public. Those that are only accessed via an Interface for example. Thinking like robotTaskData.
+
+Do tasks really return an option state details text? or do we need to add an intentional "nothing" flag. Feels weird having to handle a nil value in a task that is looking at a sub tasks state text to prefix it.
+
 Make simple build blueprint job with dummy tasks for getting items. To test framework as much as anything. Just give the robots the needed items as part of the job.
 I think any adhoc tasks can be recorded under the Robot Task Data for the task and be done just in that Task's Progress function(). They won't appear to outside views and the Progress() can pass the final state back up the chain, i.e. pre-fix it.
 
@@ -57,6 +65,7 @@ Walking to location
     - The current path_resolution_modifier of 3 can have issues with rocks and off grid items close together sometimes. In one test case they could path in 1 direction, but not the other.
     - There may be some changes to the collision mask we want to make to make our pathfinder usage better. Review options and consider.
     - The arrival radius is currently set to 0 to make sure we reach our target. However, we probably want this passed in and to be based on why we are walking somewhere. As a default this probably wants to be higher to allow us just getting close enough for what we want to do. Maybe it should be specified as part of when the parent task calls in. With a default of close like this. When it was at a value of 1.0 the pathfinder would sometimes suggest pathing in to a blocking entity right next to the target location and mining it. At 0 while it requires the target position to be reachable, it does avoid this oddity.
+    - Play around with "allow_destroy_friendly_entities = true" as in quick testing this seems to still route around issues unless the only option is to go through them. This may allow us to look for paths in tot he middle of entities and just stop when our robot reaches as far as it can go. Also would give an option possibly to try and path through walls and other safely removed entities with the robot mining and replacing them after it goes?
     - Observations and notes:
         - Should play around with these values and see what impact they have.
         - Need to check pathfinder going through dense and difficult areas, not just simple open and blocky areas.
@@ -73,7 +82,7 @@ Complete area
 -------------
 - General:
     - Try to have some smarter logic for the starting corner of the combined area for the actions to be done from. Currently just starts top left. Maybe should be nearest corner to a base storage area or some other general center point.
-    - Establish a rally point in a chunk next to the starting corner chunk. Robots should path to here from outside the completing area and then be given an active chunk for their duties. To avoid robots far off causing odd delays in job progress and opens the door to more natural driving an train usage logic in future. Will also mean that the moving to the general job site is handled by standard move logic, but moving around the job internally between chunks can be locked down to just walking and spiders.
+    - Establish a rally point in a free chunk next to the starting corner chunk. Robots should path to here from outside the completing area and then be given an active chunk for their duties. To avoid robots far off causing odd delays in job progress and opens the door to more natural driving an train usage logic in future. Will also mean that the moving to the general job site is handled by standard move logic, but moving around the job internally between chunks can be locked down to just walking and spiders.
     - Have some planning of chunks to be done order. We get rectangles as the jobs details so should be able to work progressively through them maybe?
     - A more joined up approach to actions should be done, rather than just each action in turn. This will require:
         - Using the rally point as a local storage area.
@@ -87,3 +96,4 @@ Complete area
     - Support cliffs and knowing that cliffs require cliff explosives. At present they are unhandled entirely and thus ignored. They should be prioritised and if the entity can't be built due to them the item dropped from that robots actions list. So that once the cliffs are blown up and the next cycle of checking is done they are picked up. ???
     - Currently doesn't handle if things change during the looping anywhere. As an upgrade found during initial scan could be found missing at any later point where its data is accessed. If something is found missing (invalid) we just need to remove it from the lists.
 - Deconstruct Entities in Chunk Details:
+    - Look at pathing in detail to ensure we do something sensible and nice looking. Should try to move "near" the target and if that fails then accept further away. Will need enhancements to the path finder. As the pathfinder is a work or fail doing a path to within range of the entity and then a second path from there closer seems the best way to get near the target. We assume that it's best to get near the target, on the basis that there will often be a bunch of other tasks around it that will then be within range. It may be best to try and path to the middle of a chunk upon being assigned the chunk, but have a really large arrival radius so that once the robot is within the chunks borders it then switches to a short range nearest possible movement logic. As we don;t want to try multiple closeness paths towards our target when far away. So a 2 step approach to pathing.

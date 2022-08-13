@@ -109,9 +109,12 @@ CompleteArea.Progress = function(thisTask, robot)
         -- Progress the data for each robot.
         local task_DeconstructEntitiesInChunkDetails_Details = thisTask.plannedTasks[robotTaskData.currentTaskIndex] --[[@as Task_DeconstructEntitiesInChunkDetails_Details]]
         local ticksToWait, robotStateDetails = MOD.Interfaces.Tasks.DeconstructEntitiesInChunkDetails.Progress(task_DeconstructEntitiesInChunkDetails_Details, robot)
+
+        -- TODO: this is never hit when everything is deconstructed???
         if task_DeconstructEntitiesInChunkDetails_Details.state == "completed" then
             --TODO: anything needs doing as the list will be empty and thus # will be 0.
             -- Expect to need to push on all robots current task index as well as the jobs.
+            error("deconstructing complete")
         end
 
         --We always return on the robot that did some progression on this. The next robot cycle will the next step fresh.

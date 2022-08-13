@@ -34,7 +34,7 @@ local DeconstructEntitiesInChunkDetails = require("scripts.tasks.deconstruct-ent
 ---@field plannedTasks Task_Details[] # The planned child tasks of this task.
 ---@field currentTaskIndex uint # The current task in the `tasks` list that is the active task. This is for all robots. Some individual robots will be on different current task as recorded under the robotsTaskData. Starts at 0 for a generic Task.
 ---@field job Job_Details # The job related to the lead task in this hierarchy.
----@field parentTask? Task_Details # The parent Task or nil if this is a primary Task of a Job. Not currently used other than detecting when its nil, however, it does no real harm having at present.
+---@field parentTask? Task_Details # The parent Task or nil if this is a primary Task of a Job. Not currently used other than detecting when its nil, however, it does no real harm having at present. Likely useful for migrations and other odd events when calling both directions up the task tree will be useful.
 
 --- The generic characteristics of the robot specific Task Data that all Task instances must implement if they have per robot data.
 ---@class TaskData_Robot
