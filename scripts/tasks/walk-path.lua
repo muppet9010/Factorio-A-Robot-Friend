@@ -40,7 +40,7 @@ end
 ---@param robot Robot
 ---@param pathToWalk? PathfinderWaypoint[] # Only needed on first Progress() for each robot.
 ---@return uint ticksToWait
----@return ShowRobotState_NewRobotStateDetails|nil robotStateDetails # nil if there is no state being set by this Task
+---@return ShowRobotState_NewRobotStateDetails robotStateDetails
 WalkPath.Progress = function(thisTask, robot, pathToWalk)
 
     -- Handle if this is the first Progress() for a specific robot.
@@ -73,7 +73,10 @@ WalkPath.Progress = function(thisTask, robot, pathToWalk)
                 -- Cancel the last movement input sent to the robot as it will stay persistent otherwise.
                 robot.entity.walking_state = { walking = false, direction = defines.direction.north }
 
-                return 0, nil
+                ---@type ShowRobotState_NewRobotStateDetails
+                local robotStateDetails = { stateText = "Reached end of the path", level = "normal" }
+
+                return 0, robotStateDetails
             end
             targetPosition = robotTaskData.pathToWalk[robotTaskData.nodeTarget].position
             largerDistanceToMove = false
@@ -90,7 +93,10 @@ WalkPath.Progress = function(thisTask, robot, pathToWalk)
         -- Cancel the last movement input sent to the robot as it will stay persistent otherwise.
         robot.entity.walking_state = { walking = false, direction = defines.direction.north }
 
-        return 0, nil
+        ---@type ShowRobotState_NewRobotStateDetails
+        local robotStateDetails = { stateText = "Robot stuck walking the path", level = "warning" }
+
+        return 0, robotStateDetails
     end
     robotTaskData.positionLastTick = currentPosition
 

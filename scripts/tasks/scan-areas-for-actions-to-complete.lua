@@ -146,7 +146,7 @@ end
 ---@param thisTask Task_ScanAreasForActionsToComplete_Details
 ---@param robot Robot
 ---@return uint ticksToWait
----@return ShowRobotState_NewRobotStateDetails|nil robotStateDetails # nil if there is no state being set by this Task
+---@return ShowRobotState_NewRobotStateDetails robotStateDetails
 ScanAreasForActionsToComplete.Progress = function(thisTask, robot)
     local taskData = thisTask.taskData
 

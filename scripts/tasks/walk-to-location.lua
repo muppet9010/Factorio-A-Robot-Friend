@@ -52,7 +52,7 @@ end
 ---@param thisTask Task_WalkToLocation_Details
 ---@param robot Robot
 ---@return uint ticksToWait
----@return ShowRobotState_NewRobotStateDetails|nil robotStateDetails # nil if there is no state being set by this Task
+---@return ShowRobotState_NewRobotStateDetails robotStateDetails
 WalkToLocation.Progress = function(thisTask, robot)
     local taskData = thisTask.taskData
 
@@ -156,7 +156,10 @@ WalkToLocation.Progress = function(thisTask, robot)
             end
         end
 
-        return 0, nil
+        ---@type ShowRobotState_NewRobotStateDetails
+        local robotStateDetails = { stateText = "Robot arrived at requested location", level = "normal" }
+
+        return 0, robotStateDetails
     end
 
     return ticksToWait, robotStateDetails

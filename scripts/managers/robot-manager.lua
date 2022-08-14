@@ -104,7 +104,7 @@ RobotManager.ManageRobots = function(event)
     -- For each robot check if its not busy waiting check down its active job list for something to do.
     for _, robot in pairs(global.RobotManager.robots) do
         if robot.state == "active" and robot.jobBusyUntilTick <= event.tick then
-            ---@type ShowRobotState_NewRobotStateDetails|nil, uint
+            ---@type ShowRobotState_NewRobotStateDetails, uint
             local newRobotStateDetails, ticksToWait
 
             if #robot.activeJobs > 0 then
@@ -131,12 +131,14 @@ RobotManager.ManageRobots = function(event)
                 end
             end
 
-            -- If no jobs for this robot, do its idle activity.
+            -- If no jobs for this robot, show its idle message.
+            if ticksToWait == 0 then
+                ---@type ShowRobotState_NewRobotStateDetails
+                newRobotStateDetails = { stateText = "Idle", level = "normal" }
+            end
+
+            -- Show the robot's state over its head if this is enabled.
             if global.Settings.showRobotState then
-                if newRobotStateDetails == nil then
-                    ---@type ShowRobotState_NewRobotStateDetails
-                    newRobotStateDetails = { stateText = "Idle", level = "normal" }
-                end
                 ShowRobotState.UpdateStateText(robot, newRobotStateDetails)
             end
         end

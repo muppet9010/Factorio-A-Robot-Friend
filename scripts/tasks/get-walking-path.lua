@@ -62,7 +62,7 @@ end
 ---@param robot Robot
 ---@param startPosition? MapPosition # Only needed on first Progress() for each robot.
 ---@return uint ticksToWait
----@return ShowRobotState_NewRobotStateDetails|nil robotStateDetails # nil if there is no state being set by this Task
+---@return ShowRobotState_NewRobotStateDetails robotStateDetails
 GetWalkingPath.Progress = function(thisTask, robot, startPosition)
     local taskData = thisTask.taskData
 

@@ -18,7 +18,7 @@ local DeconstructEntitiesInChunkDetails = require("scripts.tasks.deconstruct-ent
 ---@class Task_Interface
 ---@field taskName string # The internal name of the task. Recorded in here to avoid having to hard code it all over the code.
 ---@field ActivateTask fun(job:Job_Details, parentTask:Task_Details, ...): Task_Details # Called ONCE per Task to create the task when the first robot first reaches this task in the job. It is robot agnostic and returns the Task data for the bespoke task.
----@field Progress fun(thisTask:Task_Details, robot:Robot, ...): uint, ShowRobotState_NewRobotStateDetails|nil # Called to do work on the task by on_tick by each robot. Returns how many ticks to wait before next Progress() call for that robot and the robot state details object for storing by the robot. The return tick wait of 0 will make the robot moveThe robot state can be nil if there is no state being set by this Task.
+---@field Progress fun(thisTask:Task_Details, robot:Robot, ...): uint, ShowRobotState_NewRobotStateDetails # Called to do work on the task by on_tick by each robot. Returns how many ticks to wait before next Progress() call for that robot and the robot state details object for storing by the robot. The return tick wait of 0 indicates that this task has done nothing and the caller will need to check for completed or an issue.
 ---@field PauseTask function # Called to pause any activity, i.e. task has been interrupted by another higher priority task. NOT DEFINED - OLD MINDSET IN DESCRIPTION
 ---@field ResumeTask function # Called to resume a previously paused task. This will need some state checking to be done as anything could have changed from before. NOT DEFINED - OLD MINDSET IN DESCRIPTION
 ---@field RemovingTask fun(thisTask:Task_Details) # Called when a task is being removed and any task globals or ongoing activities need to be stopped. This will propagates down to all sub tasks.
@@ -125,7 +125,7 @@ end
 ---@param primaryTask Task_Details
 ---@param robot Robot
 ---@return uint ticksToWait
----@return ShowRobotState_NewRobotStateDetails|nil robotStateDetails # nil if there is no state being set by this Task
+---@return ShowRobotState_NewRobotStateDetails robotStateDetails
 TaskManager.ProgressPrimaryTask = function(primaryTask, robot)
     return MOD.Interfaces.Tasks[primaryTask.taskName]--[[@as Task_Interface]] .Progress(primaryTask, robot)
 end

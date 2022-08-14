@@ -6,10 +6,6 @@ Bugs
 Next
 ===
 
-Look at any task and job details and data that should be private fields and not public. Those that are only accessed via an Interface for example. Thinking like robotTaskData.
-
-Do tasks really return an option state details text? or do we need to add an intentional "nothing" flag. Feels weird having to handle a nil value in a task that is looking at a sub tasks state text to prefix it.
-
 Look at the deconstruction loop:
     - Decide on some standard wait times and make them global variables.
     - Review if the code flow is really right. It's been written from a nothing start, but it feels weird flowing off the end of some logic just to wait a tick before starting the next cycle to think about the next thing to do. Excess loops is UPS wasting, but consider code readability and ease of following.

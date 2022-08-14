@@ -44,7 +44,7 @@ end
 ---@param thisTask Task_XXXXX_Details
 ---@param robot Robot
 ---@return uint ticksToWait
----@return ShowRobotState_NewRobotStateDetails|nil robotStateDetails # nil if there is no state being set by this Task
+---@return ShowRobotState_NewRobotStateDetails robotStateDetails
 XXXXX.Progress = function(thisTask, robot)
     local taskData = thisTask.taskData
 

@@ -81,7 +81,7 @@ end
 ---@param job Job_Details
 ---@param robot Robot
 ---@return uint ticksToWait
----@return ShowRobotState_NewRobotStateDetails|nil robotStateDetails # nil if there is no state being set by this Task
+---@return ShowRobotState_NewRobotStateDetails robotStateDetails
 JobManager.ProgressJobForRobot = function(job, robot)
     -- Record that the robot is working on the job.
     if job.robotsOnJob[robot.id] == nil then
