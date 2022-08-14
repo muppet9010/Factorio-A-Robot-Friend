@@ -19,7 +19,7 @@ local ShowRobotState = require("scripts.common.show-robot-state")
 ---@class Task_WalkToLocation_Robot_TaskData : TaskData_Robot
 ---@field pathToWalk? PathfinderWaypoint[]
 ---@field pathToWalkDebugRenderIds? uint64[]
----@field state "active"|"completed"|"noPath"
+---@field state TaskData_Robot.state|"noPath"
 
 local WalkToLocation = {} ---@class Task_WalkToLocation_Interface : Task_Interface
 WalkToLocation.taskName = "WalkToLocation"
@@ -95,7 +95,7 @@ WalkToLocation.Progress = function(thisTask, robot)
                 -- CODE NOTE: this is on the assumption that if a path is found the robot can try and follow it.
                 getWalkingPathTask.robotsTaskData[robot] = nil
                 ---@type ShowRobotState_NewRobotStateDetails
-                local robotStateDetails = { stateText = "Going to start a new path search", level = ShowRobotState.StateLevel.warning }
+                local robotStateDetails = { stateText = "Going to start a new path search", level = "warning" }
                 return 60, robotStateDetails
             end
 
@@ -103,7 +103,7 @@ WalkToLocation.Progress = function(thisTask, robot)
             if getWalkingPathTask_robotTaskData.pathFound == nil then
                 LoggingUtils.LogPrintWarning(robot.name .. " failed to get a path from " .. LoggingUtils.PositionToString(getWalkingPathTask_robotTaskData.startPosition) .. " to " .. LoggingUtils.PositionToString(getWalkingPathTask_taskData.endPosition))
                 ---@type ShowRobotState_NewRobotStateDetails
-                local robotStateDetails = { stateText = "No path found", level = ShowRobotState.StateLevel.warning }
+                local robotStateDetails = { stateText = "No path found", level = "warning" }
                 robotTaskData.state = "noPath"
 
                 -- If this is the primary task then deal with the issue, otherwise it gets passed up the chain.

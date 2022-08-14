@@ -28,7 +28,7 @@ local TableUtils = require("utility.helper-utils.table-utils")
 ---@field scannedAreaData? Task_ScanAreasForActionsToComplete_TaskData
 
 ---@class Task_CompleteArea_Robot_TaskData : TaskData_Robot
----@field state "active"|"completed"
+---@field state TaskData_Robot.state|"test"
 
 local CompleteArea = {} ---@class Task_CompleteArea_Interface : Task_Interface
 CompleteArea.taskName = "CompleteArea"
@@ -126,8 +126,8 @@ CompleteArea.Progress = function(thisTask, robot)
 
 
     -- TEMPLATE: These are often returned from sub tasks Progress() functions, but can also be explicitly defined.
-    ---@type uint,ShowRobotState_NewRobotStateDetails
-    local ticksToWait, robotStateDetails = 0, { stateText = "All done honest...", level = ShowRobotState.StateLevel.normal }
+    ---@type uint, ShowRobotState_NewRobotStateDetails
+    local ticksToWait, robotStateDetails = 0, { stateText = "All done honest...", level = "normal" }
 
     return ticksToWait, robotStateDetails
 end

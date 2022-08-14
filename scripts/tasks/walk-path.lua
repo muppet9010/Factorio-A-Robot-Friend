@@ -16,7 +16,7 @@ local ShowRobotState = require("scripts.common.show-robot-state")
 ---@field pathToWalk PathfinderWaypoint[]
 ---@field nodeTarget uint
 ---@field positionLastTick? MapPosition
----@field state "active"|"completed"|"stuck"
+---@field state TaskData_Robot.state|"stuck"
 
 local WalkPath = {} ---@class Task_WalkPath_Interface : Task_Interface
 WalkPath.taskName = "WalkPath"
@@ -139,7 +139,7 @@ WalkPath.Progress = function(thisTask, robot, pathToWalk)
     robot.entity.walking_state = { walking = true, direction = walkDirection }
 
     ---@type ShowRobotState_NewRobotStateDetails
-    local robotStateDetails = { stateText = "Walking the path", level = ShowRobotState.StateLevel.normal }
+    local robotStateDetails = { stateText = "Walking the path", level = "normal" }
 
     return 1, robotStateDetails
 end

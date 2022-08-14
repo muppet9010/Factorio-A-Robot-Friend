@@ -27,7 +27,7 @@ local CompleteArea = require("scripts.jobs.complete-area")
 ---@field id uint
 ---@field jobName string  # The name registered under global.Jobs and MOD.Interfaces.Jobs.
 ---@field jobData? table # Any data that the job needs to store about itself goes in here. Each job will have its own BespokeData class for this.
----@field state "pending"|"active"|"completed"
+---@field state "pending"|"active"|"completed" # The current overall state of the job. Jobs must not add their own states.
 ---@field primaryTaskName string # The Interface name of the primary task.
 ---@field primaryTask? Task_Details # The primary task for this job.
 ---@field description? string # A text description for the Job.

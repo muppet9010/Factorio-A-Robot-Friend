@@ -30,7 +30,7 @@ local DeconstructEntitiesInChunkDetails = require("scripts.tasks.deconstruct-ent
 ---@field taskName string # The name registered under global.Tasks and MOD.Interfaces.Tasks.
 ---@field taskData table # Any task wide (all robot) data that the task needs to store about itself goes in here. Each task will have its own BespokeData class for this.
 ---@field robotsTaskData table<Robot, TaskData_Robot> # Any per robot data that the task needs to store about each robot goes in here. Each task will have its own BespokeData class for this.
----@field state "active"|"completed" # The state of the overall task. Some individual robots may be completed on an active task as recorded under the robotsTaskData.
+---@field state TaskDetails.state # The state of the overall task. Some individual robots may be completed on an active task as recorded under the robotsTaskData.
 ---@field plannedTasks Task_Details[] # The planned child tasks of this task.
 ---@field currentTaskIndex uint # The current task in the `tasks` list that is the active task. This is for all robots. Some individual robots will be on different current task as recorded under the robotsTaskData. Starts at 0 for a generic Task.
 ---@field job Job_Details # The job related to the lead task in this hierarchy.
@@ -39,9 +39,12 @@ local DeconstructEntitiesInChunkDetails = require("scripts.tasks.deconstruct-ent
 --- The generic characteristics of the robot specific Task Data that all Task instances must implement if they have per robot data.
 ---@class TaskData_Robot
 ---@field robot Robot
----@field state "active"|"completed" # The state of this robot in this task. Some specific task types may add their own states per robot.
+---@field state TaskData_Robot.state # The state of this robot in this task. Some specific task types may add their own states per robot, but must include these ones.
 ---@field currentTaskIndex uint # The current task in the `tasks` list that is the active task for just this robot.
 ---@field task Task_Details # The Task that this robot specific data is for.
+
+---@alias TaskDetails.state "active"|"completed"|... # The mandatory states of the Task_Details, with specific tasks being able to add their own.
+---@alias TaskData_Robot.state "active"|"completed"|... # The mandatory states of the TaskData_Robot, with specific tasks being able to add their own.
 
 local TaskManager = {} ---@class TaskManager
 

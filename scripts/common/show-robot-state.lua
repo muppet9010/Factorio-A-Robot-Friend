@@ -11,16 +11,9 @@ local Colors = require("utility.lists.colors")
 
 ---@class ShowRobotState_NewRobotStateDetails
 ---@field stateText? string
----@field level ShowRobotState_StateLevel
+---@field level "normal"|"warning"|"error"
 
 local ShowRobotState = {} ---@class ShowRobotState
-
----@enum ShowRobotState_StateLevel
-ShowRobotState.StateLevel = {
-    normal = "normal",
-    warning = "warning",
-    error = "error"
-}
 
 --- Shows the text above the robot in a normal color for the duration.
 ---@param robot Robot

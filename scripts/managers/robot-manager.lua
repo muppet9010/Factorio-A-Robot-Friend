@@ -68,8 +68,8 @@ RobotManager.CreateRobot = function(surface, position, master)
 
     -- Get the robots speed and action distances from its type. This will need updating upon either character entity or force bonus changes.
     -- Maybe per player bonuses should affect their robots, rather than me getting the character bonus for the robot entity itself?
-    robot.miningDistance = PrototypeAttributes.GetAttribute(PrototypeAttributes.PrototypeTypes.entity, entityName, "reach_distance") --[[@as uint]] + robot.entity.character_reach_distance_bonus + force.character_reach_distance_bonus
-    robot.miningSpeed = PrototypeAttributes.GetAttribute(PrototypeAttributes.PrototypeTypes.entity, entityName, "mining_speed") --[[@as uint]] + robot.entity.character_mining_speed_modifier * (1 + force.manual_mining_speed_modifier)
+    robot.miningDistance = PrototypeAttributes.GetAttribute("entity", entityName, "reach_distance") --[[@as uint]] + robot.entity.character_reach_distance_bonus + force.character_reach_distance_bonus
+    robot.miningSpeed = PrototypeAttributes.GetAttribute("entity", entityName, "mining_speed") --[[@as uint]] + robot.entity.character_mining_speed_modifier * (1 + force.manual_mining_speed_modifier)
 
     -- Robot personalisation.
     RobotManager.UpdateColor(robot, master.color)
@@ -135,7 +135,7 @@ RobotManager.ManageRobots = function(event)
             if global.Settings.showRobotState then
                 if newRobotStateDetails == nil then
                     ---@type ShowRobotState_NewRobotStateDetails
-                    newRobotStateDetails = { stateText = "Idle", level = ShowRobotState.StateLevel.normal }
+                    newRobotStateDetails = { stateText = "Idle", level = "normal" }
                 end
                 ShowRobotState.UpdateStateText(robot, newRobotStateDetails)
             end

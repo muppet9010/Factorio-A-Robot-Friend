@@ -31,19 +31,19 @@ PrototypeAttributes.GetAttribute = function(prototypeType, prototypeName, attrib
         return attributeCache.value
     else
         local resultPrototype
-        if prototypeType == PrototypeAttributes.PrototypeTypes.entity then
+        if prototypeType == "entity" then
             resultPrototype = game.entity_prototypes[prototypeName]
-        elseif prototypeType == PrototypeAttributes.PrototypeTypes.item then
+        elseif prototypeType == "item" then
             resultPrototype = game.item_prototypes[prototypeName]
-        elseif prototypeType == PrototypeAttributes.PrototypeTypes.fluid then
+        elseif prototypeType == "fluid" then
             resultPrototype = game.fluid_prototypes[prototypeName]
-        elseif prototypeType == PrototypeAttributes.PrototypeTypes.tile then
+        elseif prototypeType == "tile" then
             resultPrototype = game.tile_prototypes[prototypeName]
-        elseif prototypeType == PrototypeAttributes.PrototypeTypes.equipment then
+        elseif prototypeType == "equipment" then
             resultPrototype = game.equipment_prototypes[prototypeName]
-        elseif prototypeType == PrototypeAttributes.PrototypeTypes.recipe then
+        elseif prototypeType == "recipe" then
             resultPrototype = game.recipe_prototypes[prototypeName]
-        elseif prototypeType == PrototypeAttributes.PrototypeTypes.technology then
+        elseif prototypeType == "technology" then
             resultPrototype = game.technology_prototypes[prototypeName]
         end
         local resultValue = resultPrototype[attributeName] ---@type any
@@ -52,16 +52,7 @@ PrototypeAttributes.GetAttribute = function(prototypeType, prototypeName, attrib
     end
 end
 
----@enum UtilityPrototypeAttributes_PrototypeType # not all prototype types are supported at present as not needed before.
-PrototypeAttributes.PrototypeTypes = {
-    entity = "entity",
-    item = "item",
-    fluid = "fluid",
-    tile = "tile",
-    equipment = "equipment",
-    recipe = "recipe",
-    technology = "technology"
-}
+---@alias UtilityPrototypeAttributes_PrototypeType "entity"|"item"|"fluid"|"tile"|"equipment"|"recipe"|"technology" # not all prototype types are supported at present as not needed before.
 
 ---@alias UtilityPrototypeAttributes_CachedTypes table<string, UtilityPrototypeAttributes_CachedPrototypes> # a table of each prototype type name (key) and the prototypes it has of that type.
 ---@alias UtilityPrototypeAttributes_CachedPrototypes table<string, UtilityPrototypeAttributes_CachedAttributes> # a table of each prototype name (key) and the attributes if has of that prototype.

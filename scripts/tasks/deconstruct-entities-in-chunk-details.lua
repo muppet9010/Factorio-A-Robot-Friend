@@ -34,19 +34,12 @@ local math_ceil = math.ceil
 
 ---@class Task_DeconstructEntitiesInChunkDetails_ChunkState
 ---@field positionString string # The Id of this in the table.
----@field state Task_DeconstructEntitiesInChunkDetails_ChunkStates
+---@field state "available"|"assigned"|"completed"
 ---@field assignedRobot? Robot
 ---@field chunkDetails Task_ScanAreasForActionsToComplete_ChunkDetails
 
 local DeconstructEntitiesInChunkDetails = {} ---@class Task_DeconstructEntitiesInChunkDetails_Interface : Task_Interface
 DeconstructEntitiesInChunkDetails.taskName = "DeconstructEntitiesInChunkDetails"
-
----@enum Task_DeconstructEntitiesInChunkDetails_ChunkStates
-DeconstructEntitiesInChunkDetails.ChunkStates = {
-    available = "available",
-    assigned = "assigned",
-    completed = "completed"
-}
 
 DeconstructEntitiesInChunkDetails._OnLoad = function()
     MOD.Interfaces.Tasks.DeconstructEntitiesInChunkDetails = DeconstructEntitiesInChunkDetails
@@ -80,7 +73,7 @@ DeconstructEntitiesInChunkDetails.ActivateTask = function(job, parentTask, surfa
             if next(chunkDetails.toBeDeconstructedEntityDetails) ~= nil then
                 chunksState[chunkDetails.chunkPositionString] = {
                     positionString = chunkDetails.chunkPositionString,
-                    state = DeconstructEntitiesInChunkDetails.ChunkStates.available,
+                    state = "available",
                     assignedRobot = nil,
                     chunkDetails = chunkDetails
                 }
@@ -108,17 +101,17 @@ DeconstructEntitiesInChunkDetails.Progress = function(thisTask, robot)
     end
 
     -- If the robot doesn't have a chunk to work on or its chunk has been marked as completed assign it a new one.
-    if robotTaskData.assignedChunkState == nil or robotTaskData.assignedChunkState.state == DeconstructEntitiesInChunkDetails.ChunkStates.completed then
+    if robotTaskData.assignedChunkState == nil or robotTaskData.assignedChunkState.state == "completed" then
         local chunkFound = DeconstructEntitiesInChunkDetails.FindAvailableChunkForRobot(robotTaskData, taskData)
         if chunkFound == nil then
             -- No chunks left to be done.
 
             -- So just wait where it is for a second and check back. As the robot(s) assigned to the outstanding chunks could leave and thus those chunks will need a new robot to work on them.
-            return 60, { stateText = "Waiting for other robots to finish deconstructing", level = ShowRobotState.StateLevel.normal }
+            return 60, { stateText = "Waiting for other robots to finish deconstructing", level = "normal" }
         end
         -- Chunk found so record it.
         local chunkState = taskData.chunksState[chunkFound.chunkPositionString]
-        chunkState.state = DeconstructEntitiesInChunkDetails.ChunkStates.assigned
+        chunkState.state = "assigned"
         chunkState.assignedRobot = robotTaskData.robot
         robotTaskData.assignedChunkDetails = chunkFound
         robotTaskData.assignedChunkState = chunkState
@@ -136,9 +129,9 @@ DeconstructEntitiesInChunkDetails.Progress = function(thisTask, robot)
 
         if robotTaskData.currentTarget == nil then
             -- As the robot has completed everything on this chunk then mark the chunk as done for deconstruction. It will find a new chunk on next loop. We leave the robot assigned to the chunk as the searching for chunk will use this data before overwriting it.
-            robotTaskData.assignedChunkState.state = DeconstructEntitiesInChunkDetails.ChunkStates.completed
+            robotTaskData.assignedChunkState.state = "completed"
 
-            return 60, { stateText = "Thinking about next chunk to deconstruct", level = ShowRobotState.StateLevel.normal }
+            return 60, { stateText = "Thinking about next chunk to deconstruct", level = "normal" }
             -- This should really look for a new chunk immediately, but for viewing the robots progress this pause is convenient.
         end
     end
@@ -148,7 +141,7 @@ DeconstructEntitiesInChunkDetails.Progress = function(thisTask, robot)
     -- Check if we can mine the target from our current position and we are not currently walking there, or if we are/need to walk.
     if robotTaskData.robotWalkingTask == nil and PositionUtils.GetDistance(robot_position, robotTaskData.currentTarget.position) <= robot.miningDistance then
         -- In reach and not walking so can mine it now and then sleep.
-        ticksToWait = math_ceil(PrototypeAttributes.GetAttribute(PrototypeAttributes.PrototypeTypes.entity, robotTaskData.currentTarget.entity_name, "mineable_properties")--[[@as LuaEntityPrototype.mineable_properties]] .mining_time * 60 / robot.miningSpeed) --[[@as uint # We can safely just cast this in reality. ]]
+        ticksToWait = math_ceil(PrototypeAttributes.GetAttribute("entity", robotTaskData.currentTarget.entity_name, "mineable_properties")--[[@as LuaEntityPrototype.mineable_properties]] .mining_time * 60 / robot.miningSpeed) --[[@as uint # We can safely just cast this in reality. ]]
         if global.Settings.Debug.fastDeconstruct then ticksToWait = math.ceil(ticksToWait / 10) --[[@as uint # We can safely just cast this in reality. ]] end
 
         local minedItemsAllFittedInInventory = robot.entity.mine_entity(robotTaskData.currentTarget.entity, false)
@@ -162,7 +155,7 @@ DeconstructEntitiesInChunkDetails.Progress = function(thisTask, robot)
         robotTaskData.assignedChunkDetails.toBeDeconstructedEntityDetails[robotTaskData.currentTarget.entityListKey] = nil
         taskData.entitiesToBeDeconstructed[robotTaskData.currentTarget.entityListKey] = nil
         robotTaskData.currentTarget = nil
-        robotStateDetails = { stateText = "Deconstructing target", level = ShowRobotState.StateLevel.normal }
+        robotStateDetails = { stateText = "Deconstructing target", level = "normal" }
         entityWasMined = true
     else
         -- Out of reach so need to move towards it. Or if walking complete this so that the task ends neatly.
@@ -174,7 +167,7 @@ DeconstructEntitiesInChunkDetails.Progress = function(thisTask, robot)
         ticksToWait, robotStateDetails = MOD.Interfaces.Tasks.WalkToLocation.Progress(robotTaskData.robotWalkingTask, robot)
         if robotStateDetails == nil then
             -- TODO: main list TODO entry about if we should really return nil state details due to this as feels odd code.
-            robotStateDetails = { stateText = "Unknown State", level = ShowRobotState.StateLevel.warning }
+            robotStateDetails = { stateText = "Unknown State", level = "warning" }
         end
         robotStateDetails.stateText = "Pathing to deconstruction target: " .. robotStateDetails.stateText
 
@@ -182,7 +175,7 @@ DeconstructEntitiesInChunkDetails.Progress = function(thisTask, robot)
         if robotTaskData.robotWalkingTask.robotsTaskData[robot].state == "completed" then
             MOD.Interfaces.Tasks.WalkToLocation.RemovingTask(robotTaskData.robotWalkingTask)
             robotTaskData.robotWalkingTask = nil
-            robotStateDetails = { stateText = "Pathing to deconstruction target: reached destination", level = ShowRobotState.StateLevel.normal }
+            robotStateDetails = { stateText = "Pathing to deconstruction target: reached destination", level = "normal" }
             ticksToWait = 1 -- Just wait 1 tick once we arrive before we do anything.
         end
     end
@@ -193,17 +186,17 @@ DeconstructEntitiesInChunkDetails.Progress = function(thisTask, robot)
             -- Robot just finished the last thing in this chunk.
 
             -- As the robot has completed everything on this chunk then mark the chunk as done for deconstruction. It will find a new chunk on next loop. We leave the robot assigned to the chunk as the searching for chunk will use this data before overwriting it.
-            robotTaskData.assignedChunkState.state = DeconstructEntitiesInChunkDetails.ChunkStates.completed
+            robotTaskData.assignedChunkState.state = "completed"
             ticksToWait = 60 -- Always wait a second so we can see what the robot is doing.
 
             -- As a chunk was just completed check if there is anything left that needs doing in any chunk within the task.
             if next(taskData.entitiesToBeDeconstructed) == nil then
                 -- Nothing left to be done in any chunk, so it should all be complete.
                 thisTask.state = "completed"
-                robotStateDetails = { stateText = "Thinking about post deconstructing tasks", level = ShowRobotState.StateLevel.normal }
+                robotStateDetails = { stateText = "Thinking about post deconstructing tasks", level = "normal" }
             else
                 -- Other chunks still have stuff to be done.
-                robotStateDetails = { stateText = "Thinking about next chunk to deconstruct", level = ShowRobotState.StateLevel.normal }
+                robotStateDetails = { stateText = "Thinking about next chunk to deconstruct", level = "normal" }
             end
         end
 
@@ -223,7 +216,7 @@ DeconstructEntitiesInChunkDetails.FindAvailableChunkForRobot = function(robotTas
 
     -- Check if the starting chunk needs to be done. As the loopy searching will always check around the robot's current chunk.
     local startingChunk = taskData.chunkDetailsByAxis.xChunks[taskData.startingChunkPosition.x].yChunks[taskData.startingChunkPosition.y]
-    if taskData.chunksState[startingChunk.chunkPositionString] ~= nil and taskData.chunksState[startingChunk.chunkPositionString].state == DeconstructEntitiesInChunkDetails.ChunkStates.available then
+    if taskData.chunksState[startingChunk.chunkPositionString] ~= nil and taskData.chunksState[startingChunk.chunkPositionString].state == "available" then
         return startingChunk
     end
 
@@ -255,7 +248,7 @@ DeconstructEntitiesInChunkDetails.FindAvailableChunkForRobot = function(robotTas
                         yPosition = centerYPosition + (yMod * distanceToCheck)
                         if yPosition >= xChunkObject.minYValue and yPosition <= xChunkObject.maxYValue then
                             foundChunk = xChunkObject.yChunks[yPosition]
-                            if foundChunk ~= nil and taskData.chunksState[foundChunk.chunkPositionString] ~= nil and taskData.chunksState[foundChunk.chunkPositionString].state == DeconstructEntitiesInChunkDetails.ChunkStates.available then
+                            if foundChunk ~= nil and taskData.chunksState[foundChunk.chunkPositionString] ~= nil and taskData.chunksState[foundChunk.chunkPositionString].state == "available" then
                                 return foundChunk
                             end
                         end

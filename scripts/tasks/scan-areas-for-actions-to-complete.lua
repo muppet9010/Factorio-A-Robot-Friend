@@ -82,15 +82,11 @@ local math_floor = math.floor
 ---@field builtByItemName? string # The name of the item type used to build it for the action type, or nil if no item is required for the action type.
 ---@field builtByItemCount? uint # The count of the item type used to build it for the action type, or nil if no item is required for the action type. Most are 1, but curved rails are more and some modded things could also be >1.
 
+---@alias Task_ScanAreasForActionsToComplete_ActionType "deconstruct"|"upgrade"|"build"
+
 local ScanAreasForActionsToComplete = {} ---@class Task_ScanAreasForActionsToComplete_Interface : Task_Interface
 ScanAreasForActionsToComplete.taskName = "ScanAreasForActionsToComplete"
 
----@enum Task_ScanAreasForActionsToComplete_ActionType
-ScanAreasForActionsToComplete.ActionType = {
-    deconstruct = "deconstruct",
-    upgrade = "upgrade",
-    build = "build"
-}
 
 -- Initial values that amy need tweaking once testing on a larger blueprint and deconstruction tasks are done.
 local EntitiesDedupedPerBatch = 1000 -- Just getting unit_number via API calls.
@@ -156,7 +152,7 @@ ScanAreasForActionsToComplete.Progress = function(thisTask, robot)
 
     -- The response times and text are always the same unless the task is complete.
     ---@type uint,ShowRobotState_NewRobotStateDetails
-    local ticksToWait, robotStateDetails = 60, { stateText = "Reviewing area for actions to complete", level = ShowRobotState.StateLevel.normal }
+    local ticksToWait, robotStateDetails = 60, { stateText = "Reviewing area for actions to complete", level = "normal" }
 
     -- Handle if this is the very first robot to Progress() this Task. We leave the tables constructed but empty once used, so this check is safe throughout the tasks life.
     if not taskData._allRawDataObtained then
@@ -249,15 +245,15 @@ ScanAreasForActionsToComplete.Progress = function(thisTask, robot)
     local entitiesHandled = 0
     -- Process the deconstruction list if there's any remaining in the dedupe list.
     if next(taskData._entitiesToBeDeconstructed_deduped) ~= nil then
-        entitiesHandled = ScanAreasForActionsToComplete._ProcessDedupedTableToProcessedTable(taskData, ScanAreasForActionsToComplete.ActionType.deconstruct, entitiesHandled)
+        entitiesHandled = ScanAreasForActionsToComplete._ProcessDedupedTableToProcessedTable(taskData, "deconstruct", entitiesHandled)
         if entitiesHandled >= EntitiesHandledPerBatch then return ticksToWait, robotStateDetails end
     end
     if next(taskData._entitiesToBeUpgraded_deduped) ~= nil then
-        entitiesHandled = ScanAreasForActionsToComplete._ProcessDedupedTableToProcessedTable(taskData, ScanAreasForActionsToComplete.ActionType.upgrade, entitiesHandled)
+        entitiesHandled = ScanAreasForActionsToComplete._ProcessDedupedTableToProcessedTable(taskData, "upgrade", entitiesHandled)
         if entitiesHandled >= EntitiesHandledPerBatch then return ticksToWait, robotStateDetails end
     end
     if next(taskData._ghostsToBeBuilt_deduped) ~= nil then
-        entitiesHandled = ScanAreasForActionsToComplete._ProcessDedupedTableToProcessedTable(taskData, ScanAreasForActionsToComplete.ActionType.build, entitiesHandled)
+        entitiesHandled = ScanAreasForActionsToComplete._ProcessDedupedTableToProcessedTable(taskData, "build", entitiesHandled)
         if entitiesHandled >= EntitiesHandledPerBatch then return ticksToWait, robotStateDetails end
     end
 
@@ -312,13 +308,13 @@ end
 ---@return uint entitiesHandled
 ScanAreasForActionsToComplete._ProcessDedupedTableToProcessedTable = function(taskData, actionType, entitiesHandled)
     local dedupedTable, finalTable
-    if actionType == ScanAreasForActionsToComplete.ActionType.deconstruct then
+    if actionType == "deconstruct" then
         dedupedTable = taskData._entitiesToBeDeconstructed_deduped
         finalTable = taskData.entitiesToBeDeconstructed
-    elseif actionType == ScanAreasForActionsToComplete.ActionType.upgrade then
+    elseif actionType == "upgrade" then
         dedupedTable = taskData._entitiesToBeUpgraded_deduped
         finalTable = taskData.entitiesToBeUpgraded
-    elseif actionType == ScanAreasForActionsToComplete.ActionType.build then
+    elseif actionType == "build" then
         dedupedTable = taskData._ghostsToBeBuilt_deduped
         finalTable = taskData.ghostsToBeBuilt
     else
@@ -374,9 +370,9 @@ ScanAreasForActionsToComplete._ProcessDedupedTableToProcessedTable = function(ta
 
         -- Record input and output items.
         local minedProducts, requiredItem_name, requiredItem_count, requiredItemUsedPerAction
-        if actionType == ScanAreasForActionsToComplete.ActionType.deconstruct then
-            minedProducts = PrototypeAttributes.GetAttribute(PrototypeAttributes.PrototypeTypes.entity, entity_name, "mineable_properties")--[[@as LuaEntityPrototype.mineable_properties]] .products
-        elseif actionType == ScanAreasForActionsToComplete.ActionType.upgrade then
+        if actionType == "deconstruct" then
+            minedProducts = PrototypeAttributes.GetAttribute("entity", entity_name, "mineable_properties")--[[@as LuaEntityPrototype.mineable_properties]] .products
+        elseif actionType == "upgrade" then
             -- Based on if this is a true upgrade or a rotate.
             local upgradeTargetPrototype = entity.get_upgrade_target() ---@cast upgradeTargetPrototype -nil
             local upgradeTargetPrototype_name, upgradeTargetPrototype_type = upgradeTargetPrototype.name, upgradeTargetPrototype.type
@@ -394,15 +390,15 @@ ScanAreasForActionsToComplete._ProcessDedupedTableToProcessedTable = function(ta
                 -- Is an actual upgrade to change entity types.
 
                 -- Record the inputs and output items.
-                minedProducts = PrototypeAttributes.GetAttribute(PrototypeAttributes.PrototypeTypes.entity, entity_name, "mineable_properties")--[[@as LuaEntityPrototype.mineable_properties]] .products
+                minedProducts = PrototypeAttributes.GetAttribute("entity", entity_name, "mineable_properties")--[[@as LuaEntityPrototype.mineable_properties]] .products
                 requiredItemUsedPerAction = true
             end
 
             -- Use the new entity details.
             entity_name = upgradeTargetPrototype_name
             entity_type = upgradeTargetPrototype_type
-        elseif actionType == ScanAreasForActionsToComplete.ActionType.build then
-            local itemsToPlaceThis = PrototypeAttributes.GetAttribute(PrototypeAttributes.PrototypeTypes.entity, entity_name, "items_to_place_this") --[[@as SimpleItemStack[]? ]]
+        elseif actionType == "build" then
+            local itemsToPlaceThis = PrototypeAttributes.GetAttribute("entity", entity_name, "items_to_place_this") --[[@as SimpleItemStack[]? ]]
             if itemsToPlaceThis ~= nil then
                 local requiredItems = itemsToPlaceThis[1] -- Same as construction bots, just use the first one.
                 requiredItem_name, requiredItem_count = requiredItems.name, requiredItems.count
@@ -442,12 +438,12 @@ ScanAreasForActionsToComplete._ProcessDedupedTableToProcessedTable = function(ta
         finalTable[entityDetails.entityListKey] = entityDetails
 
         -- Record the EntityDetails in to the Chunk Details. Some of these are grouped.
-        if actionType == ScanAreasForActionsToComplete.ActionType.deconstruct then
+        if actionType == "deconstruct" then
             chunkDetails.toBeDeconstructedEntityDetails[entityDetails.entityListKey] = entityDetails
-        elseif actionType == ScanAreasForActionsToComplete.ActionType.upgrade then
+        elseif actionType == "upgrade" then
             chunkDetails.toBeUpgradedTypes[entity_name] = chunkDetails.toBeUpgradedTypes[entity_name] or {}
             chunkDetails.toBeUpgradedTypes[entity_name][entityDetails.entityListKey] = entityDetails
-        elseif actionType == ScanAreasForActionsToComplete.ActionType.build then
+        elseif actionType == "build" then
             chunkDetails.toBeBuiltTypes[entity_name] = chunkDetails.toBeBuiltTypes[entity_name] or {}
             chunkDetails.toBeBuiltTypes[entity_name][entityDetails.entityListKey] = entityDetails
         else

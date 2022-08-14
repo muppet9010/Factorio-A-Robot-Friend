@@ -78,8 +78,8 @@ GetWalkingPath.Progress = function(thisTask, robot, startPosition)
 
         -- Left as detailed with jittery movement, but able to find tight paths for now.
         local pathRequestId = taskData.surface.request_path({
-            bounding_box = PrototypeAttributes.GetAttribute(PrototypeAttributes.PrototypeTypes.entity, robot.entity_name, "collision_box"),
-            collision_mask = PrototypeAttributes.GetAttribute(PrototypeAttributes.PrototypeTypes.entity, robot.entity_name, "collision_mask"),
+            bounding_box = PrototypeAttributes.GetAttribute("entity", robot.entity_name, "collision_box"),
+            collision_mask = PrototypeAttributes.GetAttribute("entity", robot.entity_name, "collision_mask"),
             start = startPosition,
             goal = taskData.endPosition,
             force = robot.force,
@@ -102,7 +102,7 @@ GetWalkingPath.Progress = function(thisTask, robot, startPosition)
 
     -- There's nothing active to be done and when the pathfinder returns the event will record the data and mark the task as complete for that robot.
     ---@type ShowRobotState_NewRobotStateDetails
-    local robotStateDetails = { stateText = "Looking for walking path", level = ShowRobotState.StateLevel.normal }
+    local robotStateDetails = { stateText = "Looking for walking path", level = "normal" }
     return 1, robotStateDetails
 end
 

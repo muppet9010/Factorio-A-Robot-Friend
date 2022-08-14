@@ -6,10 +6,6 @@ Bugs
 Next
 ===
 
-Separate out the functions we register in to MOD.Interfaces in to public and internal. Public is for calling by other classes (JobManager calling TaskManager), Internal is for calling within the class (i.e. a bespoke task calling TaskManager).
-
-Decide if I am using definitive enums or just alias of strings. As I seem to use a mix of both currently for status's and similar things. I think alias of enum is simpler for just strings. And use enums for more complicated data structures?
-
 Look at any task and job details and data that should be private fields and not public. Those that are only accessed via an Interface for example. Thinking like robotTaskData.
 
 Do tasks really return an option state details text? or do we need to add an intentional "nothing" flag. Feels weird having to handle a nil value in a task that is looking at a sub tasks state text to prefix it.

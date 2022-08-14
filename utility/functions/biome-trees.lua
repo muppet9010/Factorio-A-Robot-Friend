@@ -80,12 +80,7 @@ local LogTags = false -- @Enable with other logging options to include details a
 ---@field chanceEnd double
 ---@field tree UtilityBiomeTrees_TreeDetails
 
----@enum UtilityBiomeTrees_TileType
-local TileType = {
-    ["allow-trees"] = "allow-trees",
-    ["water"] = "water",
-    ["no-trees"] = "no-trees"
-}
+---@alias UtilityBiomeTrees_TileType "allow-trees"|"water"|"no-trees"
 
 ----------------------------------------------------------------------------------
 --                          PUBLIC FUNCTIONS
@@ -122,7 +117,7 @@ BiomeTrees.GetBiomeTreeName = function(surface, position)
             return BiomeTrees.GetRandomTreeLastResort(tile)
         end
     end
-    if tileData.type ~= TileType["allow-trees"] then
+    if tileData.type ~= "allow-trees" then
         return nil
     end
 

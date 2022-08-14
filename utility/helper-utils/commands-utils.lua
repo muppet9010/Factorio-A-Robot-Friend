@@ -275,7 +275,7 @@ end
 ---@param mandatory boolean
 ---@param commandName string # The in-game command name. Used in error messages.
 ---@param argumentName? string # The argument name in its hierarchy. Used in error messages.
----@param allowedStrings? table<string, any> # A limited array of allowed strings can be specified as a table of string keys with non nil values. Designed to receive an enum type object.
+---@param allowedStrings? table<string, any> # A limited array of allowed strings can be specified as a table of string keys with non nil values. Designed to receive a string enum type object.
 ---@param commandString? string # If provided it will be included in error messages. Not needed for operational use.
 ---@return boolean argumentValid
 CommandsUtils.CheckStringArgument = function(value, mandatory, commandName, argumentName, allowedStrings, commandString)
@@ -343,7 +343,7 @@ end
 ---@param mandatory boolean
 ---@param commandName string # The in-game command name. Used in error messages.
 ---@param argumentName? string # The argument name in its hierarchy. Used in error messages.
----@param allowedKeys? table<string, any> # A limited array of allowed keys of the table can be specified as a table of string keys with non nil values. Designed to receive an enum type object.
+---@param allowedKeys? table<string, any> # A limited array of allowed keys of the table can be specified as a table of string keys with non nil values. Designed to receive a string enum type object.
 ---@param commandString? string # If provided it will be included in error messages. Not needed for operational use.
 ---@return boolean argumentValid
 CommandsUtils.CheckTableArgument = function(value, mandatory, commandName, argumentName, allowedKeys, commandString)

@@ -120,12 +120,12 @@ TrainUtils.GetTrainSpeedCalculationData = function(train, train_speed, trainCarr
             carriageCachedData.prototypeName = carriage_name
         end
 
-        trainFrictionForce = trainFrictionForce + PrototypeAttributes.GetAttribute(PrototypeAttributes.PrototypeTypes.entity, carriage_name, "friction_force")
-        trainRawBrakingForce = trainRawBrakingForce + PrototypeAttributes.GetAttribute(PrototypeAttributes.PrototypeTypes.entity, carriage_name, "braking_force")
+        trainFrictionForce = trainFrictionForce + PrototypeAttributes.GetAttribute("entity", carriage_name, "friction_force")
+        trainRawBrakingForce = trainRawBrakingForce + PrototypeAttributes.GetAttribute("entity", carriage_name, "braking_force")
 
         if firstCarriage then
             firstCarriage = false
-            trainAirResistanceReductionMultiplier = 1 - (PrototypeAttributes.GetAttribute(PrototypeAttributes.PrototypeTypes.entity, carriage_name, "air_resistance") / (trainWeight / 1000))
+            trainAirResistanceReductionMultiplier = 1 - (PrototypeAttributes.GetAttribute("entity", carriage_name, "air_resistance") / (trainWeight / 1000))
         end
 
         if carriage_type == "locomotive" then
@@ -418,7 +418,7 @@ end
 TrainUtils.DestroyCarriagesOnRailEntity = function(railEntity, killForce, killerCauseEntity, surface)
     -- Check if any carriage prevents the rail from being removed before just killing all carriages within the rails collision boxes as this is more like vanilla behaviour.
     if not railEntity.can_be_destroyed() then
-        local railEntityCollisionBox = PrototypeAttributes.GetAttribute(PrototypeAttributes.PrototypeTypes.entity, railEntity.name, "collision_box")
+        local railEntityCollisionBox = PrototypeAttributes.GetAttribute("entity", railEntity.name, "collision_box")
         local positionedCollisionBox = PositionUtils.ApplyBoundingBoxToPosition(railEntity.position, railEntityCollisionBox, railEntity.orientation)
         local carriagesFound = surface.find_entities_filtered { area = positionedCollisionBox, type = { "locomotive", "cargo-wagon", "fluid-wagon", "artillery-wagon" } }
         for _, carriage in pairs(carriagesFound) do
@@ -429,7 +429,7 @@ TrainUtils.DestroyCarriagesOnRailEntity = function(railEntity, killForce, killer
             EntityUtils.EntityDie(carriage, killForce, killerCauseEntity)
         end
         if railEntity.type == "curved-rail" then
-            railEntityCollisionBox = PrototypeAttributes.GetAttribute(PrototypeAttributes.PrototypeTypes.entity, railEntity.name, "secondary_collision_box")
+            railEntityCollisionBox = PrototypeAttributes.GetAttribute("entity", railEntity.name, "secondary_collision_box")
             positionedCollisionBox = PositionUtils.ApplyBoundingBoxToPosition(railEntity.position, railEntityCollisionBox, railEntity.orientation)
             carriagesFound = surface.find_entities_filtered { area = positionedCollisionBox, type = { "locomotive", "cargo-wagon", "fluid-wagon", "artillery-wagon" } }
             for _, carriage in pairs(carriagesFound) do
@@ -452,7 +452,7 @@ end
 TrainUtils.MineCarriagesOnRailEntity = function(railEntity, surface, ignoreMinableEntityFlag, destinationInventory, stopTrain)
     -- Check if any carriage prevents the rail from being removed before just killing all carriages within the rails collision boxes as this is more like vanilla behaviour.
     if not railEntity.can_be_destroyed() then
-        local railEntityCollisionBox = PrototypeAttributes.GetAttribute(PrototypeAttributes.PrototypeTypes.entity, railEntity.name, "collision_box")
+        local railEntityCollisionBox = PrototypeAttributes.GetAttribute("entity", railEntity.name, "collision_box")
         local positionedCollisionBox = PositionUtils.ApplyBoundingBoxToPosition(railEntity.position, railEntityCollisionBox, railEntity.orientation)
         local carriagesFound = surface.find_entities_filtered { area = positionedCollisionBox, type = { "locomotive", "cargo-wagon", "fluid-wagon", "artillery-wagon" } }
         for _, carriage in pairs(carriagesFound) do
@@ -466,7 +466,7 @@ TrainUtils.MineCarriagesOnRailEntity = function(railEntity, surface, ignoreMinab
             carriage.mine { inventory = destinationInventory, ignore_minable = ignoreMinableEntityFlag, raise_destroyed = true }
         end
         if railEntity.type == "curved-rail" then
-            railEntityCollisionBox = PrototypeAttributes.GetAttribute(PrototypeAttributes.PrototypeTypes.entity, railEntity.name, "secondary_collision_box")
+            railEntityCollisionBox = PrototypeAttributes.GetAttribute("entity", railEntity.name, "secondary_collision_box")
             positionedCollisionBox = PositionUtils.ApplyBoundingBoxToPosition(railEntity.position, railEntityCollisionBox, railEntity.orientation)
             carriagesFound = surface.find_entities_filtered { area = positionedCollisionBox, type = { "locomotive", "cargo-wagon", "fluid-wagon", "artillery-wagon" } }
             for _, carriage in pairs(carriagesFound) do
