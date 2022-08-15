@@ -10,7 +10,6 @@
     Mining will be done by calling the LuaControl.mine_entity API function to instantly mine the target. The robot will then wait for the mining time to expire before it looks for another action. Use of this instant mine over setting the mining state is mainly to avoid issues if the target entity is removed another way, the robot is moved by being on a belt or killed. The effect should be the same, but the code is just much simpler.
 ]]
 
-local ShowRobotState = require("scripts.common.show-robot-state")
 local PositionUtils = require("utility.helper-utils.position-utils")
 local PrototypeAttributes = require("utility.functions.prototype-attributes")
 local math_ceil = math.ceil

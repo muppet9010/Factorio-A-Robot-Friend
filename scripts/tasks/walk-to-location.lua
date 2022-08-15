@@ -5,7 +5,6 @@
 ]]
 
 local LoggingUtils = require("utility.helper-utils.logging-utils")
-local ShowRobotState = require("scripts.common.show-robot-state")
 
 ---@class Task_WalkToLocation_Details : Task_Details
 ---@field taskData Task_WalkToLocation_TaskData

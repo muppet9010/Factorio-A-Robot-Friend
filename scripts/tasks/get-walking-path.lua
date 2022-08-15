@@ -5,7 +5,6 @@
 ]]
 
 local Events = require("utility.manager-libraries.events")
-local ShowRobotState = require("scripts.common.show-robot-state")
 local PrototypeAttributes = require("utility.functions.prototype-attributes")
 local LoggingUtils = require("utility.helper-utils.logging-utils")
 

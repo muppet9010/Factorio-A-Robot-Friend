@@ -8,9 +8,6 @@
     Any comment starting with "TEMPLATE" is more of a suggestion for when using the template, rather than being part of the template itself.
 ]]
 
-
-local ShowRobotState = require("scripts.common.show-robot-state")
-
 ---@class Task_XXXXX_Details : Task_Details
 ---@field taskData Task_XXXXX_TaskData
 ---@field robotsTaskData table<Robot, Task_XXXXX_Robot_TaskData>

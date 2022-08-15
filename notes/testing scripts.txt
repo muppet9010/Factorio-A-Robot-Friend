@@ -113,6 +113,18 @@ MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job)
 
 
 
+Complete an area. Made up of 2 separate areas that overlap and need to be de-duped
+
+/sc __a_robot_friend__
+local robotPosition, completeAreas = {x=15,y=-30}, { {left_top = {x=40,y=-37}, right_bottom = {x=80,y=-30}}, {left_top = {x=56,y=-45}, right_bottom = {x=73,y=-20}} }
+robotPosition = game.surfaces[1].find_non_colliding_position("character", robotPosition, 10, 0.2, false)
+local robot = MOD.Interfaces.RobotManager.CreateRobot(game.surfaces[1], robotPosition, game.get_player(1))
+local job = MOD.Interfaces.Jobs.CompleteArea.Create(1, game.surfaces[1], completeAreas, game.forces["player"])
+MOD.Interfaces.RobotManager.AssignRobotToJob(robot, job)
+
+
+
+
 Deconstruct all the rocks below the ship with 1 robot.
 
 /sc __a_robot_friend__

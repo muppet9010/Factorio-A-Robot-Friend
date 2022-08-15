@@ -13,9 +13,7 @@
             - Build everything. Should empty the inventories out.
 ]]
 
-local ShowRobotState = require("scripts.common.show-robot-state")
 local PositionUtils = require("utility.helper-utils.position-utils")
-local TableUtils = require("utility.helper-utils.table-utils")
 
 ---@class Task_CompleteArea_Details : Task_Details
 ---@field taskData Task_CompleteArea_TaskData

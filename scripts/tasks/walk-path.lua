@@ -4,8 +4,6 @@
     Each robot is processed fully separately to the others as there's no shared elements between robots in this task and no sub tasks.
 ]]
 
-local ShowRobotState = require("scripts.common.show-robot-state")
-
 ---@class Task_WalkPath_Details : Task_Details
 ---@field taskData Task_WalkPath_TaskData
 ---@field robotsTaskData table<Robot, Task_WalkPath_Robot_TaskData>

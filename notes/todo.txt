@@ -6,6 +6,8 @@ Bugs
 Next
 ===
 
+Both Scan and Deconstruct currently don't handle if things change during the looping anywhere. As an upgrade found during initial scan could be found missing at any later point where its data is accessed. If something is found missing (invalid) we just need to remove it from the lists.
+
 Make simple build blueprint job with dummy tasks for getting items. To test framework as much as anything. Just give the robots the needed items as part of the job.
 
 
@@ -86,6 +88,5 @@ Complete area
     - Handle tiles. Consider landfill and similar tiles before other tiles (i.e. concrete). Landfill should be post deconstruct, but before manipulation tasks. Flooring tiles should be after everything else.
     - Add options to job to allow filtering by selected types, i.e. power poles, roboports, landfill type tiles. Basically so you can do a priority build.
     - Support cliffs and knowing that cliffs require cliff explosives. At present they are unhandled entirely and thus ignored. They should be prioritised and if the entity can't be built due to them the item dropped from that robots actions list. So that once the cliffs are blown up and the next cycle of checking is done they are picked up. ???
-    - Currently doesn't handle if things change during the looping anywhere. As an upgrade found during initial scan could be found missing at any later point where its data is accessed. If something is found missing (invalid) we just need to remove it from the lists.
 - Deconstruct Entities in Chunk Details:
     - Look at pathing in detail to ensure we do something sensible and nice looking. Should try to move "near" the target and if that fails then accept further away. Will need enhancements to the path finder. As the pathfinder is a work or fail doing a path to within range of the entity and then a second path from there closer seems the best way to get near the target. We assume that it's best to get near the target, on the basis that there will often be a bunch of other tasks around it that will then be within range. It may be best to try and path to the middle of a chunk upon being assigned the chunk, but have a really large arrival radius so that once the robot is within the chunks borders it then switches to a short range nearest possible movement logic. As we don;t want to try multiple closeness paths towards our target when far away. So a 2 step approach to pathing.

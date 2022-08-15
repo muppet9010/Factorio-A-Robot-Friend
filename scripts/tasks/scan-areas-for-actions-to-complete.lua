@@ -12,7 +12,6 @@
 ]]
 
 
-local ShowRobotState = require("scripts.common.show-robot-state")
 local StringUtils = require("utility.helper-utils.string-utils")
 local MathUtils = require("utility.helper-utils.math-utils")
 local PrototypeAttributes = require("utility.functions.prototype-attributes")
@@ -27,16 +26,16 @@ local math_floor = math.floor
 ---@field force LuaForce
 ---@field reviewingAreasDebugRenderIds? uint64[]
 ---
----@field _entitiesToBeDeconstructed_raw Task_ScanAreasForActionsToComplete_EntitiesRaw @ An array per area of the raw entities found needing to be deconstructed. The keys are sequential index numbers that will become gappy when processed dow to being an empty single depth table.
----@field _natureToBeDeconstructed_raw Task_ScanAreasForActionsToComplete_EntitiesRaw @ An array per area of the raw trees and rocks found needing to be deconstructed. These are marked for deconstruction by any force and may belong to the robots force and thus included already in _entitiesToBeDeconstructed_raw. The keys are sequential index numbers that will become gappy when processed dow to being an empty single depth table.
----@field _entitiesToBeUpgraded_raw Task_ScanAreasForActionsToComplete_EntitiesRaw @ An array per area of the raw entities found needing to be upgraded. The keys are sequential index numbers that will become gappy when processed dow to being an empty single depth table.
----@field _ghostsToBeBuilt_raw Task_ScanAreasForActionsToComplete_EntitiesRaw @ An array per area of the raw entities found needing to be built. The keys are sequential index numbers that will become gappy when processed dow to being an empty single depth table.
+---@field _entitiesToBeDeconstructed_raw Task_ScanAreasForActionsToComplete_EntitiesRaw @ An array per area of the raw entities found needing to be deconstructed. The inner table for entities is keyed by sequential index numbers that will become gappy when processed, eventually being reduced down to an empty single depth table.
+---@field _natureToBeDeconstructed_raw Task_ScanAreasForActionsToComplete_EntitiesRaw @ An array per area of the raw trees and rocks found needing to be deconstructed. These are marked for deconstruction by any force and may belong to the robots force and thus included already in _entitiesToBeDeconstructed_raw. The inner table for entities is keyed by sequential index numbers that will become gappy when processed, eventually being reduced down to an empty single depth table.
+---@field _entitiesToBeUpgraded_raw Task_ScanAreasForActionsToComplete_EntitiesRaw @ An array per area of the raw entities found needing to be upgraded. The inner table for entities is keyed by sequential index numbers that will become gappy when processed, eventually being reduced down to an empty single depth table.
+---@field _ghostsToBeBuilt_raw Task_ScanAreasForActionsToComplete_EntitiesRaw @ An array per area of the raw entities found needing to be built. The inner table for entities is keyed by sequential index numbers that will become gappy when processed, eventually being reduced down to an empty single depth table.
 ---@field _allRawDataObtained boolean # Flag to say when all raw data has been obtained and we can just skip that whole checking code bloc.
 ---
----@field _entitiesToBeDeconstructed_deduped Task_ScanAreasForActionsToComplete_EntitiesDeduped @ A table of all the raw entities (deduped) needing to be deconstructed across all areas. Keyed by the entities unit_number or its name and position as a string.
----@field _natureToBeDeconstructed_deduped Task_ScanAreasForActionsToComplete_EntitiesDeduped @ A table of all the trees and rocks (deduped) needing to be deconstructed across all areas.  These are marked for deconstruction by any force and may belong to the robots force and thus included already in _entitiesToBeDeconstructed_raw. Keyed by the entities unit_number or its name and position as a string. Post deduping this list is checked for force and duplicates and merged in to _entitiesToBeDeconstructed_deduped ready for actual usage.
----@field _entitiesToBeUpgraded_deduped Task_ScanAreasForActionsToComplete_EntitiesDeduped @ A table of all the raw entities (deduped) needing to be upgraded across all areas. Keyed by the entities unit_number or its name and position as a string.
----@field _ghostsToBeBuilt_deduped Task_ScanAreasForActionsToComplete_EntitiesDeduped @ A table of all the raw entities (deduped) needing to be built across all areas. Keyed by the entities unit_number or its name and position as a string.
+---@field _entitiesToBeDeconstructed_deduped Task_ScanAreasForActionsToComplete_EntitiesDeduped @ A table of all the raw entities (deduped) needing to be deconstructed across all areas merged together. Keyed by the entities unit_number or "destroyedId_[UNIQUE_NUMBER_PER_ENTITY]".
+---@field _natureToBeDeconstructed_deduped Task_ScanAreasForActionsToComplete_EntitiesDeduped @ A table of all the trees and rocks (deduped) needing to be deconstructed across all areas merged together. These are marked for deconstruction by any force and may belong to the robots force and thus included already in _entitiesToBeDeconstructed_raw. Keyed by the entities unit_number or "destroyedId_[UNIQUE_NUMBER_PER_ENTITY]". Post deduping this list is checked for force and duplicates and merged in to _entitiesToBeDeconstructed_deduped ready for actual usage.
+---@field _entitiesToBeUpgraded_deduped Task_ScanAreasForActionsToComplete_EntitiesDeduped @ A table of all the raw entities (deduped) needing to be upgraded across all areas merged together. Keyed by the entities unit_number or "destroyedId_[UNIQUE_NUMBER_PER_ENTITY]".
+---@field _ghostsToBeBuilt_deduped Task_ScanAreasForActionsToComplete_EntitiesDeduped @ A table of all the raw entities (deduped) needing to be built across all areas merged together. Keyed by the entities unit_number or "destroyedId_[UNIQUE_NUMBER_PER_ENTITY]".
 ---@field _allDataDeduped boolean # Flag to say when all data has been deduped and we can just skip that whole checking code bloc.
 ---
 ---@field entitiesToBeDeconstructed table<uint, Task_ScanAreasForActionsToComplete_EntityDetails> @ Keyed by a sequential number, used by calling functions to handle the data.
@@ -48,8 +47,8 @@ local math_floor = math.floor
 ---
 ---@field chunksInCombinedAreas Task_ScanAreasForActionsToComplete_ChunksInCombinedAreas # An object with the included chunks grouped by their x and y values.
 
----@alias Task_ScanAreasForActionsToComplete_EntitiesRaw table<uint, table<uint, LuaEntity>> @ An array per area of the raw entities found needing to be handled for their specific action type. The keys are sequential index numbers that will become gappy when processed dow to being an empty single depth table.
----@alias Task_ScanAreasForActionsToComplete_EntitiesDeduped table<uint|string, LuaEntity> @ A single table of all the raw entities (deduped) across all areas needing to be handled for their specific action type. Keyed by the entities unit_number or its name and position as a string.
+---@alias Task_ScanAreasForActionsToComplete_EntitiesRaw table<uint, table<uint, LuaEntity>> @ An array per area of the raw entities found needing to be handled for their specific action type. The inner table for entities is keyed by sequential index numbers that will become gappy when processed, eventually being reduced down to an empty single depth table.
+---@alias Task_ScanAreasForActionsToComplete_EntitiesDeduped table<uint|string, LuaEntity> @ A single table of all the raw entities (deduped) across all areas needing to be handled for their specific action type. Keyed by the entities unit_number or "destroyedId_[UNIQUE_NUMBER_PER_ENTITY]".
 
 ---@class Task_ScanAreasForActionsToComplete_ChunksInCombinedAreas # Is effectively the XChunks class, as no parent object with extra meta data is needed.
 ---@field minXValue int # The lowest X chunk position value in the xChunks table.
@@ -66,13 +65,13 @@ local math_floor = math.floor
 ---@class Task_ScanAreasForActionsToComplete_ChunkDetails
 ---@field chunkPosition ChunkPosition
 ---@field chunkPositionString string # A string of the chunk position. Used by other tasks making use of this data set.
----@field toBeDeconstructedEntityDetails table<uint, Task_ScanAreasForActionsToComplete_EntityDetails> # Keyed by the Id of the entity details. These Id keys list will be very gappy.
----@field toBeUpgradedTypes table<string, table<uint, Task_ScanAreasForActionsToComplete_EntityDetails>> # Grouped by the entity item used to upgrade it first and then keyed by the Id of the entity details. These Id keys list will be very gappy.
----@field toBeBuiltTypes table<string, table<uint, Task_ScanAreasForActionsToComplete_EntityDetails>> # Grouped by the entity item type used to build it first and then keyed by the Id of the entity details. These Id keys list will be very gappy.
+---@field toBeDeconstructedEntityDetails table<uint, Task_ScanAreasForActionsToComplete_EntityDetails> # Keyed by the entityListKey of the entity details.
+---@field toBeUpgradedTypes table<string, table<uint, Task_ScanAreasForActionsToComplete_EntityDetails>> # Grouped by the entity item used to upgrade it first and then keyed by the entityListKey of the entity details.
+---@field toBeBuiltTypes table<string, table<uint, Task_ScanAreasForActionsToComplete_EntityDetails>> # Grouped by the entity item type used to build it first and then keyed by the entityListKey of the entity details.
 
 ---@class Task_ScanAreasForActionsToComplete_EntityDetails
----@field entityListKey uint # Key in the entitiesToBe[X] table.
----@field identifier string|uint # The entities unit_number or its name and position as a string
+---@field entityListKey uint # Key in the Tasks global entitiesToBe[X] table.
+---@field identifier string|uint # The entities unit_number or "destroyedId_[UNIQUE_NUMBER_PER_ENTITY]".
 ---@field entity LuaEntity
 ---@field entity_type string # The type of the entity in relation to the actionType. For deconstruction this is the entity to be removed, for build it is the new entity, for upgrades it is the new entity being upgraded too.
 ---@field entity_name string # The name of the entity in relation to the actionType. For deconstruction this is the entity to be removed, for build it is the new entity, for upgrades it is the new entity being upgraded too.
@@ -221,6 +220,7 @@ ScanAreasForActionsToComplete.Progress = function(thisTask, robot)
         -- Nature entities need additional validation and then when clear moving in to the main entities to be deconstructed list.
         if next(taskData._natureToBeDeconstructed_deduped) ~= nil then
             for identifier, entity in pairs(taskData._natureToBeDeconstructed_deduped) do
+                -- Only check if they are for our force if we haven't already got them listed. Saves making un-needed API requests.
                 if taskData._entitiesToBeDeconstructed_deduped[identifier] == nil then
                     -- Nature isn't already in the deconstructed list so continue checking it for inclusion.
                     if entity.is_registered_for_deconstruction(taskData.force) then
@@ -285,14 +285,10 @@ end
 ScanAreasForActionsToComplete._DedupeRawTableToDedupedTable = function(rawTable, dedupedTable, entitiesDeduped)
     for areaIndex, areasEntities in pairs(rawTable) do
         for entityIndex, entity in pairs(areasEntities) do
-            local entity_identifier = entity.unit_number ---@type uint|string
-            if entity_identifier == nil then
-                local entity_Position = entity.position
-                entity_identifier = entity.name .. ":" .. entity_Position.x .. "," .. entity_Position.y
-            end
-            if dedupedTable[entity_identifier] == nil then
-                dedupedTable[entity_identifier] = entity
-            end
+            -- Get the unit_number if it has one or an ID for the entity via the on_destroyed_event. Each call of this API function on the same entity will return the same sequential number, so it will be the same across each of the raw tables for the same real entity.
+            local entity_identifier = entity.unit_number or ("destroyedId_" .. script.register_on_entity_destroyed(entity))
+            -- Just record every one as its cheaper overall to record it than check for the rare duplicate that may exist.
+            dedupedTable[entity_identifier] = entity
             entitiesDeduped = entitiesDeduped + 1
             areasEntities[entityIndex] = nil
             if entitiesDeduped >= EntitiesDedupedPerBatch then return entitiesDeduped end

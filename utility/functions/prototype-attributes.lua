@@ -1,17 +1,23 @@
--- Returns and caches prototype attributes (direct children only) as requested to save future API calls. Values stored in Lua global variable and populated as requested, as doesn't need persisting. Gets auto refreshed on game load and thus accounts for any change of attributes from mods.
+--[[
+    Returns and caches prototype attributes (direct children only) as requested to save future API calls.
+
+    Values stored in Lua global variable and populated as requested, as doesn't need persisting. Gets auto refreshed on game load and thus automatically accounts for any change of attributes from mods. Also means the cached values aren't stored in save state or shared between players.
+--]]
+
 local PrototypeAttributes = {} ---@class Utility_PrototypeAttributes
 
 MOD = MOD or {} ---@class MOD
 MOD.UTILITYPrototypeAttributes = MOD.UTILITYPrototypeAttributes or {} ---@type UtilityPrototypeAttributes_CachedTypes
 
---- Returns the request attribute of a prototype.
+--- Returns the requested attribute of a named prototype.
 ---
 --- Obtains from the Lua global variable caches if present, otherwise obtains the result and caches it before returning it.
 ---@param prototypeType UtilityPrototypeAttributes_PrototypeType
 ---@param prototypeName string
 ---@param attributeName string
+---@param prototype? LuaEntityPrototype|LuaItemPrototype|LuaFluidPrototype|LuaTilePrototype|LuaEquipmentPrototype|LuaRecipePrototype|LuaTechnologyPrototype # The LuaPrototype if its already cached somewhere to save having to obtain it if needed. Although once the value is cached for this prototypeName it won;t need to be looked up again this game session.
 ---@return any # attribute value, can include nil.
-PrototypeAttributes.GetAttribute = function(prototypeType, prototypeName, attributeName)
+PrototypeAttributes.GetAttribute = function(prototypeType, prototypeName, attributeName, prototype)
     local utilityPrototypeAttributes = MOD.UTILITYPrototypeAttributes
 
     local typeCache = utilityPrototypeAttributes[prototypeType]
@@ -30,23 +36,27 @@ PrototypeAttributes.GetAttribute = function(prototypeType, prototypeName, attrib
     if attributeCache ~= nil then
         return attributeCache.value
     else
-        local resultPrototype
-        if prototypeType == "entity" then
-            resultPrototype = game.entity_prototypes[prototypeName]
-        elseif prototypeType == "item" then
-            resultPrototype = game.item_prototypes[prototypeName]
-        elseif prototypeType == "fluid" then
-            resultPrototype = game.fluid_prototypes[prototypeName]
-        elseif prototypeType == "tile" then
-            resultPrototype = game.tile_prototypes[prototypeName]
-        elseif prototypeType == "equipment" then
-            resultPrototype = game.equipment_prototypes[prototypeName]
-        elseif prototypeType == "recipe" then
-            resultPrototype = game.recipe_prototypes[prototypeName]
-        elseif prototypeType == "technology" then
-            resultPrototype = game.technology_prototypes[prototypeName]
+        -- If the prototype wasn't passed in then obtain it.
+        if prototype == nil then
+            if prototypeType == "entity" then
+                prototype = game.entity_prototypes[prototypeName]
+            elseif prototypeType == "item" then
+                prototype = game.item_prototypes[prototypeName]
+            elseif prototypeType == "fluid" then
+                prototype = game.fluid_prototypes[prototypeName]
+            elseif prototypeType == "tile" then
+                prototype = game.tile_prototypes[prototypeName]
+            elseif prototypeType == "equipment" then
+                prototype = game.equipment_prototypes[prototypeName]
+            elseif prototypeType == "recipe" then
+                prototype = game.recipe_prototypes[prototypeName]
+            elseif prototypeType == "technology" then
+                prototype = game.technology_prototypes[prototypeName]
+            else
+                error("unsupported prototypeType: " .. tostring(prototypeType))
+            end
         end
-        local resultValue = resultPrototype[attributeName] ---@type any
+        local resultValue = prototype[attributeName] ---@type any
         prototypeCache[attributeName] = { value = resultValue }
         return resultValue
     end
