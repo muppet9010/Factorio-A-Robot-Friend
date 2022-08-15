@@ -380,24 +380,29 @@ PositionUtils.GetDistanceSingleAxis = function(pos1, pos2, axis)
 end
 
 --- Gets the nearest thing in a list based on the distance to its position, defined by its positionFieldName. Selects the first one found if multiple are of equal distance.
+---
+--- It's significantly quicker (x10) to use LuaSurface.get_closest() if you can, over feeding this with existing objects with positional data.
 ---@param startPosition MapPosition|ChunkPosition
 ---@param list table<any,table>
 ---@param positionFieldName string # The field name in each entry in the `list` table that has the position.
 ---@return table nearestThing
 ---@return any nearestThingsKeyInList
 PositionUtils.GetNearest = function(startPosition, list, positionFieldName)
-    local nearestThing, nearestThingsKey, distance
+    ---@type any, double, double, double, MapPosition
+    local nearestThingsKey, distance, distanceX, distanceY, thing_position
     local nearestDistance = MathUtils.doubleMax
+    local start_x, start_y = startPosition.x, startPosition.y
     for key, thing in pairs(list) do
-        -- Copied from PositionUtils.GetDistance().
-        distance = (((startPosition.x - thing[positionFieldName].x) ^ 2) + ((startPosition.y - thing[positionFieldName].y) ^ 2)) ^ 0.5
+        thing_position = thing[positionFieldName] --[[@as MapPosition]]
+        -- This gets a simpler relative distance, rather than the real distance. but as we are just comparing them it is fine.
+        distanceX, distanceY = (start_x - thing_position.x), (start_y - thing_position.y)
+        distance = distanceX * distanceX + distanceY * distanceY
         if distance < nearestDistance then
-            nearestThing = thing
             nearestThingsKey = key
             nearestDistance = distance
         end
     end
-    return nearestThing, nearestThingsKey
+    return list[nearestThingsKey], nearestThingsKey
 end
 
 -- Returns the offset for the first position in relation to the second position.

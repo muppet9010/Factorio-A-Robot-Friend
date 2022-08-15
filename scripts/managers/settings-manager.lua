@@ -10,7 +10,7 @@ SettingsManager._CreateGlobals = function()
     global.Settings.Debug.fastDeconstruct = true ---@type boolean # Just hardcode for now.
 
     global.Settings.Robot = global.Settings.Robot or {} ---@class Global_Settings_Robot
-    global.Settings.Robot.EndOfTaskWaitTicks = 60 ---@type uint # How long the robot will wait when it finishes something before flowing in to the next major thing. Some tasks may overwrite/ignore this and just start the next task instantly.
+    global.Settings.Robot.EndOfTaskWaitTicks = 60 ---@type uint # How long the robot will wait when it finishes something before flowing in to the next major thing. Also used for waiting and idle checks for multi robot tasks and new jobs. Some tasks may overwrite/ignore this and just start the next child task instantly.
 end
 
 return SettingsManager

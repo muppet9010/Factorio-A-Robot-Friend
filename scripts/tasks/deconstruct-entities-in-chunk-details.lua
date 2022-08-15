@@ -127,6 +127,14 @@ DeconstructEntitiesInChunkDetails.Progress = function(thisTask, robot)
     if robotTaskData.currentTarget == nil then
         robotTaskData.currentTarget = PositionUtils.GetNearest(robot_position, robotTaskData.assignedChunkDetails.toBeDeconstructedEntityDetails, "position")
 
+        -- TODO: Move to using surface for this. But really needs the data structures changed to optimise it?
+        -- TODO: could I use the LuaEntity as the table key in the current toBeDeconstructedEntityDetails table, and also keep another table of just the entities (key and value) to feed in to get_closest(). Would mean double population and removal. But that is once per entity, rather than every check.
+        local entitiesToBeDeconstructed = {} ---@type LuaEntity[]
+        for _, entityDetails in pairs(robotTaskData.assignedChunkDetails.toBeDeconstructedEntityDetails) do
+            entitiesToBeDeconstructed[#entitiesToBeDeconstructed + 1] = entityDetails.entity
+        end
+        local x = taskData.surface.get_closest(robot_position, entitiesToBeDeconstructed)
+
         if robotTaskData.currentTarget == nil then
             -- As the robot can't find anything to do on this chunk then mark the chunk as done for deconstruction. It will then start looking for a new chunk. We leave the robot assigned to the chunk as the searching for chunk will use this data before overwriting it.
             robotTaskData.assignedChunkState.state = "completed"

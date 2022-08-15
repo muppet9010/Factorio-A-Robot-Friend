@@ -6,8 +6,6 @@ Bugs
 Next
 ===
 
-Do a performance review of current code to see if anything stands out as a bad concept. My guess is any low tick waits.
-
 Make simple build blueprint job with dummy tasks for getting items. To test framework as much as anything. Just give the robots the needed items as part of the job.
 
 
