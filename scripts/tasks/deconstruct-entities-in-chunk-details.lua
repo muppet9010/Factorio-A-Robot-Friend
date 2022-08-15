@@ -22,7 +22,7 @@ local math_ceil = math.ceil
 ---@field surface LuaSurface
 ---@field chunkDetailsByAxis Task_ScanAreasForActionsToComplete_ChunksInCombinedAreas
 ---@field chunksState table<string, Task_DeconstructEntitiesInChunkDetails_ChunkState> # Keyed by the chunks position as a string.
----@field entitiesToBeDeconstructed table<uint, Task_ScanAreasForActionsToComplete_EntityDetails> # The main list of entities to be deconstructed that is used by things outside of this task. So remove entries from it as we do them.
+---@field entitiesToBeDeconstructed table<Task_ScanAreasForActionsToComplete_EntityIdentifier, Task_ScanAreasForActionsToComplete_EntityDetails> # The main list of entities to be deconstructed that is used by things outside of this task. So remove entries from it as we do them.
 ---@field startingChunkPosition ChunkPosition
 
 ---@class Task_DeconstructEntitiesInChunkDetails_Robot_TaskData : TaskData_Robot
@@ -50,7 +50,7 @@ end
 ---@param surface LuaSurface
 ---@param chunkDetailsByAxis Task_ScanAreasForActionsToComplete_ChunksInCombinedAreas
 ---@param startingChunkPosition ChunkPosition
----@param entitiesToBeDeconstructed table<uint, Task_ScanAreasForActionsToComplete_EntityDetails>
+---@param entitiesToBeDeconstructed Task_ScanAreasForActionsToComplete_EntitiesToBeActioned # The value from ScanAreasForActionsToComplete.taskData.entitiesToBeDeconstructed.
 ---@return Task_DeconstructEntitiesInChunkDetails_Details
 DeconstructEntitiesInChunkDetails.ActivateTask = function(job, parentTask, surface, chunkDetailsByAxis, entitiesToBeDeconstructed, startingChunkPosition)
     local thisTask = MOD.Interfaces.TaskManager.CreateGenericTask(DeconstructEntitiesInChunkDetails.taskName, job, parentTask) ---@cast thisTask Task_DeconstructEntitiesInChunkDetails_Details
@@ -124,15 +124,10 @@ DeconstructEntitiesInChunkDetails.Progress = function(thisTask, robot)
 
     -- If the robot doesn't have a target then it needs to find one and then start the appropriate action.
     if robotTaskData.currentTarget == nil then
-        robotTaskData.currentTarget = PositionUtils.GetNearest(robot_position, robotTaskData.assignedChunkDetails.toBeDeconstructedEntityDetails, "position")
-
-        -- TODO: Move to using surface for this. But really needs the data structures changed to optimise it?
-        -- TODO: could I use the LuaEntity as the table key in the current toBeDeconstructedEntityDetails table, and also keep another table of just the entities (key and value) to feed in to get_closest(). Would mean double population and removal. But that is once per entity, rather than every check.
-        local entitiesToBeDeconstructed = {} ---@type LuaEntity[]
-        for _, entityDetails in pairs(robotTaskData.assignedChunkDetails.toBeDeconstructedEntityDetails) do
-            entitiesToBeDeconstructed[#entitiesToBeDeconstructed + 1] = entityDetails.entity
-        end
-        local x = taskData.surface.get_closest(robot_position, entitiesToBeDeconstructed)
+        error("This doesn't handle if the entity is invalid")
+        local nearestEntity = taskData.surface.get_closest(robot_position, robotTaskData.assignedChunkDetails.toBeDeconstructedEntities) ---@cast nearestEntity - nil # We only ever call it if there are things to check.
+        local entity_identifier = nearestEntity.unit_number or ("destroyedId_" .. script.register_on_entity_destroyed(nearestEntity))
+        robotTaskData.currentTarget = robotTaskData.assignedChunkDetails.toBeDeconstructedEntityDetails[entity_identifier]
 
         if robotTaskData.currentTarget == nil then
             -- As the robot can't find anything to do on this chunk then mark the chunk as done for deconstruction. It will then start looking for a new chunk. We leave the robot assigned to the chunk as the searching for chunk will use this data before overwriting it.
@@ -156,8 +151,9 @@ DeconstructEntitiesInChunkDetails.Progress = function(thisTask, robot)
         end
 
         -- The mining was successful so update the lists and then wait for the mining time before starting anything new.
-        robotTaskData.assignedChunkDetails.toBeDeconstructedEntityDetails[robotTaskData.currentTarget.entityListKey] = nil
-        taskData.entitiesToBeDeconstructed[robotTaskData.currentTarget.entityListKey] = nil
+        robotTaskData.assignedChunkDetails.toBeDeconstructedEntityDetails[robotTaskData.currentTarget.identifier] = nil
+        robotTaskData.assignedChunkDetails.toBeDeconstructedEntities[robotTaskData.currentTarget.identifier] = nil
+        taskData.entitiesToBeDeconstructed[robotTaskData.currentTarget.identifier] = nil
         robotTaskData.currentTarget = nil
         robotStateDetails = { stateText = "Deconstructing target", level = "normal" }
 
