@@ -63,8 +63,8 @@ XXXXX.Progress = function(thisTask, robot)
     end
 
     -- TEMPLATE: These are often returned from sub tasks Progress() functions, but can also be explicitly defined.
-    ---@type uint,ShowRobotState_NewRobotStateDetails
-    local ticksToWait, robotStateDetails = 0, { stateText = "Some state text", level = "normal" }
+    ---@type uint, ShowRobotState_NewRobotStateDetails
+    local ticksToWait, robotStateDetails = global.Settings.Robot.EndOfTaskWaitTicks, { stateText = "Some state text", level = "normal" }
 
     return ticksToWait, robotStateDetails
 end

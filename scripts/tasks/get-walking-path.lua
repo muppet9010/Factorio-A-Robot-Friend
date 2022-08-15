@@ -103,7 +103,8 @@ GetWalkingPath.Progress = function(thisTask, robot, startPosition)
     -- There's nothing active to be done and when the pathfinder returns the event will record the data and mark the task as complete for that robot.
     ---@type ShowRobotState_NewRobotStateDetails
     local robotStateDetails = { stateText = "Looking for walking path", level = "normal" }
-    return 1, robotStateDetails
+    -- 15 ticks still seems very responsive to a path coming without always adding a noticeable second+ delay to small paths, but still avoiding excessive (and pointless) every tick checks for a path.
+    return 15, robotStateDetails
 end
 
 --- React to a path request being completed. Its up to the caller to handle the too busy response as it may want to try again or try some alternative task instead.

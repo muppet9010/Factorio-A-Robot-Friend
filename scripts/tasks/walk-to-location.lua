@@ -96,7 +96,7 @@ WalkToLocation.Progress = function(thisTask, robot)
                 getWalkingPathTask.robotsTaskData[robot] = nil
                 ---@type ShowRobotState_NewRobotStateDetails
                 local robotStateDetails = { stateText = "Going to start a new path search", level = "warning" }
-                return 60, robotStateDetails
+                return global.Settings.Robot.EndOfTaskWaitTicks, robotStateDetails
             end
 
             -- Handle if no path was found.

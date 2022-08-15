@@ -125,9 +125,9 @@ CompleteArea.Progress = function(thisTask, robot)
     -- TODO: Review scanned results and items the robots have and decide if we need to collect anything extra for any building.
 
 
-    -- TEMPLATE: These are often returned from sub tasks Progress() functions, but can also be explicitly defined.
+    -- TODO: This is just a placeholder until we have all the code to fully complete this task.
     ---@type uint, ShowRobotState_NewRobotStateDetails
-    local ticksToWait, robotStateDetails = 0, { stateText = "All done honest...", level = "normal" }
+    local ticksToWait, robotStateDetails = global.Settings.Robot.EndOfTaskWaitTicks, { stateText = "All done honest...", level = "normal" }
 
     return ticksToWait, robotStateDetails
 end

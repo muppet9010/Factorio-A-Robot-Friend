@@ -144,9 +144,9 @@ Demo Deconstruct:
 
 /sc __a_robot_friend__
 local robotPosition, completeAreas = game.get_player(1).position, { {left_top = {x=-80,y=-70}, right_bottom = {x=-5,y=-50}} }
-robotPosition1 = game.surfaces[1].find_non_colliding_position("character", robotPosition, 10, 0.2, false)
+local robotPosition1 = game.surfaces[1].find_non_colliding_position("character", robotPosition, 10, 0.2, false)
 local robot1 = MOD.Interfaces.RobotManager.CreateRobot(game.surfaces[1], robotPosition1, game.get_player(1))
-robotPosition2 = game.surfaces[1].find_non_colliding_position("character", robotPosition, 10, 0.2, false)
+local robotPosition2 = game.surfaces[1].find_non_colliding_position("character", robotPosition, 10, 0.2, false)
 local robot2 = MOD.Interfaces.RobotManager.CreateRobot(game.surfaces[1], robotPosition2, game.get_player(1))
 local job = MOD.Interfaces.Jobs.CompleteArea.Create(1, game.surfaces[1], completeAreas, game.forces["player"])
 MOD.Interfaces.RobotManager.AssignRobotToJob(robot1, job)

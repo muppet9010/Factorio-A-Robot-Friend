@@ -147,6 +147,7 @@ WalkPath.Progress = function(thisTask, robot, pathToWalk)
     ---@type ShowRobotState_NewRobotStateDetails
     local robotStateDetails = { stateText = "Walking the path", level = "normal" }
 
+    -- Have to manage the walking every tick to avoid overshooting etc.
     return 1, robotStateDetails
 end
 

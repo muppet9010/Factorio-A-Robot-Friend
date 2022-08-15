@@ -107,7 +107,7 @@ DeconstructEntitiesInChunkDetails.Progress = function(thisTask, robot)
             -- No chunks left to be done.
 
             -- So just wait where it is for a second and check back. As the robot(s) assigned to the outstanding chunks could leave and thus those chunks will need a new robot to work on them.
-            return 60, { stateText = "Waiting for other robots to finish deconstructing", level = "normal" }
+            return global.Settings.Robot.EndOfTaskWaitTicks, { stateText = "Waiting for other robots to finish deconstructing", level = "normal" }
         end
         -- Chunk found so record it.
         local chunkState = taskData.chunksState[chunkFound.chunkPositionString]
@@ -128,17 +128,14 @@ DeconstructEntitiesInChunkDetails.Progress = function(thisTask, robot)
         robotTaskData.currentTarget = PositionUtils.GetNearest(robot_position, robotTaskData.assignedChunkDetails.toBeDeconstructedEntityDetails, "position")
 
         if robotTaskData.currentTarget == nil then
-            -- As the robot has completed everything on this chunk then mark the chunk as done for deconstruction. It will find a new chunk on next loop. We leave the robot assigned to the chunk as the searching for chunk will use this data before overwriting it.
+            -- As the robot can't find anything to do on this chunk then mark the chunk as done for deconstruction. It will then start looking for a new chunk. We leave the robot assigned to the chunk as the searching for chunk will use this data before overwriting it.
             robotTaskData.assignedChunkState.state = "completed"
-
-            return 60, { stateText = "Thinking about next chunk to deconstruct", level = "normal" }
-            -- This should really look for a new chunk immediately, but for viewing the robots progress this pause is convenient.
+            return DeconstructEntitiesInChunkDetails.Progress(thisTask, robot)
         end
     end
 
     local ticksToWait, robotStateDetails
-    local entityWasMined = false
-    -- Check if we can mine the target from our current position and we are not currently walking there, or if we are/need to walk.
+    -- Check if we are not currently walking and can mine the target from our current position, or if we are/need to walk to the target.
     if robotTaskData.robotWalkingTask == nil and PositionUtils.GetDistance(robot_position, robotTaskData.currentTarget.position) <= robot.miningDistance then
         -- In reach and not walking so can mine it now and then sleep.
         ticksToWait = math_ceil(PrototypeAttributes.GetAttribute("entity", robotTaskData.currentTarget.entity_name, "mineable_properties")--[[@as LuaEntityPrototype.mineable_properties]] .mining_time * 60 / robot.miningSpeed) --[[@as uint # We can safely just cast this in reality. ]]
@@ -156,7 +153,24 @@ DeconstructEntitiesInChunkDetails.Progress = function(thisTask, robot)
         taskData.entitiesToBeDeconstructed[robotTaskData.currentTarget.entityListKey] = nil
         robotTaskData.currentTarget = nil
         robotStateDetails = { stateText = "Deconstructing target", level = "normal" }
-        entityWasMined = true
+
+        -- As this robot just mined an entity then check if it has completed this chunk. If it has then it may have been the last chunk needing anything deconstructed. Basically no need to check for everything being completed otherwise.
+        if next(robotTaskData.assignedChunkDetails.toBeDeconstructedEntityDetails) == nil then
+            -- Robot just finished the last thing in this chunk.
+
+            -- As the robot has completed everything on this chunk then mark the chunk as done for deconstruction. It will find a new chunk on next loop. We leave the robot assigned to the chunk as the searching for chunk will use this data before overwriting it.
+            robotTaskData.assignedChunkState.state = "completed"
+
+            -- As a chunk was just completed check if there is anything left that needs doing in any chunk within the task.
+            if next(taskData.entitiesToBeDeconstructed) == nil then
+                -- Nothing left to be done in any chunk, so it should all be complete.
+                thisTask.state = "completed"
+                robotStateDetails = { stateText = "Deconstruction completed", level = "normal" }
+            else
+                -- Other chunks still have stuff to be done.
+                robotStateDetails = { stateText = "Thinking about next chunk to deconstruct", level = "normal" }
+            end
+        end
     else
         -- Out of reach so need to move towards it. Or if walking complete this so that the task ends neatly.
 
@@ -165,41 +179,17 @@ DeconstructEntitiesInChunkDetails.Progress = function(thisTask, robot)
             robotTaskData.robotWalkingTask = MOD.Interfaces.Tasks.WalkToLocation.ActivateTask(thisTask.job, thisTask.parentTask, robotTaskData.currentTarget.position, taskData.surface, robot.miningDistance - 1)
         end
         ticksToWait, robotStateDetails = MOD.Interfaces.Tasks.WalkToLocation.Progress(robotTaskData.robotWalkingTask, robot)
-        if robotStateDetails == nil then
-            -- TODO: main list TODO entry about if we should really return nil state details due to this as feels odd code.
-            robotStateDetails = { stateText = "Unknown State", level = "warning" }
-        end
         robotStateDetails.stateText = "Pathing to deconstruction target: " .. robotStateDetails.stateText
 
-        -- If the walking task is complete then kill the task and clear it so we know we have reached our destination.
+        -- Check if the walking task was declared complete on this last pass (means the robot had arrived at its destination at the start of this tick).
         if robotTaskData.robotWalkingTask.robotsTaskData[robot].state == "completed" then
+            -- Kill the task and clear it so we know we have reached our destination.
             MOD.Interfaces.Tasks.WalkToLocation.RemovingTask(robotTaskData.robotWalkingTask)
             robotTaskData.robotWalkingTask = nil
-            robotStateDetails = { stateText = "Pathing to deconstruction target: reached destination", level = "normal" }
-            ticksToWait = 1 -- Just wait 1 tick once we arrive before we do anything.
+
+            -- Call this progress function again now to see if we can start mining something, or to put the robot in to a completed state.
+            return DeconstructEntitiesInChunkDetails.Progress(thisTask, robot)
         end
-    end
-
-    -- If this robot just mined an entity then check if it has completed this chunk. If it has then it may have been the last chunk needing anything deconstructed. Basically no need to check for everything being completed otherwise.
-    if entityWasMined then
-        if next(robotTaskData.assignedChunkDetails.toBeDeconstructedEntityDetails) == nil then
-            -- Robot just finished the last thing in this chunk.
-
-            -- As the robot has completed everything on this chunk then mark the chunk as done for deconstruction. It will find a new chunk on next loop. We leave the robot assigned to the chunk as the searching for chunk will use this data before overwriting it.
-            robotTaskData.assignedChunkState.state = "completed"
-            ticksToWait = 60 -- Always wait a second so we can see what the robot is doing.
-
-            -- As a chunk was just completed check if there is anything left that needs doing in any chunk within the task.
-            if next(taskData.entitiesToBeDeconstructed) == nil then
-                -- Nothing left to be done in any chunk, so it should all be complete.
-                thisTask.state = "completed"
-                robotStateDetails = { stateText = "Thinking about post deconstructing tasks", level = "normal" }
-            else
-                -- Other chunks still have stuff to be done.
-                robotStateDetails = { stateText = "Thinking about next chunk to deconstruct", level = "normal" }
-            end
-        end
-
     end
 
     -- Return the state and time to wait.

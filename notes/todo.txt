@@ -6,10 +6,6 @@ Bugs
 Next
 ===
 
-Look at the deconstruction loop:
-    - Decide on some standard wait times and make them global variables.
-    - Review if the code flow is really right. It's been written from a nothing start, but it feels weird flowing off the end of some logic just to wait a tick before starting the next cycle to think about the next thing to do. Excess loops is UPS wasting, but consider code readability and ease of following.
-
 Do a performance review of current code to see if anything stands out as a bad concept. My guess is any low tick waits.
 
 Make simple build blueprint job with dummy tasks for getting items. To test framework as much as anything. Just give the robots the needed items as part of the job.

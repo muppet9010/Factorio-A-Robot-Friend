@@ -131,10 +131,11 @@ RobotManager.ManageRobots = function(event)
                 end
             end
 
-            -- If no jobs for this robot, show its idle message.
+            -- If no jobs for this robot, show its idle message and wait the minimum time. No point trying every tick for a new job.
             if ticksToWait == 0 then
                 ---@type ShowRobotState_NewRobotStateDetails
                 newRobotStateDetails = { stateText = "Idle", level = "normal" }
+                robot.jobBusyUntilTick = event.tick + global.Settings.Robot.EndOfTaskWaitTicks
             end
 
             -- Show the robot's state over its head if this is enabled.

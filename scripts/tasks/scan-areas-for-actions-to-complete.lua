@@ -88,9 +88,10 @@ local ScanAreasForActionsToComplete = {} ---@class Task_ScanAreasForActionsToCom
 ScanAreasForActionsToComplete.taskName = "ScanAreasForActionsToComplete"
 
 
--- Initial values that amy need tweaking once testing on a larger blueprint and deconstruction tasks are done.
+-- Robot thinking settings. Want a balance between avoiding UPS overhead from excessive loop executions and having spiky UPS load from large irregular parses.
 local EntitiesDedupedPerBatch = 1000 -- Just getting unit_number via API calls.
 local EntitiesHandledPerBatch = 100 -- Multiple API calls to get item types, etc.
+local TicksPerBatchLoop = 60 -- How long a robot spends "thinking" for each loop of the batch. There is a minimal loops of the Progress regardless of small size as well.
 
 ScanAreasForActionsToComplete._OnLoad = function()
     MOD.Interfaces.Tasks.ScanAreasForActionsToComplete = ScanAreasForActionsToComplete
@@ -150,9 +151,9 @@ end
 ScanAreasForActionsToComplete.Progress = function(thisTask, robot)
     local taskData = thisTask.taskData
 
-    -- The response times and text are always the same unless the task is complete.
+    -- The response times and text are always the same unless the task is complete. The time is our
     ---@type uint,ShowRobotState_NewRobotStateDetails
-    local ticksToWait, robotStateDetails = 60, { stateText = "Reviewing area for actions to complete", level = "normal" }
+    local ticksToWait, robotStateDetails = TicksPerBatchLoop, { stateText = "Reviewing area for actions to complete", level = "normal" }
 
     -- Handle if this is the very first robot to Progress() this Task. We leave the tables constructed but empty once used, so this check is safe throughout the tasks life.
     if not taskData._allRawDataObtained then
