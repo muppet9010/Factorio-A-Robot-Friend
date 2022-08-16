@@ -365,7 +365,8 @@ end
 ---@param pos2 MapPosition|ChunkPosition
 ---@return double # is inherently a positive number.
 PositionUtils.GetDistance = function(pos1, pos2)
-    return (((pos1.x - pos2.x) ^ 2) + ((pos1.y - pos2.y) ^ 2)) ^ 0.5
+    local distanceX, distanceY = (pos1.x - pos2.x), (pos1.y - pos2.y)
+    return ((distanceX * distanceX) + (distanceY * distanceY)) ^ 0.5
 end
 
 ---@alias Axis "'x'"|"'y'"
@@ -381,25 +382,29 @@ end
 
 --- Gets the nearest thing in a list based on the distance to its position, defined by its positionFieldName. Selects the first one found if multiple are of equal distance.
 ---
---- It's significantly quicker (x10) to use LuaSurface.get_closest() if you can, over feeding this with existing objects with positional data.
+--- It's significantly quicker (x5-10) to use LuaSurface.get_closest() if you can (requires entities to be valid), over feeding this with existing objects with positional data.
 ---@param startPosition MapPosition|ChunkPosition
 ---@param list table<any,table>
 ---@param positionFieldName string # The field name in each entry in the `list` table that has the position.
+---@param acceptFirstRange? double # A value that will mean the first thing found within this range is returned. For use when you'll accept anything near, otherwise want the true nearest thing beyond that.
 ---@return table nearestThing
 ---@return any nearestThingsKeyInList
-PositionUtils.GetNearest = function(startPosition, list, positionFieldName)
+PositionUtils.GetNearest = function(startPosition, list, positionFieldName, acceptFirstRange)
     ---@type any, double, double, double, MapPosition
     local nearestThingsKey, distance, distanceX, distanceY, thing_position
     local nearestDistance = MathUtils.doubleMax
     local start_x, start_y = startPosition.x, startPosition.y
+    acceptFirstRange = acceptFirstRange or MathUtils.doubleMax -- Use a massive number as default so that FOR loop logic can be simpler.
     for key, thing in pairs(list) do
         thing_position = thing[positionFieldName] --[[@as MapPosition]]
-        -- This gets a simpler relative distance, rather than the real distance. but as we are just comparing them it is fine.
         distanceX, distanceY = (start_x - thing_position.x), (start_y - thing_position.y)
-        distance = distanceX * distanceX + distanceY * distanceY
+        distance = ((distanceX * distanceX) + (distanceY * distanceY)) ^ 0.5
         if distance < nearestDistance then
             nearestThingsKey = key
             nearestDistance = distance
+            if distance < acceptFirstRange then
+                break
+            end
         end
     end
     return list[nearestThingsKey], nearestThingsKey

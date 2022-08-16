@@ -24,7 +24,7 @@ local BiomeTrees = {} ---@class Utility_BiomeTrees
 local LogNonPositives = false
 local LogPositives = false
 local LogData = false
-local LogTags = false -- @Enable with other logging options to include details about tag checking.
+local LogTags = false -- Enable with other logging options to include details about tag checking.
 
 ---@class UtilityBiomeTrees_EnvironmentData
 ---@field moistureRangeAttributeNames UtilityBiomeTrees_MoistureRangeAttributeNames

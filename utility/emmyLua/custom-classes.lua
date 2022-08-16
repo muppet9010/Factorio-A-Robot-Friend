@@ -8,11 +8,13 @@
 --
 --
 --
+---@alias EntityIdentifier string|uint # The entities unit_number or "destroyedId_[UNIQUE_NUMBER_PER_ENTITY]". Created with code like `entity.unit_number or ("destroyedId_" .. script.register_on_entity_destroyed(entity))`.
 --
 --
 --
 --
 --[[
+
 
 
 
@@ -31,7 +33,7 @@ NOTE: in the below example the * from the end of each line needs to be removed s
 
 local player = game.players[1] -- Is type of LuaPlayer.
 local force ---@type LuaForce
-force = player.force --[[@as LuaForce @Debugger Sumneko temp fix for different read/write]*]
+force = player.force --[[@as LuaForce # Debugger Sumneko temp fix for different read/write]*]
 
 --]]
 --

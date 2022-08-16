@@ -5,7 +5,7 @@
         - Have only 1 robot assigned to a single chunk at a time.
         - The robot will do everything it can within that chunk before moving on.
         - Next chunk will be the nearest one that it can do something for, while favouring chunks on the edge of the combined areas if 2 are found at same chunk distance.
-        - The robot will path to within range of the nearest target, mine it, then look for a new nearest target and path if needed. This is simplest logic, but may cause a lot of stuttered moving/mining if targets are close together (i.e. in a line away from the robot).
+        - The robot will path to within range of the nearest target, mine it, then look for a new target in range (any) or the nearest one out of range and start pathing to it. This is simple logic and does may cause some stuttered moving/mining if targets are close together (i.e. in a line away from the robot).
 
     Mining will be done by calling the LuaControl.mine_entity API function to instantly mine the target. The robot will then wait for the mining time to expire before it looks for another action. Use of this instant mine over setting the mining state is mainly to avoid issues if the target entity is removed another way, the robot is moved by being on a belt or killed. The effect should be the same, but the code is just much simpler.
 ]]
@@ -39,6 +39,8 @@ local math_ceil = math.ceil
 
 local DeconstructEntitiesInChunkDetails = {} ---@class Task_DeconstructEntitiesInChunkDetails_Interface : Task_Interface
 DeconstructEntitiesInChunkDetails.taskName = "DeconstructEntitiesInChunkDetails"
+
+local DeconstructTimeDelay = 30 -- How many extra ticks each deconstruct takes to simulate a player having to change mining target.
 
 DeconstructEntitiesInChunkDetails._OnLoad = function()
     MOD.Interfaces.Tasks.DeconstructEntitiesInChunkDetails = DeconstructEntitiesInChunkDetails
@@ -124,15 +126,10 @@ DeconstructEntitiesInChunkDetails.Progress = function(thisTask, robot)
 
     -- If the robot doesn't have a target then it needs to find one and then start the appropriate action.
     if robotTaskData.currentTarget == nil then
-        robotTaskData.currentTarget = PositionUtils.GetNearest(robot_position, robotTaskData.assignedChunkDetails.toBeDeconstructedEntityDetails, "position")
-
-        -- TODO: Move to using surface for this. But really needs the data structures changed to optimise it?
-        -- TODO: could I use the LuaEntity as the table key in the current toBeDeconstructedEntityDetails table, and also keep another table of just the entities (key and value) to feed in to get_closest(). Would mean double population and removal. But that is once per entity, rather than every check.
-        local entitiesToBeDeconstructed = {} ---@type LuaEntity[]
-        for _, entityDetails in pairs(robotTaskData.assignedChunkDetails.toBeDeconstructedEntityDetails) do
-            entitiesToBeDeconstructed[#entitiesToBeDeconstructed + 1] = entityDetails.entity
-        end
-        local x = taskData.surface.get_closest(robot_position, entitiesToBeDeconstructed)
+        -- CODE NOTE: this is quite UPS expensive when the robot has to cycle through a lot to find the nearest one. There isn't an easy way to avoid this, I think it needs to use some sort of sub chunk divider and just look at those in its own sub chunk and then look for any in neighbouring sub chunks? But this is then somewhat mining distance dependant, will have more overhead and code complexity. The chunk grouping already does this to a degree.
+        -- Option 1: thinking about 4x4 tile blocks. As by default if you are within mining range-3 (accounts for diagonal) of the middle you can reach everywhere. Would then find the nearest 4x4 block to the robot and move to within mining range -3 of its center, then can mine everything within that block. It's a lot of blocks, but each one would require no searching within. Would need a fallback of if it can't path near to the middle of the block it has to path specifically at the nearest target in the old way. To handle oddities in cliffs and water patches.
+        -- Option 2: thinking about 8x8 tile blocks. Big enough that you can't just assume mining range to anywhere and so would have to do a search within these small subsets. Would keep logic simple as we would just path to the nearest one if none in range and then loop, as we currently do.
+        robotTaskData.currentTarget = PositionUtils.GetNearest(robot_position, robotTaskData.assignedChunkDetails.toBeDeconstructedEntityDetails, "position", robot.miningDistance)
 
         if robotTaskData.currentTarget == nil then
             -- As the robot can't find anything to do on this chunk then mark the chunk as done for deconstruction. It will then start looking for a new chunk. We leave the robot assigned to the chunk as the searching for chunk will use this data before overwriting it.
@@ -145,7 +142,7 @@ DeconstructEntitiesInChunkDetails.Progress = function(thisTask, robot)
     -- Check if we are not currently walking and can mine the target from our current position, or if we are/need to walk to the target.
     if robotTaskData.robotWalkingTask == nil and PositionUtils.GetDistance(robot_position, robotTaskData.currentTarget.position) <= robot.miningDistance then
         -- In reach and not walking so can mine it now and then sleep.
-        ticksToWait = math_ceil(PrototypeAttributes.GetAttribute("entity", robotTaskData.currentTarget.entity_name, "mineable_properties")--[[@as LuaEntityPrototype.mineable_properties]] .mining_time * 60 / robot.miningSpeed) --[[@as uint # We can safely just cast this in reality. ]]
+        ticksToWait = DeconstructTimeDelay + math_ceil(PrototypeAttributes.GetAttribute("entity", robotTaskData.currentTarget.entity_name, "mineable_properties")--[[@as LuaEntityPrototype.mineable_properties]] .mining_time * 60 / robot.miningSpeed) --[[@as uint # We can safely just cast this in reality. ]]
         if global.Settings.Debug.fastDeconstruct then ticksToWait = math.ceil(ticksToWait / 10) --[[@as uint # We can safely just cast this in reality. ]] end
 
         local minedItemsAllFittedInInventory = robot.entity.mine_entity(robotTaskData.currentTarget.entity, false)
@@ -183,6 +180,7 @@ DeconstructEntitiesInChunkDetails.Progress = function(thisTask, robot)
 
         -- The path request and following it can just be stored in the robot data. As it will be unique to each robot and we will have this task manage the state texts.
         if robotTaskData.robotWalkingTask == nil then
+            -- Get safely within mining range, but no real risk of having issues getting really close to it due to non mined entities, etc.
             robotTaskData.robotWalkingTask = MOD.Interfaces.Tasks.WalkToLocation.ActivateTask(thisTask.job, thisTask.parentTask, robotTaskData.currentTarget.position, taskData.surface, robot.miningDistance - 1)
         end
         ticksToWait, robotStateDetails = MOD.Interfaces.Tasks.WalkToLocation.Progress(robotTaskData.robotWalkingTask, robot)

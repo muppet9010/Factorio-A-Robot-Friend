@@ -31,7 +31,7 @@ local CompleteArea = require("scripts.jobs.complete-area")
 ---@field primaryTaskName string # The Interface name of the primary task.
 ---@field primaryTask? Task_Details # The primary task for this job.
 ---@field description? string # A text description for the Job.
----@field robotsOnJob table<uint, Robot> @ Keyed by robot Id.
+---@field robotsOnJob table<uint, Robot> # Keyed by robot Id.
 
 local JobManager = {} ---@class JobManager
 

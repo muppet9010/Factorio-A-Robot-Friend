@@ -40,7 +40,7 @@ Planned Medium Tasks list (actually callable on their own in simple situations):
         - Find walking path
         - Walk a path
     - Collect items:
-        - Search chests for items. Looking for as many items as we can until our inventory fills up. In the hope that anything we can;t get now and our inventory is full may be available when we return.
+        - Search chests for items. Looking for as many items as we can until our inventory fills up. In the hope that anything we can't get now and our inventory is full may be available when we return.
         - Collect item from chest (loops):
             - Move to location
             - Move items between chest and robot
@@ -87,6 +87,8 @@ We won't support updating jobs, but will allow via the GUI some sort of clone (w
 
 Multiple robots can be assigned to the same job and based on the type of task being done the robots will either work together or independently.
 
+Once a task is started it will largely ignore changes around it, i.e. if an entity ghost is removed once the task scans and another one added. The Task will continue as if it is there and then handle it missing, but will ignore the new one until it does a repeat pass at the end to check its got everything. Robots aren't omnipresent and so don't know about changes until they encounter them.
+
 
 
 Internal Code Structure
@@ -100,6 +102,8 @@ Each layer should call only to other managers, with each manager then knowing it
 Exceptions are when a specific job needs to call to a specific task, as it needs to know the specific tasks arguments.
 
 Avoid pre-emptive UPS optimisation as most things are run once per tick per robot at most. And so this load will be very evenly distributed and low background. Aim for minimal optimisation especially on state data to keep code simpler to maintain.
+
+We will only check things are valid at the moment we need too. We won't try and monitor everything in advance as it will make un-avoidable lag spikes in large blueprints being removed, mass un-marking things for deconstruction. It does mean we have to check things as we get to them and in certain cases can't use more optimised API calls as we don't know cached entities will be valid en-bulk. Also avoids issues around what to do about changes that partially impact a job that is under way.
 
 There is only 1 task hierarchy per job regardless of the number of robots. Tasks will either implement independent robot activities or some form of coordinated planning and action across all robots actively working on that task. As there's only 1 instance of a task per job this means the task can act as a black box regarding how it handles robots from other tasks. It also allows for clean data sharing at any point in the task hierarchy. When multiple robots are on a job and some finish their part of a common task and others are still working, it will be up to the task to define if the robots should get released to the next task (task still active as a whole), or if the robots should have their activity within the task reset to include new work.
 Previously per robot task instance was trialled, but found to be problematic in a design/structural sense for data sharing at depths in the task hierarchy between robots.

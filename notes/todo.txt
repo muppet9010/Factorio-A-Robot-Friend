@@ -4,9 +4,11 @@ Bugs
 
 
 Next
-===
+====
 
-Both Scan and Deconstruct currently don't handle if things change during the looping anywhere. As an upgrade found during initial scan could be found missing at any later point where its data is accessed. If something is found missing (invalid) we just need to remove it from the lists.
+Both Scan and Deconstruct currently don't handle if things change during the looping anywhere. As an upgrade found during initial scan could be found missing at any later point where its data is accessed. If something is found missing (invalid) we just need to remove it from the lists. We will deal with any changes as a surprise and handle it the minimum to avoid a crash. The scan stages will be reshaped a bit to minimise checking valid on things.
+
+Address the FindNearest looping issue before moving on to any building. As we will generic function a lot of the deconstruct logic for general usage. 2 options are noted against its usage PositionUtils.GetNearest().
 
 Make simple build blueprint job with dummy tasks for getting items. To test framework as much as anything. Just give the robots the needed items as part of the job.
 
@@ -74,6 +76,7 @@ Walking to location
 
 Complete area
 -------------
+
 - General:
     - Try to have some smarter logic for the starting corner of the combined area for the actions to be done from. Currently just starts top left. Maybe should be nearest corner to a base storage area or some other general center point.
     - Establish a rally point in a free chunk next to the starting corner chunk. Robots should path to here from outside the completing area and then be given an active chunk for their duties. To avoid robots far off causing odd delays in job progress and opens the door to more natural driving an train usage logic in future. Will also mean that the moving to the general job site is handled by standard move logic, but moving around the job internally between chunks can be locked down to just walking and spiders.
@@ -89,4 +92,4 @@ Complete area
     - Add options to job to allow filtering by selected types, i.e. power poles, roboports, landfill type tiles. Basically so you can do a priority build.
     - Support cliffs and knowing that cliffs require cliff explosives. At present they are unhandled entirely and thus ignored. They should be prioritised and if the entity can't be built due to them the item dropped from that robots actions list. So that once the cliffs are blown up and the next cycle of checking is done they are picked up. ???
 - Deconstruct Entities in Chunk Details:
-    - Look at pathing in detail to ensure we do something sensible and nice looking. Should try to move "near" the target and if that fails then accept further away. Will need enhancements to the path finder. As the pathfinder is a work or fail doing a path to within range of the entity and then a second path from there closer seems the best way to get near the target. We assume that it's best to get near the target, on the basis that there will often be a bunch of other tasks around it that will then be within range. It may be best to try and path to the middle of a chunk upon being assigned the chunk, but have a really large arrival radius so that once the robot is within the chunks borders it then switches to a short range nearest possible movement logic. As we don;t want to try multiple closeness paths towards our target when far away. So a 2 step approach to pathing.
+    - Look at pathing in detail to ensure we do something sensible and nice looking. Should try to move "near" the target and if that fails then accept further away. Will need enhancements to the path finder. As the pathfinder is a work or fail doing a path to within range of the entity and then a second path from there closer seems the best way to get near the target. We assume that it's best to get near the target, on the basis that there will often be a bunch of other tasks around it that will then be within range. It may be best to try and path to the middle of a chunk upon being assigned the chunk, but have a really large arrival radius so that once the robot is within the chunks borders it then switches to a short range nearest possible movement logic. As we don't want to try multiple closeness paths towards our target when far away. So a 2 step approach to pathing.
