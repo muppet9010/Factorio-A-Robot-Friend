@@ -152,7 +152,7 @@ MOD.Interfaces.RobotManager.AssignRobotToJob(robot2, job)
 
 
 
-Demo Deconstruct:
+Demo Deconstruct of a furnace array and nature by 2 robots:
 
 /sc __a_robot_friend__
 local robotPosition, completeAreas = game.get_player(1).position, { {left_top = {x=-80,y=-70}, right_bottom = {x=-5,y=-50}} }

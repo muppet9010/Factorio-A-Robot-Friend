@@ -4,20 +4,16 @@
 --
 ---@meta
 ---@diagnostic disable
---
---
---
---
----@alias EntityIdentifier string|uint # The entities unit_number or "destroyedId_[UNIQUE_NUMBER_PER_ENTITY]". Created with code like `entity.unit_number or ("destroyedId_" .. script.register_on_entity_destroyed(entity))`.
---
---
---
---
+
+--- The entities unit_number or "destroyedId_[UNIQUE_NUMBER_PER_ENTITY]". Created with code like `entity.unit_number or ("destroyedId_" .. script.register_on_entity_destroyed(entity))`.
+---@alias EntityIdentifier string|uint
+
+
+
+
+
+
 --[[
-
-
-
-
 
 Example of defining a dictionary as containing all the same type of values en-bulk.
 With just this you can't valid the dictionary level, just the selected value in it.

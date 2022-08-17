@@ -188,7 +188,7 @@ Events._RegisterEvent = function(eventName, thisFilterName, thisFilterData)
         eventId = eventName --[[@as uint]]
         if thisFilterData ~= nil then
             if TableUtils.IsTableEmpty(thisFilterData) then
-                -- filter isn't nil, but has no data, so as this won't register to any filters just drop it.
+                -- filter isn't nil, but has no data, so as this won't register to any filters so just drop it.
                 return nil
             end
             MOD.eventFilters[eventId] = MOD.eventFilters[eventId] or {}

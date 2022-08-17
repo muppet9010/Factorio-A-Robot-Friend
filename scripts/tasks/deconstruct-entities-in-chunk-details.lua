@@ -22,7 +22,7 @@ local math_ceil = math.ceil
 ---@field surface LuaSurface
 ---@field chunkDetailsByAxis Task_ScanAreasForActionsToComplete_ChunksInCombinedAreas
 ---@field chunksState table<string, Task_DeconstructEntitiesInChunkDetails_ChunkState> # Keyed by the chunks position as a string.
----@field entitiesToBeDeconstructed table<uint, Task_ScanAreasForActionsToComplete_EntityDetails> # The main list of entities to be deconstructed that is used by things outside of this task. So remove entries from it as we do them.
+---@field entitiesToBeDeconstructed table<EntityIdentifier, Task_ScanAreasForActionsToComplete_EntityDetails> # The main list of entities to be deconstructed that is used by things outside of this task. So remove entries from it as we do them.
 ---@field startingChunkPosition ChunkPosition
 
 ---@class Task_DeconstructEntitiesInChunkDetails_Robot_TaskData : TaskData_Robot
@@ -151,10 +151,11 @@ DeconstructEntitiesInChunkDetails.Progress = function(thisTask, robot)
             error("not handled full robot inventory yet")
             -- Later: Robot needs to go and empty its inventory and also release this chunk. As it may take the robot a while and another robot may be abe to start it quicker. This seems like something for the V2 of this feature and so in initial Proof Of Concept version we will just avoid a test reaching this state.
         end
+        -- TODO: need to raise an event for the mining as no standard events are raised without a player or construction bot being involved.
 
         -- The mining was successful so update the lists and then wait for the mining time before starting anything new.
-        robotTaskData.assignedChunkDetails.toBeDeconstructedEntityDetails[robotTaskData.currentTarget.entityListKey] = nil
-        taskData.entitiesToBeDeconstructed[robotTaskData.currentTarget.entityListKey] = nil
+        robotTaskData.assignedChunkDetails.toBeDeconstructedEntityDetails[robotTaskData.currentTarget.identifier] = nil
+        taskData.entitiesToBeDeconstructed[robotTaskData.currentTarget.identifier] = nil
         robotTaskData.currentTarget = nil
         robotStateDetails = { stateText = "Deconstructing target", level = "normal" }
 
