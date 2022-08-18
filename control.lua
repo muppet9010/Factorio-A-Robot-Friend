@@ -25,6 +25,17 @@ local function OnLoad()
     -- Register all remotes recorded during module's OnLoad().
     remote.remove_interface(Constants.ModName)
     remote.add_interface(Constants.ModName, MOD.RemoteInterfaces)
+
+    -- TODO: temp
+    script.on_event(defines.events.on_player_mined_entity, function(event)
+        local x = event
+    end)
+    script.on_event(defines.events.on_robot_mined_entity, function(event)
+        local x = event
+    end)
+    script.on_event(defines.events.script_raised_destroy, function(event)
+        local x = event
+    end)
 end
 
 local function OnSettingChanged(event)

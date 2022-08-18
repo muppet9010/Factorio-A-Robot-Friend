@@ -24,6 +24,12 @@ local PrototypeAttributes = require("utility.functions.prototype-attributes")
 ---@field fontColor Color # The color of the robot with no opacity, used for fonts.
 ---@field miningDistance uint
 ---@field miningSpeed double
+---@field inventories Robot_Inventories
+
+--- Cache of references to the inventories of the robot.
+---@class Robot_Inventories
+---@field main? LuaInventory
+---@field trash? LuaInventory
 
 local RobotManager = {} ---@class RobotManager
 
@@ -65,6 +71,10 @@ RobotManager.CreateRobot = function(surface, position, master)
     if robot.entity == nil then
         error("failed to create robot entity")
     end
+    robot.inventories = {
+        main = robot.entity.get_inventory(defines.inventory.character_main),
+        trash = robot.entity.get_inventory(defines.inventory.character_trash)
+    }
 
     -- Get the robots speed and action distances from its type. This will need updating upon either character entity or force bonus changes.
     -- Maybe per player bonuses should affect their robots, rather than me getting the character bonus for the robot entity itself?

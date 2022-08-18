@@ -145,13 +145,21 @@ DeconstructEntitiesInChunkDetails.Progress = function(thisTask, robot)
         ticksToWait = DeconstructTimeDelay + math_ceil(PrototypeAttributes.GetAttribute("entity", robotTaskData.currentTarget.entity_name, "mineable_properties")--[[@as LuaEntityPrototype.mineable_properties]] .mining_time * 60 / robot.miningSpeed) --[[@as uint # We can safely just cast this in reality. ]]
         if global.Settings.Debug.fastDeconstruct then ticksToWait = math.ceil(ticksToWait / 10) --[[@as uint # We can safely just cast this in reality. ]] end
 
-        local minedItemsAllFittedInInventory = robot.entity.mine_entity(robotTaskData.currentTarget.entity, false)
+        -- local constructionRobot = robot.surface.create_entity({ name = "construction-robot", surface = robot.surface, position = robot_position, force = robot.force }) ---@cast constructionRobot - nil -- 2
+        -- local minedItemsAllFittedInInventory = robotTaskData.currentTarget.entity.mine({ force = false, ignore_minable = false, raise_destroyed = true, inventory = constructionRobot.get_inventory(defines.inventory.robot_cargo) }) -- 2
+        -- constructionRobot.destroy() -- 2
+
+        -- local oldMasterCharacter = robot.master.character -- 1
+        -- robot.master.character = robot.entity -- 1
+        -- local minedItemsAllFittedInInventory = robot.entity.mine_entity(robotTaskData.currentTarget.entity, false) -1
+        -- CODE NOTE: do the mine from the entity in to the robot's inventory as this handles failed mine attempts and when to raised script_destroyed events automatically. Mining from the character entity would need me to raise the event before I try and mine so the entity is valid for the event. Thus needing more checks on inventory space, etc; for no benefit to me.
+        local minedItemsAllFittedInInventory = robotTaskData.currentTarget.entity.mine({ inventory = robot.inventories.main }) -- Raises script_raised_destroyed if it succeeded. --3
         if minedItemsAllFittedInInventory == false then
             -- Robot's inventory is now full so couldn't complete mining the entity.
             error("not handled full robot inventory yet")
             -- Later: Robot needs to go and empty its inventory and also release this chunk. As it may take the robot a while and another robot may be abe to start it quicker. This seems like something for the V2 of this feature and so in initial Proof Of Concept version we will just avoid a test reaching this state.
         end
-        -- TODO: need to raise an event for the mining as no standard events are raised without a player or construction bot being involved.
+        -- robot.master.character = oldMasterCharacter -- 1
 
         -- The mining was successful so update the lists and then wait for the mining time before starting anything new.
         robotTaskData.assignedChunkDetails.toBeDeconstructedEntityDetails[robotTaskData.currentTarget.identifier] = nil
