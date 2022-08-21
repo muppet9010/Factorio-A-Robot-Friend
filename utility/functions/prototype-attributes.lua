@@ -8,6 +8,7 @@ local PrototypeAttributes = {} ---@class Utility_PrototypeAttributes
 
 MOD = MOD or {} ---@class MOD
 MOD.UTILITYPrototypeAttributes = MOD.UTILITYPrototypeAttributes or {} ---@type UtilityPrototypeAttributes_CachedTypes
+MOD.UTILITYPrototypeAttributes_Prototypes = MOD.UTILITYPrototypeAttributes_Prototypes or {} ---@type table<string, table<string, UtilityPrototypeAttributes_SupportedLuaPrototypeTypes>> # Prototype type to prototypes.
 
 --- Returns the requested attribute of a named prototype.
 ---
@@ -15,21 +16,21 @@ MOD.UTILITYPrototypeAttributes = MOD.UTILITYPrototypeAttributes or {} ---@type U
 ---@param prototypeType UtilityPrototypeAttributes_PrototypeType
 ---@param prototypeName string
 ---@param attributeName string
----@param prototype? LuaEntityPrototype|LuaItemPrototype|LuaFluidPrototype|LuaTilePrototype|LuaEquipmentPrototype|LuaRecipePrototype|LuaTechnologyPrototype # The LuaPrototype if its already cached somewhere to save having to obtain it if needed. Although once the value is cached for this prototypeName it won;t need to be looked up again this game session.
+---@param prototype? LuaEntityPrototype|LuaItemPrototype|LuaFluidPrototype|LuaTilePrototype|LuaEquipmentPrototype|LuaRecipePrototype|LuaTechnologyPrototype # The LuaPrototype if its already cached somewhere to save having to obtain it if needed. Although once the value is cached for this prototypeName it won't need to be looked up again this game session.
 ---@return any # attribute value, can include nil.
 PrototypeAttributes.GetAttribute = function(prototypeType, prototypeName, attributeName, prototype)
     local utilityPrototypeAttributes = MOD.UTILITYPrototypeAttributes
 
     local typeCache = utilityPrototypeAttributes[prototypeType]
     if typeCache == nil then
-        utilityPrototypeAttributes[prototypeType] = {}
-        typeCache = utilityPrototypeAttributes[prototypeType]
+        typeCache = {}
+        utilityPrototypeAttributes[prototypeType] = typeCache
     end
 
     local prototypeCache = typeCache[prototypeName]
     if prototypeCache == nil then
-        typeCache[prototypeName] = {}
-        prototypeCache = typeCache[prototypeName]
+        prototypeCache = {}
+        typeCache[prototypeName] = prototypeCache
     end
 
     local attributeCache = prototypeCache[attributeName]
@@ -38,22 +39,31 @@ PrototypeAttributes.GetAttribute = function(prototypeType, prototypeName, attrib
     else
         -- If the prototype wasn't passed in then obtain it.
         if prototype == nil then
-            if prototypeType == "entity" then
-                prototype = game.entity_prototypes[prototypeName]
-            elseif prototypeType == "item" then
-                prototype = game.item_prototypes[prototypeName]
-            elseif prototypeType == "fluid" then
-                prototype = game.fluid_prototypes[prototypeName]
-            elseif prototypeType == "tile" then
-                prototype = game.tile_prototypes[prototypeName]
-            elseif prototypeType == "equipment" then
-                prototype = game.equipment_prototypes[prototypeName]
-            elseif prototypeType == "recipe" then
-                prototype = game.recipe_prototypes[prototypeName]
-            elseif prototypeType == "technology" then
-                prototype = game.technology_prototypes[prototypeName]
-            else
-                error("unsupported prototypeType: " .. tostring(prototypeType))
+            local cachedPrototypeTypeList = MOD.UTILITYPrototypeAttributes_Prototypes
+            local cachedPrototypeList = cachedPrototypeTypeList[prototypeType]
+            if cachedPrototypeList == nil then
+                cachedPrototypeList = {}
+                cachedPrototypeTypeList[prototypeType] = cachedPrototypeList
+            end
+            prototype = cachedPrototypeList[prototypeName]
+            if prototype == nil then
+                if prototypeType == "entity" then
+                    prototype = game.entity_prototypes[prototypeName]
+                elseif prototypeType == "item" then
+                    prototype = game.item_prototypes[prototypeName]
+                elseif prototypeType == "fluid" then
+                    prototype = game.fluid_prototypes[prototypeName]
+                elseif prototypeType == "tile" then
+                    prototype = game.tile_prototypes[prototypeName]
+                elseif prototypeType == "equipment" then
+                    prototype = game.equipment_prototypes[prototypeName]
+                elseif prototypeType == "recipe" then
+                    prototype = game.recipe_prototypes[prototypeName]
+                elseif prototypeType == "technology" then
+                    prototype = game.technology_prototypes[prototypeName]
+                else
+                    error("unsupported prototypeType: " .. tostring(prototypeType))
+                end
             end
         end
         local resultValue = prototype[attributeName] ---@type any
@@ -69,5 +79,7 @@ end
 ---@alias UtilityPrototypeAttributes_CachedAttributes table<string, UtilityPrototypeAttributes_CachedAttribute> # a table of each attribute name (key) and their cached values stored in the container.
 ---@class UtilityPrototypeAttributes_CachedAttribute # Container for the cached value. If it exists the value is cached. An empty table signifies that the cached value is nil.
 ---@field value any # the value of the attribute. May be nil if that's the attributes real value.
+
+---@alias UtilityPrototypeAttributes_SupportedLuaPrototypeTypes LuaEntityPrototype|LuaItemPrototype|LuaFluidPrototype|LuaTilePrototype|LuaEquipmentPrototype|LuaRecipePrototype|LuaTechnologyPrototype
 
 return PrototypeAttributes
