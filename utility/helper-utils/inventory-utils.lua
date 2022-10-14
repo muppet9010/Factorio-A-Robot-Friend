@@ -20,7 +20,7 @@ InventoryUtils.GetEntityReturnedToInventoryName = function(entity)
 end
 
 --- Moves the full Lua Item Stacks from the source to the target inventories if possible. So handles items with data and other complicated items. --- Updates the source inventory counts in inventory object.
----@param sourceInventory LuaInventory
+---@param sourceInventory? LuaInventory # Will check and handle non existent inventory.
 ---@param targetInventory LuaInventory
 ---@param dropUnmovedOnGround? boolean # If TRUE then ALL items not moved are dropped on the ground (regardless of ratioToMove value). If FALSE then unmoved items are left in the source inventory. If not provided then defaults to FALSE.
 ---@param ratioToMove? double # Ratio of the item count to try and move. Float number from 0 to 1. If not provided it defaults to 1. Number of items moved is rounded up.
