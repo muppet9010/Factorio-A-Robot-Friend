@@ -6,6 +6,8 @@ Bugs
 Next
 ====
 
+Add paramater to schedule event (EventScheduler.ScheduleEventOnce) to have the current tick passed in. As often the caller knows it and this should reduce the function cost a fair bit.
+
 Both Scan and Deconstruct currently don't handle if things change during the looping anywhere. As an upgrade found during initial scan could be found missing at any later point where its data is accessed. If something is found missing (invalid) we just need to remove it from the lists. We will deal with any changes as a surprise and handle it the minimum to avoid a crash. The scan stages will be reshaped a bit to minimise checking valid on things.
 
 Address the FindNearest looping issue before moving on to any building. As we will generic function a lot of the deconstruct logic for general usage. 2 options are noted against its usage PositionUtils.GetNearest().
