@@ -14,6 +14,9 @@ Address the FindNearest looping issue before moving on to any building. As we wi
 
 Make simple build blueprint job with dummy tasks for getting items. To test framework as much as anything. Just give the robots the needed items as part of the job.
 
+Can EventScheduler.RemoveScheduledOnceEvents() return if any (count of?) events were removed or not. Just general niceity to add to library and this mod has the WIP version. Came up from Mupper Streamer, but its an older version and not worth hot fixing.
+
+
 
 
 Core Enhancements
