@@ -71,7 +71,11 @@ LoggingUtils.LogPrint = function(text, enabled, textColor, recordToModLog)
         return
     end
     if game ~= nil then
-        game.print(tostring(text), textColor)
+        if textColor == nil then
+            game.print(tostring(text))
+        else
+            game.print(tostring(text), textColor)
+        end
     end
     log(tostring(text))
     if recordToModLog then
