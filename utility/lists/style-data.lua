@@ -408,9 +408,11 @@ StyleData.GeneratePrototypes = function()
         text = text .. "}" .. "\r\n"
 
         -- Write out the font data to the log for all the fonts we generated.
-        text = text .. "\r\n" .. "---@class UtilityGuiStyle_MuppetFonts # These names include the font version in them..." .. "\r\n" .. "StyleData.MuppetFonts = {" .. "\r\n"
+        text = text .. "\r\n" .. "---@class UtilityGuiStyle_MuppetFonts" .. "\r\n" .. "StyleData.MuppetFonts = {" .. "\r\n"
+        local fontListName
         for _, font in pairs(muppetFonts) do
-            text = text .. font.name .. ' = "' .. font.name .. '", ' .. "\r\n"
+            fontListName = string.gsub(font.name, StyleData.styleVersion, "")
+            text = text .. fontListName .. ' = "' .. font.name .. '", ' .. "\r\n"
         end
         text = text .. "}" .. "\r\n\r\n\r\n"
 
@@ -867,17 +869,17 @@ StyleData.MuppetStyles = {
     },
 }
 
----@class UtilityGuiStyle_MuppetFonts # These names include the font version in them...
+---@class UtilityGuiStyle_MuppetFonts
 StyleData.MuppetFonts = {
-    muppet_small_1_1_0 = "muppet_small_1_1_0",
-    muppet_small_semibold_1_1_0 = "muppet_small_semibold_1_1_0",
-    muppet_small_bold_1_1_0 = "muppet_small_bold_1_1_0",
-    muppet_medium_1_1_0 = "muppet_medium_1_1_0",
-    muppet_medium_semibold_1_1_0 = "muppet_medium_semibold_1_1_0",
-    muppet_medium_bold_1_1_0 = "muppet_medium_bold_1_1_0",
-    muppet_large_1_1_0 = "muppet_large_1_1_0",
-    muppet_large_semibold_1_1_0 = "muppet_large_semibold_1_1_0",
-    muppet_large_bold_1_1_0 = "muppet_large_bold_1_1_0",
+    muppet_small = "muppet_small_1_1_0",
+    muppet_small_semibold = "muppet_small_semibold_1_1_0",
+    muppet_small_bold = "muppet_small_bold_1_1_0",
+    muppet_medium = "muppet_medium_1_1_0",
+    muppet_medium_semibold = "muppet_medium_semibold_1_1_0",
+    muppet_medium_bold = "muppet_medium_bold_1_1_0",
+    muppet_large = "muppet_large_1_1_0",
+    muppet_large_semibold = "muppet_large_semibold_1_1_0",
+    muppet_large_bold = "muppet_large_bold_1_1_0",
 }
 
 return StyleData
