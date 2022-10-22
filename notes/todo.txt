@@ -16,7 +16,9 @@ Make simple build blueprint job with dummy tasks for getting items. To test fram
 
 Can EventScheduler.RemoveScheduledOnceEvents() return if any (count of?) events were removed or not. Just general niceity to add to library and this mod has the WIP version. Came up from Mupper Streamer, but its an older version and not worth hot fixing.
 
+GuiUtil.AddElement() needs a warning that the elementDetails table fed in will have its and its children `names` & `style` set/updated, which breaks re-using it across multiple players. Also add an override option that will ignore checks of name and style so that tables can be re-used between players. Will need to feed this setting down in to children being created/checked.
 
+CommandUtils - move the input argument checking functions out to their own library file and make them generic for remote or command usage.
 
 
 Core Enhancements
