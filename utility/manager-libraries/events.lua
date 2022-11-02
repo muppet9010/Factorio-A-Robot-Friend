@@ -114,8 +114,6 @@ Events.RemoveHandler = function(eventName, handlerName)
 end
 
 --- Called when needed, but not before tick 0 as they are ignored. Can either raise a custom registered event registered by Events.RegisterCustomEventName(), or one of the limited events defined in the API: https://lua-api.factorio.com/latest/LuaBootstrap.html#LuaBootstrap.raise_event.
----
---- Older Factorio versions allowed for raising any base Factorio event yourself, so review on upgrade.
 ---@param eventData EventData
 Events.RaiseEvent = function(eventData)
     eventData.tick = game.tick

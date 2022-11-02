@@ -20,6 +20,16 @@ GuiUtil.AddElement() needs a warning that the elementDetails table fed in will h
 
 CommandUtils - move the input argument checking functions out to their own library file and make them generic for remote or command usage.
 
+EventScheduler.RemoveScheduledOnceEvents("ShowMessage.RemoveNamedElementForAll") didn't work to remove all entries of this scheduled event name in older Utility version.
+
+Events.RaiseEvent() - input paramater doesn't match up right with what Factorio actually expects. Needs type updating. Break into 2 arguments as a breakign change, event name (id) and the data to be passed through. Also removing adding the tick to the data, as only the internal one needs to do this. Real events will get this automatically surely ?
+
+Events.RegisterHandlerEvent() should accept a uint to its eventName paramater, as for custom events ids from other mods this is what we get back.
+
+Actually can we add to the Todo list to make created GUI element details tables return to their pre submission state after generating. So we can just re-use the same table across multiple players. Just needs the util side to reset it's few special field at the end of the creation process, as that should also handle children nicely.
+Then we can hopefully use a single definition table for all players or just update some odd values for repeated instances of things.
+
+
 
 Core Enhancements
 =================
