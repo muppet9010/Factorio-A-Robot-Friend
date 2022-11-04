@@ -5,12 +5,13 @@
         - Require the file at usage locations.
         - Call the BiomeTrees.OnStartup() for script.on_init and script.on_configuration_changed. This will load the meta tables of the mod fresh from the current tiles and trees. This is needed as on large mods it may take a few moments and we don't want to lag the game on first usage.
         - Call the desired public functions when needed. These are the ones at the top of the file without an "_" at the start of the function name.
-    Supports specifically coded modded trees with meta data. If a tree has tile restrictions this is used for selection after temp and water, otherwise the tags of tile and tree are checked. This logic comes from supporting alien biomes.
+    Supports specifically coded modded trees with meta data. If a tree has tile restrictions this is used for selection after temp and moisture, otherwise the tags of tile and tree are checked. This logic comes from supporting alien biomes.
+    Only utilises tree's that have autoplace attributes. As otherwise we don't know their moisture and temperature requirements.
 ]]
 
 --[[
     CODE NOTES:
-        - Some of these objects aren't terribly well typed or even named fields. This is a legacy code and doesn't really ever get touched so left as minimal typing for time being.
+        - Some of these objects aren't typed by field name, but instead indexed field number. This is based on how the code has been copied from the base Factorio game file. As its been copied and not queried by code adding names to the fields would be a manual process for every one. This same policy has been applied to the alien biomes data that's extracted from their files by a programmatic values dump.
         - Don't use `surface.calculate_tile_properties()` as its output numbers for moisture and temperature/aux (not sure which one to use) don't seem to correspond to the tree data we get. Maybe with a full re-write to get compatible numbers it could work, or it may need noise manipulation scripts run against them in some fashion... Left using the old method intentionally as it seems to give solid results.
 ]]
 
@@ -51,7 +52,7 @@ local LogTags = false -- Enable with other logging options to include details ab
 
 ---@alias UtilityBiomeTrees_TreesMetaData table<string, UtilityBiomeTrees_TreeMetaData> # Key'd by tree name.
 ---@class UtilityBiomeTrees_TreeMetaData
----@field [1] table<string, string> # Tag color string as key and value.
+---@field [1] UtilityBiomeTrees_TagsList # Tag color string as key and value.
 ---@field [2] table<string, string> # The names of tiles that the tree can only go on, tile name is the key and value in table.
 
 ---@alias UtilityBiomeTrees_TilesDetails table<string, UtilityBiomeTrees_TileDetails> # Key'd by tile name.
@@ -61,13 +62,15 @@ local LogTags = false -- Enable with other logging options to include details ab
 ---@field type UtilityBiomeTrees_TileType
 ---@field tempRanges UtilityBiomeTrees_valueRange[]
 ---@field moistureRanges UtilityBiomeTrees_valueRange[]
----@field tag? string
+---@field rawTag? string # The raw string tag from alien biomes.
+---@field tags? UtilityBiomeTrees_TagsList # Tag color strings as key and value.
 
+---@alias UtilityBiomeTrees_RawTilesData table<string, UtilityBiomeTrees_RawTileData> # Key'd by tile name.
 ---@class UtilityBiomeTrees_RawTileData
 ---@field [1] UtilityBiomeTrees_TileType
 ---@field [2]? UtilityBiomeTrees_valueRange[] # tempRanges
 ---@field [3]? UtilityBiomeTrees_valueRange[] # moistureRanges
----@field [4]? string # tag
+---@field [4]? string # rawTag
 
 ---@class UtilityBiomeTrees_valueRange
 ---@field [1] double # Min in this range. Alien biomes is -1 to 1. But likely the game supports any double.
@@ -78,7 +81,7 @@ local LogTags = false -- Enable with other logging options to include details ab
 ---@field tempRange UtilityBiomeTrees_valueRange
 ---@field moistureRange UtilityBiomeTrees_valueRange
 ---@field probability double
----@field tags? table<string, string> # Tag color string as key and value.
+---@field tags? table<string, string> # Tag color strings as key and value.
 ---@field exclusivelyOnNamedTiles? table<string, string> # The names of tiles that the tree can only go on, tile name is the key and value in table.
 
 ---@class UtilityBiomeTrees_suitableTrees
@@ -90,6 +93,9 @@ local LogTags = false -- Enable with other logging options to include details ab
 ---@field tree UtilityBiomeTrees_TreeDetails
 
 ---@alias UtilityBiomeTrees_TileType "allow-trees"|"water"|"no-trees"
+
+---@alias UtilityBiomeTrees_TileTagToTreeTagsList table<string, UtilityBiomeTrees_TagsList > # A table of Tile tag color to a table of the tree tag colors. Key'd by Tile tag color.
+---@alias UtilityBiomeTrees_TagsList table<string, string> # A table of tag colors. Both key and value is the Tree tag color.
 
 MOD = MOD or {} ---@class MOD
 MOD.UTILITYBiomeTrees_TileTreePossibilities = MOD.UTILITYBiomeTrees_TileTreePossibilities or {} ---@type table<string, UtilityBiomeTrees_suitableTrees> # A table of tile name to its weighted tree possibilities.
@@ -259,15 +265,20 @@ BiomeTrees._GetTreePossibilitiesForTileData = function(tileData)
                             include = true
                         end
                     else
-                        -- No exclusive tile restrictions so check tags.
-                        if tileData.tag == nil then
+                        -- No exclusive tile restrictions so check tags. Mods either have no tile tags (base Factorio) or they have tile and possibly tree tags (alien biomes), so not all combination of tags need to be accounted for.
+                        if tileData.tags == nil then
                             -- No tile restriction tag so can just include.
                             include = true
                         elseif tree.tags ~= nil then
-                            -- There are tree restriction tags that need checking.
-                            if tree.tags[tileData.tag] then
-                                if LogTags then LoggingUtils.ModLog("tile tag: " .. tileData.tag .. "  --- tree tags: " .. TableUtils.TableKeyToCommaString(tree.tags), false) end
-                                include = true
+                            -- There are tree restriction tags that need checking against the tile data tags.
+                            -- CODE NOTE: there are less tags on tiles athan trees when both are present, so loop over each tile tag.
+                            for tileDataTag in pairs(tileData.tags) do
+                                if LogTags then LoggingUtils.ModLog("check tile tag: " .. tileDataTag, false) end
+                                if tree.tags[tileDataTag] ~= nil then
+                                    if LogTags then LoggingUtils.ModLog("tree name:: " .. tree.name .. "  --- matching tree tags: " .. TableUtils.TableKeyToCommaString(tree.tags), false) end
+                                    include = true
+                                    break
+                                end
                             end
                         end
                     end
@@ -332,17 +343,17 @@ BiomeTrees._GetEnvironmentData = function()
             min = -15
         }
         environmentData.tileData = BiomeTrees._ProcessTilesRawData(AlienBiomesData.GetTileData())
-        local tagToColors = AlienBiomesData.GetTileTagToTreeColors()
+        local tagToColors = AlienBiomesData.GetTileTagToTreeColors() ---@type UtilityBiomeTrees_TileTagToTreeTagsList
         for _, tile in pairs(environmentData.tileData) do
-            if tile.tag ~= nil then
-                if tagToColors[tile.tag] then
-                    tile.tag = tagToColors[tile.tag]
+            if tile.rawTag ~= nil then
+                if tagToColors[tile.rawTag] then
+                    tile.tags = tagToColors[tile.rawTag]
                 else
-                    LoggingUtils.LogPrintError("Failed to find tile to tree color mapping for tile tag: ' " .. tile.tag .. "'", LogSuitablePositives or LogSuitableNonPositives)
+                    LoggingUtils.LogPrintError("Failed to find tile to tree color mapping for tile rawTag: ' " .. tile.rawTag .. "'", LogSuitablePositives or LogSuitableNonPositives)
                 end
             end
         end
-        environmentData.treesMetaData = AlienBiomesData.GetTreesMetaData()
+        environmentData.treesMetaData = AlienBiomesData.GetTreesMetaData() ---@type UtilityBiomeTrees_TreesMetaData
         environmentData.deadTreeNames = { "dead-tree-desert", "dead-grey-trunk", "dead-dry-hairy-tree", "dry-hairy-tree", "dry-tree" }
         environmentData.randomTreeLastResort = "GetRandomDeadTree"
     else
@@ -412,8 +423,8 @@ end
 ---@param type UtilityBiomeTrees_TileType
 ---@param range1? UtilityBiomeTrees_valueRange[]
 ---@param range2? UtilityBiomeTrees_valueRange[]
----@param tag? string
-BiomeTrees._AddTileDetails = function(tileDetails, tileName, type, range1, range2, tag)
+---@param rawTag? string
+BiomeTrees._AddTileDetails = function(tileDetails, tileName, type, range1, range2, rawTag)
     local tempRanges = {} ---@type UtilityBiomeTrees_valueRange[]
     local moistureRanges = {} ---@type UtilityBiomeTrees_valueRange[]
     if range1 ~= nil then
@@ -424,11 +435,13 @@ BiomeTrees._AddTileDetails = function(tileDetails, tileName, type, range1, range
         tempRanges[#tempRanges + 1] = { range2[1][1] or 0, range2[2][1] or 0 }
         moistureRanges[#moistureRanges + 1] = { range2[1][2] or 0, range2[2][2] or 0 }
     end
-    tileDetails[tileName] = { name = tileName, type = type, tempRanges = tempRanges, moistureRanges = moistureRanges, tag = tag } ---@type UtilityBiomeTrees_TileDetails
+
+    ---@type UtilityBiomeTrees_TileDetails
+    tileDetails[tileName] = { name = tileName, type = type, tempRanges = tempRanges, moistureRanges = moistureRanges, rawTag = rawTag }
 end
 
 --- Processes raw tile data in to a tiles details table.
----@param rawTilesData table<string, UtilityBiomeTrees_RawTileData>
+---@param rawTilesData UtilityBiomeTrees_RawTilesData
 ---@return UtilityBiomeTrees_TilesDetails
 BiomeTrees._ProcessTilesRawData = function(rawTilesData)
     local tilesDetails = {} ---@type UtilityBiomeTrees_TilesDetails
