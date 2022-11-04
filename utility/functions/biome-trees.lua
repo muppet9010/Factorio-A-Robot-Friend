@@ -7,12 +7,16 @@
         - Call the desired public functions when needed. These are the ones at the top of the file without an "_" at the start of the function name.
     Supports specifically coded modded trees with meta data. If a tree has tile restrictions this is used for selection after temp and water, otherwise the tags of tile and tree are checked. This logic comes from supporting alien biomes.
 ]]
---
--- CODE NOTES: Some of these objects aren't terribly well typed or even named fields. This is a legacy code and doesn't really ever get touched so left as minimal typing for time being.
 
-local MathUtils = require("utility.helper-utils.math-utils")
+--[[
+    CODE NOTES:
+        - Some of these objects aren't terribly well typed or even named fields. This is a legacy code and doesn't really ever get touched so left as minimal typing for time being.
+        - Don't use `surface.calculate_tile_properties()` as its output numbers for moisture and temperature/aux (not sure which one to use) don't seem to correspond to the tree data we get. Maybe with a full re-write to get compatible numbers it could work, or it may need noise manipulation scripts run against them in some fashion... Left using the old method intentionally as it seems to give solid results.
+]]
+
 local TableUtils = require("utility.helper-utils.table-utils")
 local LoggingUtils = require("utility.helper-utils.logging-utils")
+local math_min, math_max, math_random = math.min, math.max, math.random
 
 -- At present these sub files aren't typed at all.
 local BaseGameData = require("utility.functions.biome-trees-data.base-game")
@@ -21,16 +25,18 @@ local AlienBiomesData = require("utility.functions.biome-trees-data.alien-biomes
 local BiomeTrees = {} ---@class Utility_BiomeTrees
 
 --- Debug testing/logging options. Al should be false in releases.
-local LogNonPositives = false
-local LogPositives = false
-local LogData = false
+local LogPlacedNonPositives = false
+local LogPlacedPositives = false
+local LogSuitableNonPositives = false
+local LogSuitablePositives = false
+local LogInputData = false
 local LogTags = false -- Enable with other logging options to include details about tag checking.
 
 ---@class UtilityBiomeTrees_EnvironmentData
 ---@field moistureRangeAttributeNames UtilityBiomeTrees_MoistureRangeAttributeNames
 ---@field tileTemperatureCalculationSettings UtilityBiomeTrees_TileTemperatureCalculationSettings
 ---@field tileData UtilityBiomeTrees_TilesDetails
----@field treesMetaData UtilityBiomeTrees_TreesMetaData
+---@field treesMetaData? UtilityBiomeTrees_TreesMetaData # If non nil then must have contents.
 ---@field deadTreeNames string[]
 ---@field randomTreeLastResort string
 
@@ -64,8 +70,8 @@ local LogTags = false -- Enable with other logging options to include details ab
 ---@field [4]? string # tag
 
 ---@class UtilityBiomeTrees_valueRange
----@field [1] double # Min in this range.
----@field [2] double # Max in this range.
+---@field [1] double # Min in this range. Alien biomes is -1 to 1. But likely the game supports any double.
+---@field [2] double # Max in this range. Alien biomes is -1 to 1. But likely the game supports any double.
 
 ---@class UtilityBiomeTrees_TreeDetails
 ---@field name string
@@ -75,12 +81,18 @@ local LogTags = false -- Enable with other logging options to include details ab
 ---@field tags? table<string, string> # Tag color string as key and value.
 ---@field exclusivelyOnNamedTiles? table<string, string> # The names of tiles that the tree can only go on, tile name is the key and value in table.
 
+---@class UtilityBiomeTrees_suitableTrees
+---@field trees table<string, UtilityBiomeTrees_suitableTree> # Key'd by the tree name.
+---@field maxChance double
+
 ---@class UtilityBiomeTrees_suitableTree
----@field chanceStart double
----@field chanceEnd double
+---@field chance double
 ---@field tree UtilityBiomeTrees_TreeDetails
 
 ---@alias UtilityBiomeTrees_TileType "allow-trees"|"water"|"no-trees"
+
+MOD = MOD or {} ---@class MOD
+MOD.UTILITYBiomeTrees_TileTreePossibilities = MOD.UTILITYBiomeTrees_TileTreePossibilities or {} ---@type table<string, UtilityBiomeTrees_suitableTrees> # A table of tile name to its weighted tree possibilities.
 
 ----------------------------------------------------------------------------------
 --                          PUBLIC FUNCTIONS
@@ -93,9 +105,9 @@ BiomeTrees.OnStartup = function()
     global.UTILITYBIOMETREES.environmentData = BiomeTrees._GetEnvironmentData() ---@type UtilityBiomeTrees_EnvironmentData
     global.UTILITYBIOMETREES.tileData = global.UTILITYBIOMETREES.environmentData.tileData ---@type UtilityBiomeTrees_TilesDetails
     global.UTILITYBIOMETREES.treeData = BiomeTrees._GetTreeData() ---@type UtilityBiomeTrees_TreeDetails[]
-    if LogData then
-        LoggingUtils.ModLog(serpent.block(global.UTILITYBIOMETREES.treeData), false)
-        LoggingUtils.ModLog(serpent.block(global.UTILITYBIOMETREES.tileData), false)
+    if LogInputData then
+        LoggingUtils.ModLog("\r\n" .. "treeData: \r\n" .. serpent.block(global.UTILITYBIOMETREES.treeData), false)
+        LoggingUtils.ModLog("\r\n" .. "tileData: \r\n" .. serpent.block(global.UTILITYBIOMETREES.tileData), false)
     end
 end
 
@@ -113,7 +125,7 @@ BiomeTrees.GetBiomeTreeName = function(surface, position)
             tileData = global.UTILITYBIOMETREES.tileData[tileName]
         end
         if tileData == nil then
-            LoggingUtils.ModLog("Failed to get tile data for '" .. tostring(tile.name) .. "' and hidden tile '" .. tostring(tileName) .. "'", true, LogNonPositives)
+            LoggingUtils.ModLog("Failed to get tile data for '" .. tostring(tile.name) .. "' and hidden tile '" .. tostring(tileName) .. "'", true, LogPlacedNonPositives)
             return BiomeTrees.GetRandomTreeLastResort(tile)
         end
     end
@@ -121,31 +133,26 @@ BiomeTrees.GetBiomeTreeName = function(surface, position)
         return nil
     end
 
-    local rangeInt = math.random(1, #tileData.tempRanges)
-    local tempRange = tileData.tempRanges[rangeInt]
-    local moistureRange = tileData.moistureRanges[rangeInt]
-    local tileTemp = BiomeTrees._CalculateTileTemperature(MathUtils.GetRandomDoubleInRange(tempRange[1], tempRange[2]))
-    local tileMoisture = MathUtils.GetRandomDoubleInRange(moistureRange[1], moistureRange[2])
-
-    local suitableTrees = BiomeTrees._SearchForSuitableTrees(tileData, tileTemp, tileMoisture)
-    if #suitableTrees == 0 then
-        LoggingUtils.ModLog("No tree found for conditions: tile: " .. tileData.name .. "   temp: " .. tileTemp .. "    moisture: " .. tileMoisture, true, LogNonPositives)
+    -- Load tree possibilities for this tile.
+    local suitableTrees = MOD.UTILITYBiomeTrees_TileTreePossibilities[tileData.name]
+    if suitableTrees == nil then
+        suitableTrees = BiomeTrees._GetTreePossibilitiesForTileData(tileData)
+        MOD.UTILITYBiomeTrees_TileTreePossibilities[tileData.name] = suitableTrees
+    end
+    if suitableTrees.maxChance == 0 then
         return BiomeTrees.GetRandomTreeLastResort(tile)
     end
-    LoggingUtils.ModLog("trees found for conditions: tile: " .. tileData.name .. "   temp: " .. tileTemp .. "    moisture: " .. tileMoisture, true, LogPositives)
 
-    local highestChance, treeFound = suitableTrees[#suitableTrees].chanceEnd, false
+    -- Find our chance tree for this time.
     local treeName ---@type string
-    local chanceValue = math.random() * highestChance
-    for _, treeEntry in pairs(suitableTrees) do
-        if chanceValue >= treeEntry.chanceStart and chanceValue <= treeEntry.chanceEnd then
+    local chanceValue = math_random() * suitableTrees.maxChance
+    local currentChance = 0
+    for _, treeEntry in pairs(suitableTrees.trees) do
+        currentChance = currentChance + treeEntry.chance
+        if currentChance > chanceValue then
             treeName = treeEntry.tree.name
-            treeFound = true
             break
         end
-    end
-    if not treeFound then
-        return nil
     end
 
     return treeName
@@ -156,25 +163,27 @@ end
 ---@param position MapPosition
 ---@param distance double
 ---@return LuaEntity|nil createdTree
+---@return MapPosition|nil treePosition
+---@return string|nil treeName
 BiomeTrees.AddBiomeTreeNearPosition = function(surface, position, distance)
     -- Returns the tree entity if one found and created or nil
-    local treeType = BiomeTrees.GetBiomeTreeName(surface, position)
-    if treeType == nil then
-        LoggingUtils.ModLog("no tree was found", true, LogNonPositives)
-        return nil
+    local treeName = BiomeTrees.GetBiomeTreeName(surface, position)
+    if treeName == nil then
+        LoggingUtils.ModLog("no tree was found", true, LogPlacedNonPositives)
+        return nil, nil, nil
     end
-    local newPosition = surface.find_non_colliding_position(treeType, position, distance, 0.2)
+    local newPosition = surface.find_non_colliding_position(treeName, position, distance, 0.2)
     if newPosition == nil then
-        LoggingUtils.ModLog("No position for new tree found", true, LogNonPositives)
-        return nil
+        LoggingUtils.ModLog("No position for new tree found", true, LogPlacedNonPositives)
+        return nil, nil, nil
     end
-    local newTree = surface.create_entity { name = treeType, position = newPosition, force = "neutral", raise_built = true, create_build_effect_smoke = false }
+    local newTree = surface.create_entity { name = treeName, position = newPosition, force = "neutral", raise_built = true, create_build_effect_smoke = false }
     if newTree == nil then
-        LoggingUtils.LogPrintError("Failed to create tree at found position", LogPositives or LogNonPositives)
-        return nil
+        LoggingUtils.LogPrintError("Failed to create tree at found position", LogPlacedPositives or LogPlacedNonPositives)
+        return nil, nil, nil
     end
-    LoggingUtils.ModLog("tree added successfully, type: " .. treeType .. "    position: " .. newPosition.x .. ", " .. newPosition.y, true, LogPositives)
-    return newTree
+    LoggingUtils.ModLog("tree added successfully, name: " .. treeName .. "    position: " .. newPosition.x .. ", " .. newPosition.y, true, LogPlacedPositives)
+    return newTree, newPosition, treeName
 end
 
 --- Get a random (truly random) dead tree name if the tile allows trees to be placed.
@@ -185,7 +194,7 @@ BiomeTrees.GetRandomDeadTree = function(tile)
         -- Is a non-land tile
         return nil
     else
-        return global.UTILITYBIOMETREES.environmentData.deadTreeNames[math.random(#global.UTILITYBIOMETREES.environmentData.deadTreeNames)]
+        return global.UTILITYBIOMETREES.environmentData.deadTreeNames[math_random(#global.UTILITYBIOMETREES.environmentData.deadTreeNames)]
     end
 end
 
@@ -197,7 +206,7 @@ BiomeTrees.GetTrulyRandomTree = function(tile)
         -- Is a non-land tile
         return nil
     else
-        return global.UTILITYBIOMETREES.treeData[math.random(#global.UTILITYBIOMETREES.treeData)].name
+        return global.UTILITYBIOMETREES.treeData[math_random(#global.UTILITYBIOMETREES.treeData)].name
     end
 end
 
@@ -217,62 +226,95 @@ end
 --                          PRIVATE FUNCTIONS
 ----------------------------------------------------------------------------------
 
---- Gets a list of trees that are valid for the tile's temperature and moisture.
+--- Return the full weighted tree chances for this tile.
 ---@param tileData UtilityBiomeTrees_TileDetails
----@param tileTemp double
----@param tileMoisture double
----@return UtilityBiomeTrees_suitableTree[]
-BiomeTrees._SearchForSuitableTrees = function(tileData, tileTemp, tileMoisture)
-    local suitableTrees = {} ---@type UtilityBiomeTrees_suitableTree[]
-    local currentChance = 0
-    -- Try to ensure we find a tree vaguely accurate. Start as accurate as possible and then become less precise.
-    for accuracy = 1, 1.5, 0.1 do
-        for _, tree in pairs(global.UTILITYBIOMETREES.treeData) do
-            if tileTemp >= tree.tempRange[1] / accuracy and tileTemp <= tree.tempRange[2] * accuracy and tileMoisture >= tree.moistureRange[1] / accuracy and tileMoisture <= tree.moistureRange[2] * accuracy then
-                local include = false
-                if not TableUtils.IsTableEmpty(tree.exclusivelyOnNamedTiles) then
-                    -- As there are exclusive tiles for this tree, only base inclusion on the tile type.
-                    if tree.exclusivelyOnNamedTiles[tileData.name] then
-                        if LogTags then
-                            LoggingUtils.ModLog("exclusive tile type match", false)
-                        end
-                        include = true
-                    end
-                else
-                    -- No exclusive tile restrictions so check tags.
-                    if tileData.tag == nil then
-                        -- No tile restriction tag so can just include.
-                        include = true
-                    elseif not TableUtils.IsTableEmpty(tree.tags) then
-                        -- There are tree restriction tags that need checking.
-                        if tree.tags[tileData.tag] then
-                            if LogTags then
-                                LoggingUtils.ModLog("tile tag: " .. tileData.tag .. "  --- tree tags: " .. TableUtils.TableKeyToCommaString(tree.tags), false)
-                            end
+---@return UtilityBiomeTrees_suitableTrees
+BiomeTrees._GetTreePossibilitiesForTileData = function(tileData)
+    local suitableTrees = { trees = {}, maxChance = 0 } ---@type UtilityBiomeTrees_suitableTrees
+    local currentChance = 0 ---@type number
+    local suitableTrees_trees = suitableTrees.trees
+    local treeTempMin, treeTempMax, treeMoistureMin, treeMoistureMax
+    local logTileDetails = LogSuitableNonPositives or LogSuitablePositives or LogTags
+    if logTileDetails then LoggingUtils.ModLog("\r\n" .. tileData.name, false) end
+
+    -- Try varying decreasing accuracy requirements on the tiles until we find a tree that matches. Generally we find one at accuracy of 1, but old code had this so assume some cases (modded?) this isn't the case and we find one near the ranges. The 0.1 variation is applied to both the upper and lower values and so is equivalent to a 20% total widening of range criteria.
+    for rangeAccuracy = 1, 1.5, 0.1 do
+        -- For each temp/moisture range of the tile repeat the tree detection logic.
+        for rangeNumber = 1, #tileData.tempRanges do
+            -- Get the range values based on the degraded accuracy we have resorted too.
+            local tileTempRange = tileData.tempRanges[rangeNumber]
+            local tileTempMin, tileTempMax = BiomeTrees._CalculateTileTemperature(tileTempRange[1] / rangeAccuracy), BiomeTrees._CalculateTileTemperature(tileTempRange[2] * rangeAccuracy)
+            local tileMoistureRange = tileData.moistureRanges[rangeNumber]
+            local tileMoistureMin, tileMoistureMax = tileMoistureRange[1] / rangeAccuracy, tileMoistureRange[2] * rangeAccuracy
+            if logTileDetails then LoggingUtils.ModLog("Tile Details:" .. "\r\n    tileTempMin: " .. tileTempMin .. "\r\n    tileTempMax: " .. tileTempMax .. "\r\n    tileMoistureMin: " .. tileMoistureMin .. "\r\n    tileMoistureMax: " .. tileMoistureMax, false) end
+
+            for _, tree in pairs(global.UTILITYBIOMETREES.treeData) do
+                treeTempMin, treeTempMax, treeMoistureMin, treeMoistureMax = tree.tempRange[1], tree.tempRange[2], tree.moistureRange[1], tree.moistureRange[2]
+                if treeTempMin <= tileTempMax and treeTempMax >= tileTempMin and treeMoistureMin <= tileMoistureMax and treeMoistureMax >= tileMoistureMin then
+                    local include = false
+                    if tree.exclusivelyOnNamedTiles ~= nil then
+                        -- As there are exclusive tiles for this tree, only base inclusion on the tile type.
+                        if tree.exclusivelyOnNamedTiles[tileData.name] then
+                            if LogTags then LoggingUtils.ModLog("exclusive tile type match", false) end
                             include = true
                         end
+                    else
+                        -- No exclusive tile restrictions so check tags.
+                        if tileData.tag == nil then
+                            -- No tile restriction tag so can just include.
+                            include = true
+                        elseif tree.tags ~= nil then
+                            -- There are tree restriction tags that need checking.
+                            if tree.tags[tileData.tag] then
+                                if LogTags then LoggingUtils.ModLog("tile tag: " .. tileData.tag .. "  --- tree tags: " .. TableUtils.TableKeyToCommaString(tree.tags), false) end
+                                include = true
+                            end
+                        end
                     end
-                end
 
-                if (include) then
-                    local treeEntry = {
-                        chanceStart = currentChance,
-                        chanceEnd = currentChance + tree.probability,
-                        tree = tree
-                    }
-                    suitableTrees[#suitableTrees + 1] = treeEntry
-                    currentChance = treeEntry.chanceEnd
+                    if (include) then
+                        -- Weight the tree probability based on how much of the tile-tree temp and moisture ranges overlap. So a tree that overlaps much more of the tiles ranges should have its tree probability much higher than one that doesn't. As we don't know where on the tiles range the square actually was in map gen, just that it got that tile. So we want to weight the tree chance across all of the possible range overlap areas.
+                        local sharedTempMin, sharedTempMax = math_max(treeTempMin, tileTempMin), math_min(treeTempMax, tileTempMax)
+                        local sharedMoistureMin, sharedMoistureMax = math_max(treeMoistureMin, tileMoistureMin), math_min(treeMoistureMax, tileMoistureMax)
+                        local weightedTreeProbability = (sharedTempMax - sharedTempMin) * (sharedMoistureMax - sharedMoistureMin) * tree.probability
+
+                        -- If the weighted chance is 0 or less than don't add it as it might just confuse looping over the tree chances at run time and will add pointless entries to the table.
+                        if weightedTreeProbability > 0 then
+                            currentChance = currentChance + weightedTreeProbability
+
+                            if suitableTrees_trees[tree.name] == nil then
+                                ---@type UtilityBiomeTrees_suitableTree
+                                local treeEntry = {
+                                    chance = weightedTreeProbability,
+                                    tree = tree
+                                }
+                                suitableTrees_trees[tree.name] = treeEntry
+                            else
+                                suitableTrees_trees[tree.name].chance = suitableTrees_trees[tree.name].chance + weightedTreeProbability
+                            end
+                        end
+                    end
                 end
             end
         end
-        if #suitableTrees > 0 then
-            if LogPositives then
-                LoggingUtils.ModLog(#suitableTrees .. " found on accuracy: " .. accuracy, false)
-            end
+
+        -- If we found some trees on the current accuracy no need to try any others.
+        if next(suitableTrees) ~= nil then
+            if LogSuitablePositives then LoggingUtils.ModLog("trees found on accuracy: " .. rangeAccuracy, false) end
+            suitableTrees.maxChance = currentChance
             break
+        else
+            if LogSuitableNonPositives then LoggingUtils.ModLog("0 trees found on accuracy: " .. rangeAccuracy, false) end
         end
     end
 
+    -- Record the end result if we want it.
+    if LogSuitableNonPositives and suitableTrees.maxChance == 0 then
+        LoggingUtils.ModLog("No tree found for tile: " .. tileData.name, true)
+    elseif LogSuitablePositives and suitableTrees.maxChance > 0 then
+        LoggingUtils.ModLog("trees found for tile: " .. tileData.name, true)
+        LoggingUtils.ModLog("suitableTrees: \r\n" .. serpent.block(suitableTrees), false)
+    end
     return suitableTrees
 end
 
@@ -296,7 +338,7 @@ BiomeTrees._GetEnvironmentData = function()
                 if tagToColors[tile.tag] then
                     tile.tag = tagToColors[tile.tag]
                 else
-                    LoggingUtils.LogPrintError("Failed to find tile to tree color mapping for tile tag: ' " .. tile.tag .. "'", LogPositives or LogNonPositives)
+                    LoggingUtils.LogPrintError("Failed to find tile to tree color mapping for tile tag: ' " .. tile.tag .. "'", LogSuitablePositives or LogSuitableNonPositives)
                 end
             end
         end
@@ -311,7 +353,7 @@ BiomeTrees._GetEnvironmentData = function()
             min = 5
         }
         environmentData.tileData = BiomeTrees._ProcessTilesRawData(BaseGameData.GetTileData())
-        environmentData.treesMetaData = {}
+        environmentData.treesMetaData = nil
         environmentData.deadTreeNames = { "dead-tree-desert", "dead-grey-trunk", "dead-dry-hairy-tree", "dry-hairy-tree", "dry-tree" }
         environmentData.randomTreeLastResort = "GetTrulyRandomTree"
     end
@@ -323,15 +365,12 @@ end
 ---@return UtilityBiomeTrees_TreeDetails[]
 BiomeTrees._GetTreeData = function()
     local treeDataArray = {} ---@type UtilityBiomeTrees_TreeDetails[]
-    local treeData
+    local treeData, prototypeName
     local environmentData = global.UTILITYBIOMETREES.environmentData
     local moistureRangeAttributeNames = global.UTILITYBIOMETREES.environmentData.moistureRangeAttributeNames
-    local treeEntities = game.get_filtered_entity_prototypes({ { filter = "type", type = "tree" }, { mode = "and", filter = "autoplace" } })
+    local treePrototypes = game.get_filtered_entity_prototypes({ { filter = "type", type = "tree" }, { mode = "and", filter = "autoplace" } })
 
-    for _, prototype in pairs(treeEntities) do
-        if LogData then
-            LoggingUtils.ModLog(prototype.name, false)
-        end
+    for _, prototype in pairs(treePrototypes) do
         local autoplace ---@type AutoplaceSpecificationPeak|nil
         for _, peak in pairs(prototype.autoplace_specification.peaks) do
             if peak.temperature_optimal ~= nil or peak[moistureRangeAttributeNames.optimal] ~= nil then
@@ -342,9 +381,10 @@ BiomeTrees._GetTreeData = function()
 
         if autoplace ~= nil then
             -- Use really wide range defaults for missing moisture values as likely unspecified by mods to mean ALL.
+            prototypeName = prototype.name
             ---@type UtilityBiomeTrees_TreeDetails
             treeData = {
-                name = prototype.name,
+                name = prototypeName,
                 tempRange = {
                     (autoplace.temperature_optimal or 0) - (autoplace.temperature_range or 0),
                     (autoplace.temperature_optimal or 1) + (autoplace.temperature_range or 0)
@@ -355,9 +395,9 @@ BiomeTrees._GetTreeData = function()
                 },
                 probability = prototype.autoplace_specification.max_probability or 0.01
             }
-            if environmentData.treesMetaData[prototype.name] ~= nil then
-                treeData.tags = environmentData.treesMetaData[prototype.name][1]
-                treeData.exclusivelyOnNamedTiles = environmentData.treesMetaData[prototype.name][2]
+            if environmentData.treesMetaData ~= nil and environmentData.treesMetaData[prototypeName] ~= nil then
+                treeData.tags = environmentData.treesMetaData[prototypeName][1]
+                treeData.exclusivelyOnNamedTiles = environmentData.treesMetaData[prototypeName][2]
             end
             treeDataArray[#treeDataArray + 1] = treeData
         end
@@ -407,10 +447,10 @@ BiomeTrees._CalculateTileTemperature = function(tileTemperature)
         tileTemperature = tileTemperature * tileTemperatureCalculationSettings.scaleMultiplier
     end
     if tileTemperatureCalculationSettings.max ~= nil then
-        tileTemperature = math.min(tileTemperatureCalculationSettings.max--[[@as double]] , tileTemperature)
+        tileTemperature = math_min(tileTemperatureCalculationSettings.max--[[@as double]] , tileTemperature)
     end
     if tileTemperatureCalculationSettings.min ~= nil then
-        tileTemperature = math.max(tileTemperatureCalculationSettings.min--[[@as double]] , tileTemperature)
+        tileTemperature = math_max(tileTemperatureCalculationSettings.min--[[@as double]] , tileTemperature)
     end
     return tileTemperature
 end

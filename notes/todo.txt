@@ -29,6 +29,47 @@ Events.RegisterHandlerEvent() should accept a uint to its eventName paramater, a
 Actually can we add to the Todo list to make created GUI element details tables return to their pre submission state after generating. So we can just re-use the same table across multiple players. Just needs the util side to reset it's few special field at the end of the creation process, as that should also handle children nicely.
 Then we can hopefully use a single definition table for all players or just update some odd values for repeated instances of things.
 
+Bring a copy of the below in to Utils, but made generic. Used in a few mods so far.
+
+				---@enum MovableEntityTypes
+				local MovableEntityTypes = { unit = "unit", character = "character", car = "car", tank = "tank", ["spider-vehicle"] = "spider-vehicle" }
+
+				--- Move any teleportable entities in the bounding box of an entity out of the way. Anything non movable is just killed.
+				---@param surface LuaSurface
+				---@param createdEntity LuaEntity
+				Reincarnation.DisplaceEntitiesInBoundingBox = function(surface, createdEntity)
+					for _, entity in pairs(EntityUtils.ReturnAllObjectsInArea(surface, createdEntity.bounding_box, true, nil, true, true, { createdEntity })) do
+						if global.largeReincarnationsPush then
+							local entityMoved = false
+							if MovableEntityTypes[entity.type] ~= nil then
+								local entityNewPosition = surface.find_non_colliding_position(entity.name, entity.position, 2, 0.1)
+								if entityNewPosition ~= nil then
+									entity.teleport(entityNewPosition)
+									entityMoved = true
+								end
+							end
+							if not entityMoved then
+								entity.die("neutral", createdEntity)
+							end
+						else
+							entity.die("neutral", createdEntity)
+						end
+					end
+				end
+
+EntityUtils.ReturnAllObjectsInArea() has an entiy.valid check on an entity we just obtained. Remove the valid check and also look over the Utils for other pointless valid checks.
+
+EntityUtils.ReturnAllObjectsInArea() look at some of its options and if we can use different LuaSurface.find_entities_filtered() to do it better in some cases. Main ones are all killable & destructible, or ignore both.
+
+EntityUtils.ReturnAllObjectsInArea() At present onlyKillable would include things set to 0 health, which I don't think it should. Although these things should also have the destructible state set as well. Does smoke or other effects have desctructible set as in Biter Reincarnation I see some things having destructible of true set, but health of nil. All current uses of the function have the same values for killable & destructible passed in, and I wonder if theres ever a use case when this wouldn't be so ?
+
+EntityUtils.ReturnAllObjectsInArea() has `IsBoundingBoxPopulated(entity.prototype.collision_box))`, can we not just use the entities value for this applied to its position from the game to reduce an API call? Also surely just a non nil value check is good enough. Also EntityUtils.KillAllObjectsInArea() passes in false for this, but everything else passes in true, so why do we do this? document the option on the functions much better.
+
+PositionUtils.IsBoundingBoxPopulated() comment it better to say it checks for populated and non 0 sized collsion boxes. Check if you can have an entity with 0 sized collision box at 0 and also at an offset. Can probably make the check more accurate and clearer to read.
+
+Check if BiterSelection.GetBiterType() errors if evolution is unchanged across a save/load and a biter mod has been removed during the gap. If it does this should be stored in Lua global and not Factorio global. We do this for prototype-attributes for this reason. As we don't need to persist the result for the current evolution, just cache it to avoid mass near simultanious lookups.
+
+
 
 
 Core Enhancements
@@ -62,6 +103,7 @@ Automatic testing
 -----------------
 
 - Automated testing including lots of removing and breaking things mid and post tests. As I added very few nil checks during initial coding.
+
 
 
 
