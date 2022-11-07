@@ -69,6 +69,8 @@ PositionUtils.IsBoundingBoxPopulated() comment it better to say it checks for po
 
 Check if BiterSelection.GetBiterType() errors if evolution is unchanged across a save/load and a biter mod has been removed during the gap. If it does this should be stored in Lua global and not Factorio global. We do this for prototype-attributes for this reason. As we don't need to persist the result for the current evolution, just cache it to avoid mass near simultanious lookups.
 
+Events.RemoveHandler() should call script.on_event(EVENTID, nil) when the last handler is removed from an event so that our mod stops listening to it entirely, rather than just having no handlers triggered by the Events library. For high frequency events this could save quite a bit of UPS.
+
 
 
 
