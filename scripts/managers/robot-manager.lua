@@ -175,7 +175,7 @@ RobotManager.UpdateColor = function(robot, color)
     if robot.entity ~= nil then
         robot.entity.color = color
     end
-    robot.fontColor = { r = color.r, g = color.g, b = color.b, 255 }
+    robot.fontColor = { r = color.r, g = color.g, b = color.b, 255.0 }
 end
 
 --- Sets a robots name and updates visual elements related to it.
@@ -190,7 +190,7 @@ RobotManager.UpdateName = function(robot, name)
         text = robot.name,
         surface = robot.surface,
         target = robot.entity,
-        target_offset = { 0, -2 },
+        target_offset = { 0.0, -2.0 },
         color = robot.fontColor,
         scale_with_zoom = true,
         alignment = "center",

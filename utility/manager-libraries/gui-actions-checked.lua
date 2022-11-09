@@ -103,11 +103,7 @@ end
 ---@param elementType string
 ---@return UtilityGuiActionsChecked_GuiElementName guiElementName
 GuiActionsChecked._GenerateGuiElementName = function(elementName, elementType)
-    if elementName == nil or elementType == nil then
-        return nil
-    else
-        return Constants.ModName .. "-" .. elementName .. "-" .. elementType
-    end
+    return Constants.ModName .. "-" .. elementName .. "-" .. elementType
 end
 
 ---@alias UtilityGuiActionsChecked_GuiElementName string # A single unique string made by combining an elements name and type with mod name.

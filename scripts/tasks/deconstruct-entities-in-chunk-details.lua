@@ -51,8 +51,8 @@ end
 ---@param parentTask? Task_Details # The parent Task or nil if this is a primary Task of a Job.
 ---@param surface LuaSurface
 ---@param chunkDetailsByAxis Task_ScanAreasForActionsToComplete_ChunksInCombinedAreas
+---@param entitiesToBeDeconstructed table<EntityIdentifier, Task_ScanAreasForActionsToComplete_EntityDetails>
 ---@param startingChunkPosition ChunkPosition
----@param entitiesToBeDeconstructed table<uint, Task_ScanAreasForActionsToComplete_EntityDetails>
 ---@return Task_DeconstructEntitiesInChunkDetails_Details
 DeconstructEntitiesInChunkDetails.ActivateTask = function(job, parentTask, surface, chunkDetailsByAxis, entitiesToBeDeconstructed, startingChunkPosition)
     local thisTask = MOD.Interfaces.TaskManager.CreateGenericTask(DeconstructEntitiesInChunkDetails.taskName, job, parentTask) ---@cast thisTask Task_DeconstructEntitiesInChunkDetails_Details

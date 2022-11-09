@@ -82,6 +82,7 @@ TrainUtils.GetTrainSpeedCalculationData = function(train, train_speed, trainCarr
 
     -- If trainCarriagesDataArray is nil we'll build it up as we go from the train_carriages array. This means that the functions logic only has 1 data structure to worry about. The trainCarriagesDataArray isn't passed out as a return and so while we build up the cache object it is dropped at the end of the function.
     if trainCarriagesDataArray == nil then
+        ---@cast train_carriages - nil # It will be provided if trainCarriagesDataArray wasn't, otherwise it can just error.
         trainCarriagesDataArray = {} ---@type TrainUtils_TrainCarriageData[]
         for i, entity in pairs(train_carriages) do
             trainCarriagesDataArray[i] = { entity = entity }
@@ -89,6 +90,7 @@ TrainUtils.GetTrainSpeedCalculationData = function(train, train_speed, trainCarr
     end
 
     local trainWeight = train.weight
+    ---@type double, uint, double
     local trainFrictionForce, forwardFacingLocoCount, trainRawBrakingForce = 0, 0, 0
     local trainAirResistanceReductionMultiplier
     local trainMovingForwards = train_speed > 0
@@ -416,7 +418,7 @@ end
 ---@param killerCauseEntity LuaEntity
 ---@param surface LuaSurface
 TrainUtils.DestroyCarriagesOnRailEntity = function(railEntity, killForce, killerCauseEntity, surface)
-    -- Check if any carriage prevents the rail from being removed before just killing all carriages within the rails collision boxes as this is more like vanilla behaviour.
+    -- Check if any carriage prevents the rail from being removed before just killing all carriages within the rails collision boxes as this is more like vanilla behavior.
     if not railEntity.can_be_destroyed() then
         local railEntityCollisionBox = PrototypeAttributes.GetAttribute("entity", railEntity.name, "collision_box")
         local positionedCollisionBox = PositionUtils.ApplyBoundingBoxToPosition(railEntity.position, railEntityCollisionBox, railEntity.orientation)
@@ -450,7 +452,7 @@ end
 ---@param destinationInventory LuaInventory
 ---@param stopTrain boolean # If TRUE stops the train that it will try and mine.
 TrainUtils.MineCarriagesOnRailEntity = function(railEntity, surface, ignoreMinableEntityFlag, destinationInventory, stopTrain)
-    -- Check if any carriage prevents the rail from being removed before just killing all carriages within the rails collision boxes as this is more like vanilla behaviour.
+    -- Check if any carriage prevents the rail from being removed before just killing all carriages within the rails collision boxes as this is more like vanilla behavior.
     if not railEntity.can_be_destroyed() then
         local railEntityCollisionBox = PrototypeAttributes.GetAttribute("entity", railEntity.name, "collision_box")
         local positionedCollisionBox = PositionUtils.ApplyBoundingBoxToPosition(railEntity.position, railEntityCollisionBox, railEntity.orientation)

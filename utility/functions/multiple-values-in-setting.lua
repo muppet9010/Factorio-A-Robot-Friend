@@ -67,7 +67,7 @@ SettingsManager.HandleSettingWithArrayOfValues = function(factorioSettingType, f
     end
 
     local values = settings[factorioSettingType][factorioSettingName].value ---@type boolean|number|string|nil # This is whatever the user has put in the text box.
-    local tableOfValues ---@type AnyBasic|nil
+    local tableOfValues ---@type AnyBasic|table<uint, boolean|number|string>|nil
     if type(values) == "string" then
         tableOfValues = game.json_to_table(values)
     end
@@ -75,8 +75,8 @@ SettingsManager.HandleSettingWithArrayOfValues = function(factorioSettingType, f
     local isMultipleGroups
     if tableOfValues == nil or type(tableOfValues) ~= "table" then
         isMultipleGroups = false
-    else -- is a table type of value for setting
-        ---@cast tableOfValues table<uint, boolean|number|string>
+    else
+        -- is a table type of value for setting
         if not expectedValueType.hasChildren then
             isMultipleGroups = true
         else
@@ -91,7 +91,7 @@ SettingsManager.HandleSettingWithArrayOfValues = function(factorioSettingType, f
     end
 
     if isMultipleGroups then
-        ---@cast tableOfValues -nil # If it was nil this logic branch couldn't be reached.
+        ---@cast tableOfValues table<uint, boolean|number|string> # If it was nil this logic branch couldn't be reached.
         for id, value in pairs(tableOfValues) do
             local thisGlobalSettingContainer = SettingsManager._CreateGlobalGroupSettingsContainer(globalGroupsContainer, id, globalSettingContainerName)
             local typedValue = SettingsManager._ValueToType(value, expectedValueType)
@@ -104,6 +104,7 @@ SettingsManager.HandleSettingWithArrayOfValues = function(factorioSettingType, f
         end
         defaultSettingsContainer[globalSettingName] = valueHandlingFunction(defaultValue)
     else
+        ---@cast tableOfValues AnyBasic|nil # If it was a table then `isMultipleGroups == true`.
         local value = tableOfValues or values
         local typedValue = SettingsManager._ValueToType(value, expectedValueType)
         if typedValue ~= nil then

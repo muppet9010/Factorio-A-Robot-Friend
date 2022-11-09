@@ -1,7 +1,7 @@
 Player Experience
 -----------------
 
-A job is what a player asks the robot to do. This will be top level wrapper around a given task and the job may give the player behaviour choices on how it is completed.
+A job is what a player asks the robot to do. This will be top level wrapper around a given task and the job may give the player behavior choices on how it is completed.
 
 A task manages the doing of things by the robots. These can include direct actions by the robot in the map or managing child tasks.
 

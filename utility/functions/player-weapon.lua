@@ -276,16 +276,23 @@ end
 --- When getting the AmmoType of the ammo LuaItemPrototype with get_ammo_type() he API will automatically return the 'default' source_type if there isn't one defined for the specific type we ask for. So generally you always want to be specific.
 ---@param ammoType AmmoType
 ---@param weaponItemPrototype LuaItemPrototype
----@return boolean compatible
+---@return boolean? compatible # Returns nil if the weapon isn't a gun (no attack_parameters)
 PlayerWeapon.IsAmmoCompatibleWithWeapon = function(ammoType, weaponItemPrototype)
-    local currentAmmoType_category = ammoType.category
-    local newWeaponType_categories = weaponItemPrototype.attack_parameters.ammo_categories
+    local weapon_attackParameters = weaponItemPrototype.attack_parameters
 
-    for _, newWeaponType_category in pairs(newWeaponType_categories) do
-        if currentAmmoType_category == newWeaponType_category then
-            return true
-        end
+    -- If the weapon doesn't have attack_parameters it isn't an actual weapon.
+    if weapon_attackParameters == nil then return nil end
+
+    -- If the weapon has an ammo_type specified then it doesn't take any external ammo type, but generates its own attack effect. So the ammo is never the right type for this weapon. It may still have a category specified, but this doesn't really matter.
+    if weapon_attackParameters.ammo_type ~= nil then return false end
+
+    -- There is a weapon list so check if the specific ammo category is in the weapon's category list.
+    local currentAmmoType_category = ammoType.category
+    local weapon_categories = weapon_attackParameters.ammo_categories ---@cast weapon_categories - nil # If there's no ammo_type on the weapon prototype it must have categories.
+    for _, weapon_category in pairs(weapon_categories) do
+        if currentAmmoType_category == weapon_category then return true end
     end
+
     return false
 end
 

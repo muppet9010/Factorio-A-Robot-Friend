@@ -56,10 +56,13 @@ local LogTags = false -- Enable with other logging options to include details ab
 ---@field min? double
 ---@field max? double
 
+--- Metadata about trees we have to get from source code.
+--- 1. Field 1 - Tag color string as both key and value in a table.
+--- 2. Field 2 - The exclusive tiles list that this tree can go on. This is very generic list and so tags must still match.
 ---@alias UtilityBiomeTrees_TreesMetaData table<string, UtilityBiomeTrees_TreeMetaData> # Key'd by tree name.
 ---@class UtilityBiomeTrees_TreeMetaData
----@field [1] UtilityBiomeTrees_TagsList # Tag color string as key and value.
----@field [2] table<string, string> # The names of tiles that the tree can only go on, tile name is the key and value in table.
+---@field [1] UtilityBiomeTrees_TagsList # Tag color string as both key and value in a table.
+---@field [2] table<string, string> # The names of tiles that the tree can only go on, tile name is the key and value in table. This is very generic list and so tags must still match.
 
 ---@alias UtilityBiomeTrees_TilesDetails table<string, UtilityBiomeTrees_TileDetails> # Key'd by tile name.
 
@@ -71,21 +74,38 @@ local LogTags = false -- Enable with other logging options to include details ab
 ---@field rawTag? string # The raw string tag from alien biomes.
 ---@field tags? UtilityBiomeTrees_TagsList # Tag color strings as key and value.
 
+--- The min and max for this value range.
+--- 1. Field 1 - Minimum value.
+--- 2. Field 2 - Maximum value.
 ---@class UtilityBiomeTrees_ValueRange
 ---@field [1] double # Min in this range. Alien biomes is -1 to 1. But likely the game supports any double.
 ---@field [2] double # Max in this range. Alien biomes is -1 to 1. But likely the game supports any double.
 
+--- The raw tile data we get from game source code.
+--- 1. Field 1 - The tile type category string.
+--- 2. Field 2 - Range 1 of temperature and moisture values.
+--- 3. Field 3 - Range 2 of temperature and moisture values, optional.
+--- 4. Field 4 - The raw tag string of this tile.
 ---@alias UtilityBiomeTrees_RawTilesData table<string, UtilityBiomeTrees_RawTileData> # Key'd by tile name.
 ---@class UtilityBiomeTrees_RawTileData
----@field [1] UtilityBiomeTrees_TileType
----@field [2] UtilityBiomeTrees_RawValueRange[] # Range 1.
----@field [3]? UtilityBiomeTrees_RawValueRange[] # Range 2.
+---@field [1] UtilityBiomeTrees_TileType # the tile type category string.
+---@field [2] UtilityBiomeTrees_RawValueRange # Range 1.
+---@field [3]? UtilityBiomeTrees_RawValueRange # Range 2.
 ---@field [4]? string # rawTag
 
---- This is the values for the temperature and possibly moisture values within this range. Alien biomes is -1 to 1. But likely the game supports any double.
+--- This is the data table for the temperature and moisture in this range.
+--- 1. Field 1 - Minimum values in the range.
+--- 2. Field 2 - Maximum values in the range.
 ---@class UtilityBiomeTrees_RawValueRange
----@field [1] double[] # The min value for temperature (first) and possible also moisture (second?).
----@field [2] double[] # The max value for temperature (first) and possible also moisture (second?).
+---@field [1] UtilityBiomeTrees_RawValues # Minimum values
+---@field [2] UtilityBiomeTrees_RawValues # Maximum values.
+
+--- This is the values for the temperature and possibly moisture values for either the minimum or maximum within this range. Alien biomes is -1 to 1. But likely the game supports any double.
+--- 1. Field 1 - Temperature value.
+--- 2. Field 2 - Moisture value, optional.
+---@class UtilityBiomeTrees_RawValues
+---@field [1] double # Temperature value.
+---@field [2]? double # Moisture value.
 
 ---@class UtilityBiomeTrees_TreeDetails
 ---@field name string
@@ -436,8 +456,8 @@ end
 ---@param tileDetails UtilityBiomeTrees_TilesDetails
 ---@param tileName string
 ---@param type UtilityBiomeTrees_TileType
----@param range1? UtilityBiomeTrees_RawValueRange[]
----@param range2? UtilityBiomeTrees_RawValueRange[]
+---@param range1? UtilityBiomeTrees_RawValueRange
+---@param range2? UtilityBiomeTrees_RawValueRange
 ---@param rawTag? string
 BiomeTrees._AddTileDetails = function(tileDetails, tileName, type, range1, range2, rawTag)
     local tempRanges = {} ---@type UtilityBiomeTrees_ValueRange[]
@@ -462,7 +482,8 @@ end
 BiomeTrees._ProcessTilesRawData = function(rawTilesData)
     local tilesDetails = {} ---@type UtilityBiomeTrees_TilesDetails
     for name, rawTileData in pairs(rawTilesData) do
-        BiomeTrees._AddTileDetails(tilesDetails, name, rawTileData[1], rawTileData[2], rawTileData[3], rawTileData[4])
+        --- Force typed with upgrade to Sumneko 3.6.x: https://github.com/sumneko/lua-language-server/issues/1677
+        BiomeTrees._AddTileDetails(tilesDetails, name, rawTileData[1]--[[@as UtilityBiomeTrees_TileType]] , rawTileData[2]--[[@as UtilityBiomeTrees_RawValueRange]] , rawTileData[3]--[[@as UtilityBiomeTrees_RawValueRange]] , rawTileData[4]--[[@as string]] )
     end
     return tilesDetails
 end
