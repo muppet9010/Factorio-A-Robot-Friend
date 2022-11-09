@@ -91,12 +91,21 @@ EventScheduler.ScheduleEventOnce = function(eventTick, eventName, instanceId, ev
     end ---@cast eventTick uint
     eventData = eventData or {}
     global.UTILITYSCHEDULEDFUNCTIONS = global.UTILITYSCHEDULEDFUNCTIONS or {} ---@type UtilityScheduledEvent_ScheduledFunctionsTicks
-    global.UTILITYSCHEDULEDFUNCTIONS[eventTick] = global.UTILITYSCHEDULEDFUNCTIONS[eventTick] or {}
-    global.UTILITYSCHEDULEDFUNCTIONS[eventTick][eventName] = global.UTILITYSCHEDULEDFUNCTIONS[eventTick][eventName] or {}
-    if global.UTILITYSCHEDULEDFUNCTIONS[eventTick][eventName][instanceId] ~= nil then
-        error("EventScheduler.ScheduleEventOnce tried to override schedule event: '" .. eventName .. "' id: '" .. instanceId .. "' at tick: " .. eventTick)
+    local tickEvents = global.UTILITYSCHEDULEDFUNCTIONS[eventTick]
+    if tickEvents == nil then
+        tickEvents = {}
+        global.UTILITYSCHEDULEDFUNCTIONS[eventTick] = tickEvents
     end
-    global.UTILITYSCHEDULEDFUNCTIONS[eventTick][eventName][instanceId] = eventData
+    local tickNamedEvent = tickEvents[eventName]
+    if tickNamedEvent == nil then
+        tickNamedEvent = {}
+        tickEvents[eventName] = tickNamedEvent
+    end
+    if tickNamedEvent[instanceId] ~= nil then
+        error("EventScheduler.ScheduleEventOnce tried to override schedule event: '" .. eventName .. "' id: '" .. instanceId .. "' at tick: " .. eventTick)
+    else
+        tickNamedEvent[instanceId] = eventData
+    end
 end
 
 --- Checks if an event name is scheduled as per other arguments.
@@ -178,11 +187,16 @@ EventScheduler.ScheduleEventEachTick = function(eventName, instanceId, eventData
     end
     eventData = eventData or {}
     global.UTILITYSCHEDULEDFUNCTIONSPERTICK = global.UTILITYSCHEDULEDFUNCTIONSPERTICK or {} ---@type UtilityScheduledEvent_ScheduledFunctionsPerTickEventNames
-    global.UTILITYSCHEDULEDFUNCTIONSPERTICK[eventName] = global.UTILITYSCHEDULEDFUNCTIONSPERTICK[eventName] or {} ---@type UtilityScheduledEvent_ScheduledFunctionsPerTickEventNamesInstanceIds
-    if global.UTILITYSCHEDULEDFUNCTIONSPERTICK[eventName][instanceId] ~= nil then
-        error("WARNING: Overridden schedule event per tick: '" .. eventName .. "' id: '" .. instanceId .. "'")
+    local namedEventInstances = global.UTILITYSCHEDULEDFUNCTIONSPERTICK[eventName]
+    if namedEventInstances == nil then
+        namedEventInstances = {} ---@type UtilityScheduledEvent_ScheduledFunctionsPerTickEventNamesInstanceIds
+        global.UTILITYSCHEDULEDFUNCTIONSPERTICK[eventName] = namedEventInstances
     end
-    global.UTILITYSCHEDULEDFUNCTIONSPERTICK[eventName][instanceId] = eventData
+    if namedEventInstances[instanceId] ~= nil then
+        error("WARNING: Overridden schedule event per tick: '" .. eventName .. "' id: '" .. instanceId .. "'")
+    else
+        namedEventInstances[instanceId] = eventData
+    end
 end
 
 --- Checks if an event name is scheduled each tick as per other arguments.
@@ -339,15 +353,16 @@ EventScheduler._RemoveScheduledOnceEventsFromTickEntry = function(tickEvents, ta
     local removedEntriesCount = 0
 
     -- Check if this tick has any schedules for the filter event name.
-    if tickEvents[targetEventName] ~= nil then
+    local tickNamedEvent = tickEvents[targetEventName]
+    if tickNamedEvent ~= nil then
         -- Check if this tick's filtered event name has any schedules with the filter instance Id.
-        if tickEvents[targetEventName][targetInstanceId] ~= nil then
+        if tickNamedEvent[targetInstanceId] ~= nil then
             -- Remove the scheduled filtered scheduled event.
-            tickEvents[targetEventName][targetInstanceId] = nil
+            tickNamedEvent[targetInstanceId] = nil
             removedEntriesCount = removedEntriesCount + 1
 
             -- Check if the there's no other instances of this scheduled event name.
-            if next(tickEvents[targetEventName]) == nil then
+            if next(tickNamedEvent) == nil then
                 -- Remove the table we have just emptied.
                 tickEvents[targetEventName] = nil
 
@@ -429,15 +444,16 @@ EventScheduler._RemoveScheduledEventFromEachTickList = function(everyTickEvents,
     local removedEntriesCount = 0
 
     -- Check if there's any schedules for the filter event name in the every tick events list.
-    if everyTickEvents[targetEventName] ~= nil then
+    local namedEvent = everyTickEvents[targetEventName]
+    if namedEvent ~= nil then
         -- Check if this tick's filtered event name has any schedules with the filter instance Id.
-        if everyTickEvents[targetEventName][targetInstanceId] ~= nil then
+        if namedEvent[targetInstanceId] ~= nil then
             -- Remove the scheduled filtered scheduled event.
-            everyTickEvents[targetEventName][targetInstanceId] = nil
+            namedEvent[targetInstanceId] = nil
             removedEntriesCount = removedEntriesCount + 1
 
             -- Check if the there's no other instances of this scheduled event name.
-            if next(everyTickEvents[targetEventName]) == nil then
+            if next(namedEvent) == nil then
                 everyTickEvents[targetEventName] = nil
             end
         end

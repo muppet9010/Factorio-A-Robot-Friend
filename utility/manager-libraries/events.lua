@@ -36,15 +36,23 @@ Events.RegisterHandlerEvent = function(eventName, handlerName, handlerFunction, 
     if eventId == nil then
         return nil
     end
-    if MOD.eventIdHandlerNameToEventIdsListIndex[eventId] == nil or MOD.eventIdHandlerNameToEventIdsListIndex[eventId][handlerName] == nil then
+    local eventIdHandlers = MOD.eventIdHandlerNameToEventIdsListIndex[eventId]
+    if eventIdHandlers == nil or eventIdHandlers[handlerName] == nil then
         -- Is the first registering of this unique handler name for this event id.
-        MOD.eventsById[eventId] = MOD.eventsById[eventId] or {}
-        MOD.eventsById[eventId][#MOD.eventsById[eventId] + 1] = { handlerName = handlerName, handlerFunction = handlerFunction }
-        MOD.eventIdHandlerNameToEventIdsListIndex[eventId] = MOD.eventIdHandlerNameToEventIdsListIndex[eventId] or {}
-        MOD.eventIdHandlerNameToEventIdsListIndex[eventId][handlerName] = #MOD.eventsById[eventId]
+        local eventsByIdEntry = MOD.eventsById[eventId]
+        if eventsByIdEntry == nil then
+            eventsByIdEntry = {}
+            MOD.eventsById[eventId] = eventsByIdEntry
+        end
+        eventsByIdEntry[#eventsByIdEntry + 1] = { handlerName = handlerName, handlerFunction = handlerFunction }
+        if eventIdHandlers == nil then
+            eventIdHandlers = {}
+            MOD.eventIdHandlerNameToEventIdsListIndex[eventId] = eventIdHandlers
+        end
+        eventIdHandlers[handlerName] = #eventsByIdEntry
     else
         -- Is a re-registering of a unique handler name for this event id, so just update everything.
-        MOD.eventsById[eventId][MOD.eventIdHandlerNameToEventIdsListIndex[eventId][handlerName]] = { handlerName = handlerName, handlerFunction = handlerFunction }
+        MOD.eventsById[eventId][eventIdHandlers[handlerName]] = { handlerName = handlerName, handlerFunction = handlerFunction }
     end
     return eventId
 end
@@ -58,15 +66,23 @@ Events.RegisterHandlerCustomInput = function(actionName, handlerName, handlerFun
         error("Events.RegisterHandlerCustomInput called with missing arguments")
     end
     script.on_event(actionName, Events._HandleEvent)
-    if MOD.eventActionNameHandlerNameToEventActionNamesListIndex[actionName] == nil or MOD.eventActionNameHandlerNameToEventActionNamesListIndex[actionName][handlerName] == nil then
+    local actionNameHandlers = MOD.eventActionNameHandlerNameToEventActionNamesListIndex[actionName]
+    if actionNameHandlers == nil or actionNameHandlers[handlerName] == nil then
         -- Is the first registering of this unique handler name for this action name.
-        MOD.eventsByActionName[actionName] = MOD.eventsByActionName[actionName] or {}
-        MOD.eventsByActionName[actionName][#MOD.eventsByActionName[actionName] + 1] = { handlerName = handlerName, handlerFunction = handlerFunction }
-        MOD.eventActionNameHandlerNameToEventActionNamesListIndex[actionName] = MOD.eventActionNameHandlerNameToEventActionNamesListIndex[actionName] or {}
-        MOD.eventActionNameHandlerNameToEventActionNamesListIndex[actionName][handlerName] = #MOD.eventsByActionName[actionName]
+        local eventsByActionEntry = MOD.eventsByActionName[actionName]
+        if eventsByActionEntry == nil then
+            eventsByActionEntry = {}
+            MOD.eventsByActionName[actionName] = eventsByActionEntry
+        end
+        eventsByActionEntry[#eventsByActionEntry + 1] = { handlerName = handlerName, handlerFunction = handlerFunction }
+        if actionNameHandlers == nil then
+            actionNameHandlers = {}
+            MOD.eventActionNameHandlerNameToEventActionNamesListIndex[actionName] = actionNameHandlers
+        end
+        actionNameHandlers[handlerName] = #eventsByActionEntry
     else
         -- Is a re-registering of a unique handler name for this action name, so just update everything.
-        MOD.eventsByActionName[actionName][MOD.eventActionNameHandlerNameToEventActionNamesListIndex[actionName][handlerName]] = { handlerName = handlerName, handlerFunction = handlerFunction }
+        MOD.eventsByActionName[actionName][actionNameHandlers[handlerName]] = { handlerName = handlerName, handlerFunction = handlerFunction }
     end
 end
 
@@ -94,20 +110,22 @@ Events.RemoveHandler = function(eventName, handlerName)
     if eventName == nil or handlerName == nil then
         error("Events.RemoveHandler called with missing arguments")
     end
-    if MOD.eventsById[eventName] ~= nil then
-        ---@cast eventName defines.events
-        for i, handler in pairs(MOD.eventsById[eventName]) do
+    local eventsByIdForEventName = MOD.eventsById[eventName--[[@as defines.events]] ]
+    if eventsByIdForEventName ~= nil then
+        for i, handler in pairs(eventsByIdForEventName) do
             if handler.handlerName == handlerName then
-                table.remove(MOD.eventsById[eventName], i)
+                table.remove(eventsByIdForEventName, i)
                 break
             end
         end
-    elseif MOD.eventsByActionName[eventName] ~= nil then
-        ---@cast eventName string
-        for i, handler in pairs(MOD.eventsByActionName[eventName]) do
-            if handler.handlerName == handlerName then
-                table.remove(MOD.eventsByActionName[eventName], i)
-                break
+    else
+        local eventsByActionForEventName = MOD.eventsByActionName[eventName--[[@as string]] ]
+        if eventsByActionForEventName ~= nil then
+            for i, handler in pairs(eventsByActionForEventName) do
+                if handler.handlerName == handlerName then
+                    table.remove(eventsByActionForEventName, i)
+                    break
+                end
             end
         end
     end
@@ -121,8 +139,7 @@ Events.RaiseEvent = function(eventData)
     if type(eventName) == "number" then
         script.raise_event(eventName--[[@as uint]] , eventData)
     elseif MOD.customEventNameToId[eventName] ~= nil then
-        local eventId = MOD.customEventNameToId[eventName--[[@as string]] ]
-        script.raise_event(eventId, eventData)
+        script.raise_event(MOD.customEventNameToId[eventName--[[@as string]] ], eventData)
     else
         error("WARNING: raise event called that doesn't exist: " .. eventName)
     end

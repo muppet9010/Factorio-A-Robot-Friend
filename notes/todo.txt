@@ -18,11 +18,6 @@ Make simple build blueprint job with dummy tasks for getting items. To test fram
 
 
 
-EventScheduler - localise a lot of the table entries in all the functions. We are often getting the same entry in a table via key multiple times in a function, i.e. tickEvents[targetEventName]. Also check and log for Events. As EventScheduler.ScheduleEventOnce() did take a surprisingly high UPS when I was doing it often.
-
-
-
-
 Events.RaiseEvent() - input parameter doesn't match up right with what Factorio actually expects. Needs type updating. Break into 2 arguments as a breaking change, event name (id) and the data to be passed through. Also removing adding the tick to the data, as only the internal one needs to do this. Real events will get this automatically surely ?
 
 Events.RegisterHandlerEvent() should accept a uint to its eventName parameter, as for custom events ids from other mods this is what we get back.
