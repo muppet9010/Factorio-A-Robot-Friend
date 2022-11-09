@@ -53,7 +53,7 @@ local function OnLoad()
 
     local c = EventScheduler.RemoveScheduledOnceEvents("testFunc", 4)
 
-    local d = EventScheduler.RemoveScheduledOnceEvents("testFunc")
+    local d = EventScheduler.RemoveScheduledOnceEvents("testFunc", "")
 
     EventScheduler.ScheduleEventEachTick("testFunc", "a")
     EventScheduler.ScheduleEventEachTick("testFunc", "b")

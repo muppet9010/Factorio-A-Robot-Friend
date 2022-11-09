@@ -20,12 +20,7 @@ Make simple build blueprint job with dummy tasks for getting items. To test fram
 
 EventScheduler - localise a lot of the table entries in all the functions. We are often getting the same entry in a table via key multiple times in a function, i.e. tickEvents[targetEventName]. Also check and log for Events. As EventScheduler.ScheduleEventOnce() did take a surprisingly high UPS when I was doing it often.
 
-EventScheduler - move EventScheduler.RegisterScheduler() in to EventScheduler.RegisterScheduledEventType() and just use a MOD.XXXX Lua global to track if it's been done before. Just removes the need of a run once
-
-EventScheduler.RemoveScheduledOnceEvents("ShowMessage.RemoveNamedElementForAll") didn't work to remove all entries of this scheduled event name in older Utility version. Check it works now, as may have been a typo in the scheduled function name.
-
-EventScheduler - make targetInstanceId mandatory. If the caller wants to use a blank string as a unique ID so be it. Will make code logic simpler and clearer.
-
+EventScheduler & Events - pass in currentTick rather than forcing use of game.tick.
 
 
 
