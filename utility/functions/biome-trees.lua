@@ -151,7 +151,7 @@ end
 --- Get a biome appropriate tree's name or nil if one isn't allowed there.
 ---@param surface LuaSurface
 ---@param position MapPosition
----@return string|nil treeName
+---@return string? treeName
 BiomeTrees.GetBiomeTreeName = function(surface, position)
     -- Returns the tree name or nil if tile isn't land type
     local tile = surface.get_tile(position--[[@as TilePosition # handled equally by Factorio in this API function.]] )
@@ -199,9 +199,9 @@ end
 ---@param surface LuaSurface
 ---@param position MapPosition
 ---@param distance double
----@return LuaEntity|nil createdTree
----@return MapPosition|nil treePosition
----@return string|nil treeName
+---@return LuaEntity? createdTree
+---@return MapPosition? treePosition
+---@return string? treeName
 BiomeTrees.AddBiomeTreeNearPosition = function(surface, position, distance)
     -- Returns the tree entity if one found and created or nil
     local treeName = BiomeTrees.GetBiomeTreeName(surface, position)
@@ -225,7 +225,7 @@ end
 
 --- Get a random (truly random) dead tree name if the tile allows trees to be placed.
 ---@param tile LuaTile
----@return string|nil deadTreeName
+---@return string? deadTreeName
 BiomeTrees.GetRandomDeadTree = function(tile)
     if tile ~= nil and tile.collides_with("player-layer") then
         -- Is a non-land tile
@@ -237,7 +237,7 @@ end
 
 --- Get a random (truly random) alive tree name if the tile allows trees to be placed.
 ---@param tile LuaTile
----@return string|nil treeName
+---@return string? treeName
 BiomeTrees.GetTrulyRandomTree = function(tile)
     if tile ~= nil and tile.collides_with("player-layer") then
         -- Is a non-land tile
@@ -249,7 +249,7 @@ end
 
 --- Get a random (truly random) tree name for the tile type (alive/dead tree), if the tile allows trees to be placed.
 ---@param tile LuaTile
----@return string|nil treeName
+---@return string? treeName
 BiomeTrees.GetRandomTreeLastResort = function(tile)
     -- Gets the a tree from the list of last resort based on the mod active.
     if global.UTILITYBIOMETREES.environmentData.randomTreeLastResort == "GetTrulyRandomTree" then
@@ -417,7 +417,7 @@ BiomeTrees._GetTreeData = function()
     local treePrototypes = game.get_filtered_entity_prototypes({ { filter = "type", type = "tree" }, { mode = "and", filter = "autoplace" } })
 
     for _, prototype in pairs(treePrototypes) do
-        local autoplace ---@type AutoplaceSpecificationPeak|nil
+        local autoplace ---@type AutoplaceSpecificationPeak?
         for _, peak in pairs(prototype.autoplace_specification.peaks) do
             if peak.temperature_optimal ~= nil or peak[moistureRangeAttributeNames.optimal] ~= nil then
                 autoplace = peak

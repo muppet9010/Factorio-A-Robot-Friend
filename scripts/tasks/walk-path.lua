@@ -99,7 +99,7 @@ WalkPath.Progress = function(thisTask, robot, pathToWalk)
     robotTaskData.positionLastTick = currentPosition
 
     -- Get the direction to move towards the target node.
-    local walkDirection ---@type defines.direction|nil
+    local walkDirection ---@type defines.direction?
     if currentPosition.x > targetPosition.x + walkAccuracy then
         -- Needs to go west.
         if currentPosition.y > targetPosition.y + walkAccuracy then

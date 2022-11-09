@@ -68,7 +68,7 @@ local StyleDataStyleVersion = require("utility.lists.style-data").styleVersion
 
 --- Add Gui Elements in a manner supporting short-hand features, nested GUI structures and templating features. See the param type for detailed information on its features and usage.
 ---@param elementDetails UtilityGuiUtil_ElementDetails_Add
----@return table<string, LuaGuiElement>|nil returnElements? # Provided if returnElement option is TRUE. Table of UtilityGuiUtil_GuiElementName keys to LuaGuiElement values.
+---@return table<string, LuaGuiElement>? returnElements # Provided if returnElement option is TRUE. Table of UtilityGuiUtil_GuiElementName keys to LuaGuiElement values.
 GuiUtil.AddElement = function(elementDetails)
     -- Reference the "name" key by this indirect way to avoid EmmyLua picking it up. Have to use new reference and type as we set it.
     ---@type table
@@ -203,7 +203,7 @@ end
 ---@param elementType string
 ---@param changes UtilityGuiUtil_ElementDetails_Update # See the UtilityGuiUtil_ElementDetails_Update type for what can be updated with this function.
 ---@param ignoreMissingElement boolean # If TRUE and the GUI element doesn't exist it won't error. If FALSE or nil and the GUI element doesn't exist an error will be raised.
----@return LuaGuiElement|nil UpdatedGuiElement? # The Lua Gui Element that was updated if one was found, otherwise nil.
+---@return LuaGuiElement? UpdatedGuiElement # The Lua Gui Element that was updated if one was found, otherwise nil.
 GuiUtil.UpdateElementFromPlayersReferenceStorage = function(playerIndex, storeName, elementName, elementType, changes, ignoreMissingElement)
     ignoreMissingElement = ignoreMissingElement or false
     local element = GuiUtil.GetElementFromPlayersReferenceStorage(playerIndex, storeName, elementName, elementType)

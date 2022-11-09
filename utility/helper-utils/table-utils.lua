@@ -6,7 +6,7 @@
 local TableUtils = {} ---@class Utility_TableUtils
 local string_rep = string.rep
 
--- csSpell:ignore deepcopy # Ignore in this file, but don't add as shouldn't be seen outside theis reference.
+-- cSpell:ignore deepcopy # Ignore in this file, but don't add as shouldn't be seen outside this reference to the core util.lua file.
 
 --- Copies a table and all of its children all the way down.
 --- Based on code from Factorio "__core__.lualib.util.lua", table.deepcopy().
@@ -165,7 +165,7 @@ end
 --- Makes a numbered text string from a table's keys with the keys wrapped in single quotes.
 ---
 --- i.e. 1: 'firstKey', 2: 'secondKey'
----@param aTable table<any,any> # doesn't support commas in values or nested tables. Really for logging.t
+---@param aTable table<any,any> # doesn't support commas in values or nested tables. Really for logging.
 ---@return string
 TableUtils.TableKeyToNumberedListString = function(aTable)
     local newString
@@ -187,7 +187,7 @@ end
 --- Makes a numbered text string from a table's values with the values wrapped in single quotes.
 ---
 --- i.e. 1: 'firstValue', 2: 'secondValue'
----@param aTable table<any,any> # doesn't support commas in values or nested tables. Really for logging.t
+---@param aTable table<any,any> # doesn't support commas in values or nested tables. Really for logging.
 ---@return string
 TableUtils.TableValueToNumberedListString = function(aTable)
     local newString
@@ -313,7 +313,7 @@ end
 ---
 --- Useful for converting a list in to dictionary of the list items.
 ---@param tableWithValues table<any,any>
----@return table|nil tableOfKeys # Returns nil when nil is passed in.
+---@return table? tableOfKeys # Returns nil when nil is passed in.
 TableUtils.TableValuesToKey = function(tableWithValues)
     local newTable = {} ---@type table<any, any>
     for _, value in pairs(tableWithValues) do
@@ -327,7 +327,7 @@ end
 --- Useful for converting a list of objects in to dictionary of the list items's with a specific inner field being the new dictionary key.
 ---@param refTable table<any,any>
 ---@param innerValueAttributeName any
----@return table|nil
+---@return table?
 TableUtils.TableInnerValueToKey = function(refTable, innerValueAttributeName)
     local newTable = {} ---@type table<any, any>
     for _, value in pairs(refTable) do

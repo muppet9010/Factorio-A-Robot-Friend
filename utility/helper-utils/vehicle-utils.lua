@@ -5,7 +5,7 @@ local VehicleUtils = {} ---@class Utility_VehicleUtils
 --- Checks the vehicle for its current fuel and returns it's prototype. Checks fuel inventories if nothing is currently burning.
 ---@param vehicle LuaEntity
 ---@param vehicle_burner? LuaBurner # Optionally passed in, obtained otherwise.
----@return LuaItemPrototype|nil currentFuelPrototype # Will be nil if there's no current fuel in the vehicle or this vehicle doesn't have a burner.
+---@return LuaItemPrototype? currentFuelPrototype # Will be nil if there's no current fuel in the vehicle or this vehicle doesn't have a burner.
 VehicleUtils.GetVehicleCurrentFuelPrototype = function(vehicle, vehicle_burner)
     local vehicle_burner = vehicle_burner or vehicle.burner
     if vehicle_burner == nil then
@@ -41,7 +41,7 @@ end
 ---@param itemName string
 ---@param itemCount uint
 ---@param trackingTable? table # Reference to an existing table that the function will populate, or if nil a new table will be made and returned for subsequent loops.
----@return boolean|nil newBestFuel # Returns true when the fuel is a new best and false when its not. Returns nil if the item isn't a fuel type.
+---@return boolean? newBestFuel # Returns true when the fuel is a new best and false when its not. Returns nil if the item isn't a fuel type.
 ---@return VehicleUtils_BestFuelTrackingTable trackingTable
 VehicleUtils.TrackBestFuelCount = function(itemName, itemCount, trackingTable)
     trackingTable = trackingTable or {}

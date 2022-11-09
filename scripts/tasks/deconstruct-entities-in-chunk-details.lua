@@ -213,7 +213,7 @@ end
 --- Find the robot an available chunk to work on.
 ---@param robotTaskData Task_DeconstructEntitiesInChunkDetails_Robot_TaskData
 ---@param taskData Task_DeconstructEntitiesInChunkDetails_TaskData
----@return Task_ScanAreasForActionsToComplete_ChunkDetails|nil # Nil is only returned if there are no available chunks to be assigned.
+---@return Task_ScanAreasForActionsToComplete_ChunkDetails? # Nil is only returned if there are no available chunks to be assigned.
 DeconstructEntitiesInChunkDetails.FindAvailableChunkForRobot = function(robotTaskData, taskData)
     --  If it had one before find it one near by, otherwise find it one nearest the startingChunk.
     local startSearchingChunkPosition = robotTaskData.assignedChunkDetails and robotTaskData.assignedChunkDetails.chunkPosition or taskData.startingChunkPosition

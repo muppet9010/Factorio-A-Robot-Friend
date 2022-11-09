@@ -85,7 +85,7 @@ end
 ---@param sourceGrid LuaEquipmentGrid
 ---@param targetInventory LuaInventory
 ---@param dropUnmovedOnGround? boolean # If TRUE then ALL items not moved are dropped on the ground. If FALSE then unmoved items are left in the source inventory. If not provided then defaults to FALSE.
----@return boolean|nil everythingMoved? # If all items were moved successfully or not. Nil if no items to move.
+---@return boolean? everythingMoved? # If all items were moved successfully or not. Nil if no items to move.
 InventoryUtils.TryTakeGridsItems = function(sourceGrid, targetInventory, dropUnmovedOnGround)
     -- Set default values.
     if dropUnmovedOnGround == nil then
@@ -127,7 +127,7 @@ end
 ---@param targetInventory LuaInventory
 ---@param dropUnmovedOnGround? boolean # If TRUE then ALL items not moved are dropped on the ground. If FALSE then unmoved items are left in the source inventory. If not provided then defaults to FALSE.
 ---@param ratioToMove? double # Ratio of the item count to try and move. Float number from 0 to 1. If not provided it defaults to 1. Number of items moved is rounded up.
----@return boolean|nil everythingMoved? # If all items were moved successfully or not. Nil if no items to move.
+---@return boolean? everythingMoved? # If all items were moved successfully or not. Nil if no items to move.
 InventoryUtils.TryInsertInventoryContents = function(contents, targetInventory, dropUnmovedOnGround, ratioToMove)
     -- Set default values.
     if dropUnmovedOnGround == nil then
@@ -180,7 +180,7 @@ end
 ---@param targetInventory LuaInventory
 ---@param dropUnmovedOnGround? boolean # If TRUE then ALL items not moved are dropped on the ground. If FALSE then unmoved items are left in the source inventory. If not provided then defaults to FALSE.
 ---@param ratioToMove? double # Ratio of the item count to try and move. Float number from 0 to 1. If not provided it defaults to 1. Number of items moved is rounded up.
----@return boolean|nil everythingMoved? # If all items were moved successfully or not. Nil if no items to move.
+---@return boolean? everythingMoved? # If all items were moved successfully or not. Nil if no items to move.
 ---@deprecated This doesn't handle durability or tags. Also the health needs to be dropped on floor and ammo may need to be dropped on floor if non are inserted.
 InventoryUtils.TryInsertSimpleItems = function(simpleItemStacks, targetInventory, dropUnmovedOnGround, ratioToMove)
     -- Set default values.

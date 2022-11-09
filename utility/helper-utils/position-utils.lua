@@ -40,7 +40,7 @@ end
 
 -- Returns the table as an x|y table rather than an [1]|[2] table.
 ---@param thing table
----@return MapPosition|nil position # x,y keyed table or nil if not a valid MapPosition.
+---@return MapPosition? position # x,y keyed table or nil if not a valid MapPosition.
 PositionUtils.TableToProperPosition = function(thing)
     if thing.x ~= nil and thing.y ~= nil then
         if type(thing.x) == "number" and type(thing.y) == "number" then
@@ -81,7 +81,7 @@ end
 
 -- Returns a clean bounding box object or nil if invalid.
 ---@param thing table
----@return BoundingBox|nil
+---@return BoundingBox?
 PositionUtils.TableToProperBoundingBox = function(thing)
     if not PositionUtils.IsTableValidBoundingBox(thing) then
         return nil
@@ -96,7 +96,7 @@ end
 ---@param centerPos MapPosition
 ---@param boundingBox BoundingBox
 ---@param orientation RealOrientation
----@return BoundingBox|nil
+---@return BoundingBox?
 PositionUtils.ApplyBoundingBoxToPosition = function(centerPos, boundingBox, orientation)
     local checked_centerPos = PositionUtils.TableToProperPosition(centerPos)
     if checked_centerPos == nil then
@@ -505,8 +505,8 @@ end
 ---@param radius double
 ---@param slope double # the x value per 1 Y. so 1 is a 45 degree SW to NE line. 2 is a steeper line. -1 would be a 45 degree line SE to NW line. -- I THINK...
 ---@param yIntercept double # Where on the Y axis the line crosses.
----@return MapPosition|nil firstCrossingPosition # Position if the line crossed or touched the edge of the circle. Nil if the line never crosses the circle.
----@return MapPosition|nil secondCrossingPosition # Only a position if the line crossed the circle in 2 places. Nil if the line just touched the edge of the circle or never crossed it.
+---@return MapPosition? firstCrossingPosition # Position if the line crossed or touched the edge of the circle. Nil if the line never crosses the circle.
+---@return MapPosition? secondCrossingPosition # Only a position if the line crossed the circle in 2 places. Nil if the line just touched the edge of the circle or never crossed it.
 PositionUtils.FindWhereLineCrossesCircle = function(radius, slope, yIntercept)
     local centerPos = { x = 0, y = 0 }
     local A = 1 + slope * slope

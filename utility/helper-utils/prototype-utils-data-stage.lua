@@ -160,7 +160,7 @@ end
 ---@param attributeName string
 ---@param recipeCostType? "ingredients"|"normal"|"expensive" # Defaults to the `ingredients` if not provided. The `ingredients` option will return any inline value first, then the value from the ingredients field.
 ---@param defaultValue? any # The default value to return if nothing is found in the hierarchy of "costs" checked.
----@return any|nil value
+---@return any? value
 PrototypeUtils.GetRecipeAttribute = function(recipe, attributeName, recipeCostType, defaultValue)
     recipeCostType = recipeCostType or "ingredients"
     if recipeCostType == "ingredients" and recipe[attributeName] ~= nil then

@@ -177,7 +177,7 @@ end
 ---@return boolean noFuelFound # TRUE if no fuel was found in any forward moving locomotive. Generally FALSE is returned when all is normal.
 TrainUtils.UpdateTrainSpeedCalculationDataForCurrentFuel = function(trainSpeedCalculationData, trainCarriagesDataArray, trainMovingForwardsToCacheData, train)
     -- Get a current fuel for the forwards movement of the train.
-    local fuelPrototype ---@type LuaItemPrototype|nil
+    local fuelPrototype ---@type LuaItemPrototype?
     local noFuelFound = true
     for _, carriageCachedData in pairs(trainCarriagesDataArray) do
         -- Only process locomotives that are powering the trains movement.

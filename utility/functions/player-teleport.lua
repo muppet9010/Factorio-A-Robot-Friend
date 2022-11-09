@@ -45,7 +45,7 @@ PlayerTeleport.RequestTeleportToNearPosition = function(targetPlayer, targetSurf
 
     -- If a vehicle, get its current nearest cardinal direction (4 direction) to orientation.
     -- CODE NOTE: This isn't perfect, but is better than nothing until this Interface Request is done: https://forums.factorio.com/viewtopic.php?f=28&t=102792
-    local playersVehicle_directionToCheck ---@type defines.direction|nil
+    local playersVehicle_directionToCheck ---@type defines.direction?
     if targetPlayerPlacementEntity_isVehicle then
         playersVehicle_directionToCheck = DirectionUtils.OrientationToNearestCardinalDirection(targetPlayerPlacementEntity.orientation)
     end
@@ -164,7 +164,7 @@ end
 --- Get the entity that will be placed when the teleport is done, either a teleportable vehicle or the players character.
 ---@param targetPlayer LuaPlayer
 ---@param targetPlayer_character? LuaEntity # If nil is passed in and the player's character entity is needed it will be obtained.
----@return LuaEntity|nil placementEntity # Can be nil if player doesn't have a vehicle or character.
+---@return LuaEntity? placementEntity # Can be nil if player doesn't have a vehicle or character.
 ---@return boolean isVehicle
 PlayerTeleport.GetPlayerTeleportPlacementEntity = function(targetPlayer, targetPlayer_character)
     local targetPlayer_vehicle = targetPlayer.vehicle

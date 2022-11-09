@@ -154,7 +154,7 @@ end
 ---@param mandatory boolean # If false then passing in nothing won't flag an error message, but will still error on malformed text string.
 ---@param commandName string # The in-game command name. Used in error messages.
 ---@param allowedSettingNames string[] # The setting names that are allowed in this command. Warns (not errors) about any that aren't expected. The values of this table are read as its a list of strings (done for easier calling of the function).
----@return table<string, any>|nil dataTable # The dataTable of arguments or nil if invalid or none provided.
+---@return table<string, any>? dataTable # The dataTable of arguments or nil if invalid or none provided.
 CommandsUtils.GetSettingsTableFromCommandParameterString = function(commandParameterString, mandatory, commandName, allowedSettingNames)
     commandParameterString = commandParameterString or ""
     local dataTable = game.json_to_table(commandParameterString)
@@ -226,7 +226,7 @@ CommandsUtils.CheckNumberArgument = function(value, requiredType, mandatory, com
     -- Check its valid for generic requirements first.
     if not CommandsUtils.CheckGenericArgument(value, "number", mandatory, commandName, argumentName, commandString) then
         return false
-    end ---@cast value double|nil
+    end ---@cast value double?
 
     -- If value is nil and it passed the generic requirements which checks mandatory if needed, then end this parse successfully.
     if value == nil then
@@ -287,7 +287,7 @@ CommandsUtils.CheckStringArgument = function(value, mandatory, commandName, argu
     -- Check its valid for generic requirements first.
     if not CommandsUtils.CheckGenericArgument(value, "string", mandatory, commandName, argumentName, commandString) then
         return false
-    end ---@cast value string|nil
+    end ---@cast value string?
 
     -- If value is nil and it passed the generic requirements which handles mandatory then end this parse successfully.
     if value == nil then
@@ -326,7 +326,7 @@ CommandsUtils.CheckBooleanArgument = function(value, mandatory, commandName, arg
     -- Check its valid for generic requirements first.
     if not CommandsUtils.CheckGenericArgument(value, "boolean", mandatory, commandName, argumentName, commandString) then
         return false
-    end ---@cast value boolean|nil
+    end ---@cast value boolean?
 
     -- If value is nil and it passed the generic requirements which handles mandatory then end this parse successfully.
     if value == nil then
@@ -350,7 +350,7 @@ CommandsUtils.CheckTableArgument = function(value, mandatory, commandName, argum
     -- Check its valid for generic requirements first.
     if not CommandsUtils.CheckGenericArgument(value, "table", mandatory, commandName, argumentName, commandString) then
         return false
-    end ---@cast value table<any, any>|nil
+    end ---@cast value table<any, any>?
 
     -- If value is nil and it passed the generic requirements which handles mandatory then end this parse successfully.
     if value == nil then

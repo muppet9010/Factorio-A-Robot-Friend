@@ -133,7 +133,7 @@ end
 --- Called by a job to check if the primary task of the job is complete for a given robot. If there is no robot data for this Task then it returns nil.
 ---@param primaryTask Task_Details
 ---@param robot Robot
----@return boolean|nil # Is nil if this robot doesn't have an instance of this Task.
+---@return boolean? # Is nil if this robot doesn't have an instance of this Task.
 TaskManager.IsPrimaryTaskCompleteForRobot = function(primaryTask, robot)
     local robotTaskData = primaryTask.robotsTaskData[robot]
     if robotTaskData == nil then return nil end

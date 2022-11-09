@@ -123,8 +123,8 @@ end
 --- Only produces correct stack traces in regular Factorio, not in debugger as this adds extra lines to the stacktrace.
 ---@param functionRef function,
 ---@param ... any
----@return string|nil errorMessage # An error message string if an error occurred.
----@return string|nil fullErrorDetails # The full error, stacktrace and arguments as a text string for writing to a file. Only populated if an error occurred.
+---@return string? errorMessage # An error message string if an error occurred.
+---@return string? fullErrorDetails # The full error, stacktrace and arguments as a text string for writing to a file. Only populated if an error occurred.
 LoggingUtils.RunFunctionAndCatchErrors = function(functionRef, ...)
     local args = { ... } ---@type any[]
 
@@ -185,7 +185,7 @@ LoggingUtils.PrintThingsDetails = function(thing, _tablesLogged)
     end ---@cast thing table
 
     -- Handle specific Factorio Lua objects
-    local thing_objectName = thing.object_name --[[@as string|nil]]
+    local thing_objectName = thing.object_name --[[@as string?]]
     if thing_objectName ~= nil then
         ---@cast thing LuaObject
         -- Invalid things are returned in safe way.
@@ -300,7 +300,7 @@ end
 ---@return uint64[] renderIds
 LoggingUtils.DrawPath = function(path, surface, lineColor, startLabel, endLabel)
     local renderIds = {} ---@type uint64[]
-    local lastPoint ---@type MapPosition|nil
+    local lastPoint ---@type MapPosition?
     if startLabel ~= nil then
         renderIds[#renderIds + 1] = rendering.draw_text {
             text = startLabel,

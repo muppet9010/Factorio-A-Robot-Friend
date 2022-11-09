@@ -23,8 +23,8 @@ local PlayerWeapon = {} ---@class Utility_PlayerWeapon
 ---@param forceWeaponToWeaponInventorySlot boolean # If the weapon should be forced to be equipped, otherwise it may end up in their inventory.
 ---@param selectWeapon boolean
 ---@param ammoTypePlanned? string # The name of the ammo planned to be put in this weapon. Handles removing the ammo from the weapon slot and any filters if needed. Doesn't actually give any ammo.
----@return boolean|nil weaponGiven # If the weapon item had to be given to the player, compared to them already having it and it possibly just being moved between their inventories. Returns nil for invalid situations, i.e. called on a player with no gun inventory.
----@return UtilityPlayerWeapon_RemovedWeaponToEnsureWeapon|nil removedWeaponDetails # Details on the weapon that was removed to add the new weapon. Is nil if no active weapon was set/found, i.e. weapon was found/put in to the players main inventory and not as an equipped weapon.
+---@return boolean? weaponGiven # If the weapon item had to be given to the player, compared to them already having it and it possibly just being moved between their inventories. Returns nil for invalid situations, i.e. called on a player with no gun inventory.
+---@return UtilityPlayerWeapon_RemovedWeaponToEnsureWeapon? removedWeaponDetails # Details on the weapon that was removed to add the new weapon. Is nil if no active weapon was set/found, i.e. weapon was found/put in to the players main inventory and not as an equipped weapon.
 PlayerWeapon.EnsureHasWeapon = function(player, weaponName, forceWeaponToWeaponInventorySlot, selectWeapon, ammoTypePlanned)
     if player == nil or not player.valid then
         return nil, nil
@@ -36,7 +36,7 @@ PlayerWeapon.EnsureHasWeapon = function(player, weaponName, forceWeaponToWeaponI
     }
 
     -- See if the gun is already equipped by the player in their active gun inventory, or find which of their weapon slots is best to assign too.
-    ---@type boolean, uint|nil, uint|nil, uint|nil
+    ---@type boolean, uint?, uint?, uint?
     local weaponGiven, weaponFoundIndex, freeGunIndex, freeButFilteredGunIndex = false, nil, nil, nil
     local gunInventory = player.get_inventory(defines.inventory.character_guns)
     if gunInventory == nil then
@@ -66,7 +66,7 @@ PlayerWeapon.EnsureHasWeapon = function(player, weaponName, forceWeaponToWeaponI
 
     -- Handle if the player doesn't already have the gun equipped.
     local needsGunGiving = false
-    local characterInventory ---@type LuaInventory|nil # Only populated if needsGunGiving is true.
+    local characterInventory ---@type LuaInventory? # Only populated if needsGunGiving is true.
     if weaponFoundIndex == nil then
         needsGunGiving = true
         characterInventory = player.get_main_inventory()

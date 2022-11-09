@@ -203,7 +203,7 @@ end
 --- Called whenever required.
 ---@param targetEventName string # The event name as registered with EventScheduler.RegisterScheduledEventType().
 ---@param targetInstanceId? string|number # The instance Id of the scheduled event to match against. If not provided then the default of empty string is used.
----@return UtilityScheduledEvent_Information[]|nil results
+---@return UtilityScheduledEvent_Information[]? results
 EventScheduler.GetScheduledEachTickEvent = function(targetEventName, targetInstanceId)
     if targetEventName == nil then
         error("EventScheduler.GetScheduledEachTickEvent called with missing arguments")
@@ -258,8 +258,8 @@ end
 ---@param targetEventName string
 ---@param targetInstanceId? string|number
 ---@param targetTick? uint
----@param actionFunction fun(tickEvents: UtilityScheduledEvent_ScheduledFunctionsTicksEventNames, targetEventName: string, targetInstanceId: string|number, tick?:uint):UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome|nil # function must return a single result and a table of results, both can be nil or populated.
----@return boolean|UtilityScheduledEvent_Information|nil result # the result type is based on the actionFunction passed in. However nil may be returned if the actionFunction finds no matching results for any reason.
+---@param actionFunction fun(tickEvents: UtilityScheduledEvent_ScheduledFunctionsTicksEventNames, targetEventName: string, targetInstanceId: string|number, tick?:uint):UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome? # function must return a single result and a table of results, both can be nil or populated.
+---@return boolean|UtilityScheduledEvent_Information? result # the result type is based on the actionFunction passed in. However nil may be returned if the actionFunction finds no matching results for any reason.
 ---@return UtilityScheduledEvent_Information[] results # a table of the results found or an empty table if nothing matching found.
 EventScheduler._ParseScheduledOnceEvents = function(targetEventName, targetInstanceId, targetTick, actionFunction)
     targetInstanceId = targetInstanceId or ""
@@ -299,7 +299,7 @@ end
 ---@param tickEvents UtilityScheduledEvent_ScheduledFunctionsTicksEventNames
 ---@param targetEventName string
 ---@param targetInstanceId string|number
----@return UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome|nil result # Returns either a table with result of TRUE if the event is scheduled or nil. As nil allows the parsing function to continue looking, while TRUE will stop the looping.
+---@return UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome? result # Returns either a table with result of TRUE if the event is scheduled or nil. As nil allows the parsing function to continue looking, while TRUE will stop the looping.
 EventScheduler._IsEventScheduledOnceInTickEntry = function(tickEvents, targetEventName, targetInstanceId)
     if tickEvents[targetEventName] ~= nil and tickEvents[targetEventName][targetInstanceId] ~= nil then
         return { result = true }
@@ -338,7 +338,7 @@ end
 ---@param targetEventName string
 ---@param targetInstanceId string|number
 ---@param tick uint
----@return UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome|nil results # Returns either an outcome object with results populated with details on a matching scheduled event or nil if no results.
+---@return UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome? results # Returns either an outcome object with results populated with details on a matching scheduled event or nil if no results.
 EventScheduler._GetScheduledOnceEventsFromTickEntry = function(tickEvents, targetEventName, targetInstanceId, tick)
     if tickEvents[targetEventName] ~= nil and tickEvents[targetEventName][targetInstanceId] ~= nil then
         ---@type UtilityScheduledEvent_Information
@@ -357,7 +357,7 @@ end
 --- If an actionFunction returns a single "result" item that's not nil then the looping is stopped early. Single "result" values of nil and all "results" entries continue the loop.
 ---@param targetEventName string
 ---@param targetInstanceId? string|number
----@param actionFunction fun(tickEvents: UtilityScheduledEvent_ScheduledFunctionsTicksEventNames, targetEventName: string, targetInstanceId: string|number, tick?:uint):UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome|nil # function must return a single result and a table of results, both can be nil or populated.
+---@param actionFunction fun(tickEvents: UtilityScheduledEvent_ScheduledFunctionsTicksEventNames, targetEventName: string, targetInstanceId: string|number, tick?:uint):UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome? # function must return a single result and a table of results, both can be nil or populated.
 ---@return boolean|UtilityScheduledEvent_Information|nil result # the result type is based on the actionFunction passed in. However nil may be returned if the actionFunction finds no matching results for any reason.
 ---@return UtilityScheduledEvent_Information[] results # a table of the results found or an empty table if nothing matching found.
 EventScheduler._ParseScheduledEachTickEvents = function(targetEventName, targetInstanceId, actionFunction)
@@ -380,7 +380,7 @@ end
 ---@param everyTickEvents UtilityScheduledEvent_ScheduledFunctionsPerTickEventNamesInstanceIds
 ---@param targetEventName string
 ---@param targetInstanceId string|number
----@return UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome|nil result # Returns either a table with a result of TRUE if found or nil. As nil allows the parsing function to continue looking, while TRUE will stop the looping.
+---@return UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome? result # Returns either a table with a result of TRUE if found or nil. As nil allows the parsing function to continue looking, while TRUE will stop the looping.
 EventScheduler._IsEventScheduledInEachTickList = function(everyTickEvents, targetEventName, targetInstanceId)
     if everyTickEvents[targetEventName] ~= nil and everyTickEvents[targetEventName][targetInstanceId] ~= nil then
         return { result = true }
@@ -411,7 +411,7 @@ end
 ---@param everyTickEvents UtilityScheduledEvent_ScheduledFunctionsPerTickEventNamesInstanceIds
 ---@param targetEventName string
 ---@param targetInstanceId string|number
----@return UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome|nil results # Returns either an outcome object with results populated with details on a matching scheduled event or nil if no results.
+---@return UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome? results # Returns either an outcome object with results populated with details on a matching scheduled event or nil if no results.
 EventScheduler._GetScheduledEventFromEachTickList = function(everyTickEvents, targetEventName, targetInstanceId)
     if everyTickEvents[targetEventName] ~= nil and everyTickEvents[targetEventName][targetInstanceId] ~= nil then
         ---@type UtilityScheduledEvent_Information

@@ -104,7 +104,7 @@ SettingsManager.HandleSettingWithArrayOfValues = function(factorioSettingType, f
         end
         defaultSettingsContainer[globalSettingName] = valueHandlingFunction(defaultValue)
     else
-        ---@cast tableOfValues AnyBasic|nil # If it was a table then `isMultipleGroups == true`.
+        ---@cast tableOfValues AnyBasic? # If it was a table then `isMultipleGroups == true`.
         local value = tableOfValues or values
         local typedValue = SettingsManager._ValueToType(value, expectedValueType)
         if typedValue ~= nil then

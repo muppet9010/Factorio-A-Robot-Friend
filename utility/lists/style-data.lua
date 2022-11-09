@@ -234,8 +234,8 @@ StyleData.GeneratePrototypes = function()
             local styleNameVersion = styleName .. StyleData.styleVersion
             defaultStyle[styleNameVersion] = {
                 type = "button_style",
-                width = size[2] --[[@as uint|nil]] ,
-                height = size[2] --[[@as uint|nil]] ,
+                width = size[2] --[[@as uint?]] ,
+                height = size[2] --[[@as uint?]] ,
                 margin = 0,
                 padding = 0
             }
