@@ -160,7 +160,7 @@ PlayerWeapon.EnsureHasWeapon = function(player, weaponName, forceWeaponToWeaponI
             -- Ammo in the slot so need to check its compatible with the gun.
 
             -- Clear the current ammo stack ready for the the planned ammo if not compatible with the gun.
-            local ammoType = ammoItemStack.prototype.get_ammo_type("player") ---@cast ammoType -nil
+            local ammoType = ammoItemStack.prototype.get_ammo_type("player") ---@cast ammoType - nil
             local ammoIsCompatibleWithGun = PlayerWeapon.IsAmmoCompatibleWithWeapon(ammoType, game.item_prototypes[weaponName])
             if not ammoIsCompatibleWithGun then
                 -- Move it to the players inventory, or the floor.
@@ -276,12 +276,9 @@ end
 --- When getting the AmmoType of the ammo LuaItemPrototype with get_ammo_type() he API will automatically return the 'default' source_type if there isn't one defined for the specific type we ask for. So generally you always want to be specific.
 ---@param ammoType AmmoType
 ---@param weaponItemPrototype LuaItemPrototype
----@return boolean? compatible # Returns nil if the weapon isn't a gun (no attack_parameters)
+---@return boolean compatible
 PlayerWeapon.IsAmmoCompatibleWithWeapon = function(ammoType, weaponItemPrototype)
-    local weapon_attackParameters = weaponItemPrototype.attack_parameters
-
-    -- If the weapon doesn't have attack_parameters it isn't an actual weapon.
-    if weapon_attackParameters == nil then return nil end
+    local weapon_attackParameters = weaponItemPrototype.attack_parameters ---@cast weapon_attackParameters - nil # Is mandatory for `gun` type items. This will error if a non `gun` weaponItemPrototype is passed in, but that should be validated outside of this.
 
     -- If the weapon has an ammo_type specified then it doesn't take any external ammo type, but generates its own attack effect. So the ammo is never the right type for this weapon. It may still have a category specified, but this doesn't really matter.
     if weapon_attackParameters.ammo_type ~= nil then return false end
@@ -305,7 +302,7 @@ end
 ---@return float maxRange
 ---@return float cooldown
 PlayerWeapon.GetWeaponAmmoDetails = function(ammoType, weaponItemPrototype)
-    local weapon_attackParameters = weaponItemPrototype.attack_parameters --[[@as AttackParameters # Assume only sane ItemPrototypes are passed in.]]
+    local weapon_attackParameters = weaponItemPrototype.attack_parameters --[[@as AttackParameters # Is mandatory for `gun` type items. This will error if a non `gun` weaponItemPrototype is passed in, but that should be validated outside of this.]]
 
     local minRange = weapon_attackParameters.min_range
 

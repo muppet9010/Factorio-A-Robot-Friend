@@ -496,10 +496,10 @@ BiomeTrees._CalculateTileTemperature = function(tileTemperature)
         tileTemperature = tileTemperature * tileTemperatureCalculationSettings.scaleMultiplier
     end
     if tileTemperatureCalculationSettings.max ~= nil then
-        tileTemperature = math_min(tileTemperatureCalculationSettings.max--[[@as double]] , tileTemperature)
+        tileTemperature = math_min(tileTemperatureCalculationSettings.max, tileTemperature) --[[@as double]]
     end
     if tileTemperatureCalculationSettings.min ~= nil then
-        tileTemperature = math_max(tileTemperatureCalculationSettings.min--[[@as double]] , tileTemperature)
+        tileTemperature = math_max(tileTemperatureCalculationSettings.min, tileTemperature) --[[@as double]]
     end
     return tileTemperature
 end
