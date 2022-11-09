@@ -4,6 +4,11 @@
 
 -- Make Automatic Testing: make tests for this at end of file. Either have runnable via command and commented out or for pasting the whole file in to Demo Lua. Should check that the results all come back as expected for the various schedule add/remove/get/etc functions as I'd like to simplify the _ParseScheduledEachTickEvents() actionFunction response objects and their handling as was hard to document and messy.
 
+--[[
+    CODE NOTES:
+    - For ease of updating code the code in the Every Tick functions is basically the same as the Per Tick functions. This is overkill in places for the Every Tick, but they are rarely called and so the wasted few Lua code lines is irrelevant.
+]]
+
 local Events = require("utility.manager-libraries.events")
 local EventScheduler = {} ---@class Utility_EventScheduler
 MOD = MOD or {} ---@class MOD
@@ -117,20 +122,33 @@ end
 ---
 --- Called whenever required.
 ---@param targetEventName string # The event name to removed as registered with EventScheduler.RegisterScheduledEventType().
----@param targetInstanceId? string|number # The instance Id of the scheduled event to match against. If not provided then the default of empty string is used.
+---@param targetInstanceId? string|number # The instance Id of the scheduled event to match against. If not provided then the default of empty string is used, which must match a blank string when the event instance was scheduled.
 ---@param targetTick? uint # The tick the scheduled event must be for. If not provided matches all ticks.
+---@return uint removedEventCount # How many instances of scheduled events were removed.
 EventScheduler.RemoveScheduledOnceEvents = function(targetEventName, targetInstanceId, targetTick)
     if targetEventName == nil then
         error("EventScheduler.RemoveScheduledOnceEvents called with missing arguments")
     end
-    EventScheduler._ParseScheduledOnceEvents(targetEventName, targetInstanceId, targetTick, EventScheduler._RemoveScheduledOnceEventsFromTickEntry)
+    -- We can't count the entries within the _ParseScheduledOnceEvents(), but can have each execution of _RemoveScheduledOnceEventsFromTickEntry() return the number of scheduled entries it removed.
+    local _, results = EventScheduler._ParseScheduledOnceEvents(targetEventName, targetInstanceId, targetTick, EventScheduler._RemoveScheduledOnceEventsFromTickEntry)
+    if next(results) ~= nil then
+        -- Some scheduled events were removed so check how many.
+        local removedEventCount = 0 ---@type uint
+        for _, countInTick in pairs(results) do
+            removedEventCount = removedEventCount + countInTick
+        end
+        return removedEventCount
+    else
+        -- Nothing was removed.
+        return 0
+    end
 end
 
 --- Returns an array of the scheduled events that match the filter arguments.
 ---
 --- Called whenever required.
 ---@param targetEventName string # The event name as registered with EventScheduler.RegisterScheduledEventType().
----@param targetInstanceId? string|number # The instance Id of the scheduled event to match against. If not provided then the default of empty string is used.
+---@param targetInstanceId? string|number # The instance Id of the scheduled event to match against. If not provided then the default of empty string is used, which must match a blank string when the event instance was scheduled.
 ---@param targetTick? uint # The tick the scheduled event must be for. If not provided matches all ticks.
 ---@return UtilityScheduledEvent_Information[] results
 EventScheduler.GetScheduledOnceEvents = function(targetEventName, targetInstanceId, targetTick)
@@ -173,7 +191,7 @@ end
 ---
 --- Called whenever required.
 ---@param targetEventName string # The event name to removed as registered with EventScheduler.RegisterScheduledEventType().
----@param targetInstanceId? string|number # The instance Id of the scheduled event to match against. If not provided then the default of empty string is used.
+---@param targetInstanceId? string|number # The instance Id of the scheduled event to match against. If not provided then the default of empty string is used, which must match a blank string when the event instance was scheduled.
 ---@return boolean
 EventScheduler.IsEventScheduledEachTick = function(targetEventName, targetInstanceId)
     if targetEventName == nil then
@@ -190,19 +208,27 @@ end
 ---
 --- Called whenever required.
 ---@param targetEventName string # The event name to removed as registered with EventScheduler.RegisterScheduledEventType().
----@param targetInstanceId? string|number # The instance Id of the scheduled event to match against. If not provided then the default of empty string is used.
+---@param targetInstanceId? string|number # The instance Id of the scheduled event to match against. If not provided then the default of empty string is used, which must match a blank string when the event instance was scheduled.
+---@return boolean removedEvent
 EventScheduler.RemoveScheduledEventFromEachTick = function(targetEventName, targetInstanceId)
     if targetEventName == nil then
         error("EventScheduler.RemoveScheduledEventsFromEachTick called with missing arguments")
     end
-    EventScheduler._ParseScheduledEachTickEvents(targetEventName, targetInstanceId, EventScheduler._RemoveScheduledEventFromEachTickList)
+    local _, results = EventScheduler._ParseScheduledEachTickEvents(targetEventName, targetInstanceId, EventScheduler._RemoveScheduledEventFromEachTickList)
+    if next(results) ~= nil then
+        -- A scheduled events were removed.
+        return true
+    else
+        -- Nothing was removed.
+        return false
+    end
 end
 
 --- Returns the scheduled event each tick that match the filter arguments.
 ---
 --- Called whenever required.
 ---@param targetEventName string # The event name as registered with EventScheduler.RegisterScheduledEventType().
----@param targetInstanceId? string|number # The instance Id of the scheduled event to match against. If not provided then the default of empty string is used.
+---@param targetInstanceId? string|number # The instance Id of the scheduled event to match against. If not provided then the default of empty string is used, which must match a blank string when the event instance was scheduled.
 ---@return UtilityScheduledEvent_Information[]? results
 EventScheduler.GetScheduledEachTickEvent = function(targetEventName, targetInstanceId)
     if targetEventName == nil then
@@ -254,17 +280,17 @@ end
 
 --- Loops over the scheduled once events and runs the actionFunction against each entry with the filter arguments.
 ---
---- If an actionFunction returns a single "result" item that's not nil then the looping is stopped early. Single "result" values of nil and all "results" entries continue the loop.
+--- If an actionFunction returns a single "result" item that's not nil then the looping is stopped early. Single "result" values of nil and all "results" values continue the loop.
 ---@param targetEventName string
 ---@param targetInstanceId? string|number
 ---@param targetTick? uint
 ---@param actionFunction fun(tickEvents: UtilityScheduledEvent_ScheduledFunctionsTicksEventNames, targetEventName: string, targetInstanceId: string|number, tick?:uint):UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome? # function must return a single result and a table of results, both can be nil or populated.
 ---@return boolean|UtilityScheduledEvent_Information? result # the result type is based on the actionFunction passed in. However nil may be returned if the actionFunction finds no matching results for any reason.
----@return UtilityScheduledEvent_Information[] results # a table of the results found or an empty table if nothing matching found.
+---@return UtilityScheduledEvent_Information[]|uint[] results # a table of the results found or an empty table if nothing matching found.
 EventScheduler._ParseScheduledOnceEvents = function(targetEventName, targetInstanceId, targetTick, actionFunction)
     targetInstanceId = targetInstanceId or ""
     local result
-    local results = {} ---@type UtilityScheduledEvent_Information[]
+    local results = {} ---@type UtilityScheduledEvent_Information[]|uint[]
     if global.UTILITYSCHEDULEDFUNCTIONS ~= nil then
         if targetTick == nil then
             for tick, tickEvents in pairs(global.UTILITYSCHEDULEDFUNCTIONS) do
@@ -299,7 +325,7 @@ end
 ---@param tickEvents UtilityScheduledEvent_ScheduledFunctionsTicksEventNames
 ---@param targetEventName string
 ---@param targetInstanceId string|number
----@return UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome? result # Returns either a table with result of TRUE if the event is scheduled or nil. As nil allows the parsing function to continue looking, while TRUE will stop the looping.
+---@return UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome? resultObject # Returns either a table with result of TRUE if the event is scheduled or nil. As nil allows the parsing function to continue looking, while TRUE will stop the looping.
 EventScheduler._IsEventScheduledOnceInTickEntry = function(tickEvents, targetEventName, targetInstanceId)
     if tickEvents[targetEventName] ~= nil and tickEvents[targetEventName][targetInstanceId] ~= nil then
         return { result = true }
@@ -311,13 +337,17 @@ end
 ---@param targetEventName string
 ---@param targetInstanceId string|number
 ---@param tick uint
+---@return UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome? resultObject # The number of events removed from this tick.
 EventScheduler._RemoveScheduledOnceEventsFromTickEntry = function(tickEvents, targetEventName, targetInstanceId, tick)
+    local removedEntriesCount = 0
+
     -- Check if this tick has any schedules for the filter event name.
     if tickEvents[targetEventName] ~= nil then
         -- Check if this tick's filtered event name has any schedules with the filter instance Id.
         if tickEvents[targetEventName][targetInstanceId] ~= nil then
             -- Remove the scheduled filtered scheduled event.
             tickEvents[targetEventName][targetInstanceId] = nil
+            removedEntriesCount = removedEntriesCount + 1
 
             -- Check if the there's no other instances of this scheduled event name.
             if next(tickEvents[targetEventName]) == nil then
@@ -331,6 +361,13 @@ EventScheduler._RemoveScheduledOnceEventsFromTickEntry = function(tickEvents, ta
             end
         end
     end
+
+    -- Return the count or nil. We don't want to return 0 for every tick as it will just make pointless table entries.
+    if removedEntriesCount > 0 then
+        return { results = removedEntriesCount } --[[@as UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome]]
+    else
+        return nil
+    end
 end
 
 --- Returns information on a matching filtered scheduled event as a UtilityScheduledEvent_Information object.
@@ -338,7 +375,7 @@ end
 ---@param targetEventName string
 ---@param targetInstanceId string|number
 ---@param tick uint
----@return UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome? results # Returns either an outcome object with results populated with details on a matching scheduled event or nil if no results.
+---@return UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome? resultObject # Returns either an outcome object with results populated with details on a matching scheduled event or nil if no results.
 EventScheduler._GetScheduledOnceEventsFromTickEntry = function(tickEvents, targetEventName, targetInstanceId, tick)
     if tickEvents[targetEventName] ~= nil and tickEvents[targetEventName][targetInstanceId] ~= nil then
         ---@type UtilityScheduledEvent_Information
@@ -354,16 +391,16 @@ end
 
 --- Loops over the scheduled each tick events and runs the actionFunction against each entry with the filter arguments.
 ---
---- If an actionFunction returns a single "result" item that's not nil then the looping is stopped early. Single "result" values of nil and all "results" entries continue the loop.
+--- If an actionFunction returns a single "result" item that's not nil then the looping is stopped early. Single "result" values of nil and all "results" values continue the loop.
 ---@param targetEventName string
 ---@param targetInstanceId? string|number
 ---@param actionFunction fun(tickEvents: UtilityScheduledEvent_ScheduledFunctionsTicksEventNames, targetEventName: string, targetInstanceId: string|number, tick?:uint):UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome? # function must return a single result and a table of results, both can be nil or populated.
----@return boolean|UtilityScheduledEvent_Information|nil result # the result type is based on the actionFunction passed in. However nil may be returned if the actionFunction finds no matching results for any reason.
----@return UtilityScheduledEvent_Information[] results # a table of the results found or an empty table if nothing matching found.
+---@return boolean|UtilityScheduledEvent_Information|nil result? # the result type is based on the actionFunction passed in. However nil may be returned if the actionFunction finds no matching results for any reason.
+---@return UtilityScheduledEvent_Information[]|uint[] results # a table of the results found or an empty table if nothing matching found.
 EventScheduler._ParseScheduledEachTickEvents = function(targetEventName, targetInstanceId, actionFunction)
     targetInstanceId = targetInstanceId or ""
     local result
-    local results = {} ---@type UtilityScheduledEvent_Information[]
+    local results = {} ---@type UtilityScheduledEvent_Information[]|uint[]
     if global.UTILITYSCHEDULEDFUNCTIONSPERTICK ~= nil then
         local outcome = actionFunction(global.UTILITYSCHEDULEDFUNCTIONSPERTICK, targetEventName, targetInstanceId)
         if outcome ~= nil then
@@ -380,7 +417,7 @@ end
 ---@param everyTickEvents UtilityScheduledEvent_ScheduledFunctionsPerTickEventNamesInstanceIds
 ---@param targetEventName string
 ---@param targetInstanceId string|number
----@return UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome? result # Returns either a table with a result of TRUE if found or nil. As nil allows the parsing function to continue looking, while TRUE will stop the looping.
+---@return UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome? resultObject # Returns either a table with a result of TRUE if found or nil. As nil allows the parsing function to continue looking, while TRUE will stop the looping.
 EventScheduler._IsEventScheduledInEachTickList = function(everyTickEvents, targetEventName, targetInstanceId)
     if everyTickEvents[targetEventName] ~= nil and everyTickEvents[targetEventName][targetInstanceId] ~= nil then
         return { result = true }
@@ -391,13 +428,17 @@ end
 ---@param everyTickEvents UtilityScheduledEvent_ScheduledFunctionsPerTickEventNamesInstanceIds
 ---@param targetEventName string
 ---@param targetInstanceId string|number
+---@return UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome? resultObject # The number of events removed from this tick.
 EventScheduler._RemoveScheduledEventFromEachTickList = function(everyTickEvents, targetEventName, targetInstanceId)
+    local removedEntriesCount = 0
+
     -- Check if there's any schedules for the filter event name in the every tick events list.
     if everyTickEvents[targetEventName] ~= nil then
         -- Check if this tick's filtered event name has any schedules with the filter instance Id.
         if everyTickEvents[targetEventName][targetInstanceId] ~= nil then
             -- Remove the scheduled filtered scheduled event.
             everyTickEvents[targetEventName][targetInstanceId] = nil
+            removedEntriesCount = removedEntriesCount + 1
 
             -- Check if the there's no other instances of this scheduled event name.
             if next(everyTickEvents[targetEventName]) == nil then
@@ -405,13 +446,20 @@ EventScheduler._RemoveScheduledEventFromEachTickList = function(everyTickEvents,
             end
         end
     end
+
+    -- Return the count or nil. We don't want to return 0 for every tick as it will just make pointless table entries.
+    if removedEntriesCount > 0 then
+        return { results = removedEntriesCount } --[[@as UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome]]
+    else
+        return nil
+    end
 end
 
 --- Returns information on a matching filtered scheduled event as a UtilityScheduledEvent_Information object.
 ---@param everyTickEvents UtilityScheduledEvent_ScheduledFunctionsPerTickEventNamesInstanceIds
 ---@param targetEventName string
 ---@param targetInstanceId string|number
----@return UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome? results # Returns either an outcome object with results populated with details on a matching scheduled event or nil if no results.
+---@return UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome? resultObject # Returns either an outcome object with results populated with details on a matching scheduled event or nil if no results.
 EventScheduler._GetScheduledEventFromEachTickList = function(everyTickEvents, targetEventName, targetInstanceId)
     if everyTickEvents[targetEventName] ~= nil and everyTickEvents[targetEventName][targetInstanceId] ~= nil then
         ---@type UtilityScheduledEvent_Information
@@ -433,6 +481,6 @@ end
 
 ---@class UtilityScheduledEvent_ScheduledFunctions_ActionFunctionOutcome
 ---@field result? boolean
----@field results? UtilityScheduledEvent_Information
+---@field results? UtilityScheduledEvent_Information|uint
 
 return EventScheduler

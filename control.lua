@@ -4,6 +4,7 @@ local TestingManager = require("scripts.testing.testing-manager")
 local RobotManager = require("scripts.managers.robot-manager")
 local JobManager = require("scripts.managers.job-manager")
 local SettingsManager = require("scripts.managers.settings-manager")
+local EventScheduler = require("utility.manager-libraries.event-scheduler")
 
 local function CreateGlobals()
     SettingsManager._CreateGlobals()
@@ -26,16 +27,48 @@ local function OnLoad()
     remote.remove_interface(Constants.ModName)
     remote.add_interface(Constants.ModName, MOD.RemoteInterfaces)
 
-    -- TODO: temp
-    script.on_event(defines.events.on_player_mined_entity, function(event)
+    ------------------------------------------------
+    --
+    -- Testing Utility Temp - START
+    --
+    ------------------------------------------------
+    EventScheduler.RegisterScheduler()
+    local testFunc = function(event)
         local x = event
-    end)
-    script.on_event(defines.events.on_robot_mined_entity, function(event)
-        local x = event
-    end)
-    script.on_event(defines.events.script_raised_destroy, function(event)
-        local x = event
-    end)
+    end
+    EventScheduler.RegisterScheduledEventType("testFunc", testFunc)
+
+    EventScheduler.ScheduleEventOnce(game.tick + 1, "testFunc", 1)
+    EventScheduler.ScheduleEventOnce(game.tick + 2, "testFunc", 2)
+    EventScheduler.ScheduleEventOnce(game.tick + 3, "testFunc", 2)
+    EventScheduler.ScheduleEventOnce(game.tick + 5, "testFunc", 2)
+    EventScheduler.ScheduleEventOnce(game.tick + 3, "testFunc", 3)
+    EventScheduler.ScheduleEventOnce(game.tick + 4, "testFunc", 4)
+
+    local a = EventScheduler.RemoveScheduledOnceEvents("testFunc", 2, game.tick + 1)
+
+    local b = EventScheduler.RemoveScheduledOnceEvents("testFunc", 2, game.tick + 2)
+
+    local b2 = EventScheduler.RemoveScheduledOnceEvents("testFunc", 2)
+
+    local c = EventScheduler.RemoveScheduledOnceEvents("testFunc", 4)
+
+    local d = EventScheduler.RemoveScheduledOnceEvents("testFunc")
+
+    EventScheduler.ScheduleEventEachTick("testFunc", "a")
+    EventScheduler.ScheduleEventEachTick("testFunc", "b")
+
+    local x = EventScheduler.RemoveScheduledEventFromEachTick("testFunc", "a")
+
+    local y = EventScheduler.RemoveScheduledEventFromEachTick("testFunc", "c")
+
+    local endTest = 1
+
+    ------------------------------------------------
+    --
+    -- Testing Utility Temp - END
+    --
+    ------------------------------------------------
 end
 
 local function OnSettingChanged(event)

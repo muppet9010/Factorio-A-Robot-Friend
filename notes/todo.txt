@@ -14,17 +14,33 @@ Address the FindNearest looping issue before moving on to any building. As we wi
 
 Make simple build blueprint job with dummy tasks for getting items. To test framework as much as anything. Just give the robots the needed items as part of the job.
 
-Can EventScheduler.RemoveScheduledOnceEvents() return if any (count of?) events were removed or not. Just a general nicety to add to library and this mod has the WIP version. Came up from Muppet Streamer, but its an older version and not worth hot fixing.
 
-GuiUtil.AddElement() needs a warning that the elementDetails table fed in will have its and its children `names` & `style` set/updated, which breaks re-using it across multiple players. Also add an override option that will ignore checks of name and style so that tables can be re-used between players. Will need to feed this setting down in to children being created/checked.
 
-CommandUtils - move the input argument checking functions out to their own library file and make them generic for remote or command usage.
 
-EventScheduler.RemoveScheduledOnceEvents("ShowMessage.RemoveNamedElementForAll") didn't work to remove all entries of this scheduled event name in older Utility version.
+
+EventScheduler - localise a lot of the table entries in all the functions. We are often getting the same entry in a table via key multiple times in a function, i.e. tickEvents[targetEventName]. Also check and log for Events. As EventScheduler.ScheduleEventOnce() did take a surprisingly high UPS when I was doing it often.
+
+EventScheduler - move EventScheduler.RegisterScheduler() in to EventScheduler.RegisterScheduledEventType() and just use a MOD.XXXX Lua global to track if it's been done before. Just removes the need of a run once
+
+EventScheduler.RemoveScheduledOnceEvents("ShowMessage.RemoveNamedElementForAll") didn't work to remove all entries of this scheduled event name in older Utility version. Check it works now, as may have been a typo in the scheduled function name.
+
+EventScheduler - make targetInstanceId mandatory. If the caller wants to use a blank string as a unique ID so be it. Will make code logic simpler and clearer.
+
+
+
 
 Events.RaiseEvent() - input parameter doesn't match up right with what Factorio actually expects. Needs type updating. Break into 2 arguments as a breaking change, event name (id) and the data to be passed through. Also removing adding the tick to the data, as only the internal one needs to do this. Real events will get this automatically surely ?
 
 Events.RegisterHandlerEvent() should accept a uint to its eventName parameter, as for custom events ids from other mods this is what we get back.
+
+Events.RemoveHandler() should call script.on_event(EVENTID, nil) when the last handler is removed from an event so that our mod stops listening to it entirely, rather than just having no handlers triggered by the Events library. For high frequency events this could save quite a bit of UPS.
+
+
+
+
+GuiUtil.AddElement() needs a warning that the elementDetails table fed in will have its and its children `names` & `style` set/updated, which breaks re-using it across multiple players. Also add an override option that will ignore checks of name and style so that tables can be re-used between players. Will need to feed this setting down in to children being created/checked.
+
+CommandUtils - move the input argument checking functions out to their own library file and make them generic for remote or command usage.
 
 Actually can we add to the Todo list to make created GUI element details tables return to their pre submission state after generating. So we can just re-use the same table across multiple players. Just needs the util side to reset it's few special field at the end of the creation process, as that should also handle children nicely.
 Then we can hopefully use a single definition table for all players or just update some odd values for repeated instances of things.
@@ -68,8 +84,6 @@ EntityUtils.ReturnAllObjectsInArea() has `IsBoundingBoxPopulated(entity.prototyp
 PositionUtils.IsBoundingBoxPopulated() comment it better to say it checks for populated and non 0 sized collision boxes. Check if you can have an entity with 0 sized collision box at 0 and also at an offset. Can probably make the check more accurate and clearer to read.
 
 Check if BiterSelection.GetBiterType() errors if evolution is unchanged across a save/load and a biter mod has been removed during the gap. If it does this should be stored in Lua global and not Factorio global. We do this for prototype-attributes for this reason. As we don't need to persist the result for the current evolution, just cache it to avoid mass near simultaneous lookups.
-
-Events.RemoveHandler() should call script.on_event(EVENTID, nil) when the last handler is removed from an event so that our mod stops listening to it entirely, rather than just having no handlers triggered by the Events library. For high frequency events this could save quite a bit of UPS.
 
 
 
