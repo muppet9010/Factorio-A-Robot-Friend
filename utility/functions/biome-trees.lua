@@ -482,8 +482,7 @@ end
 BiomeTrees._ProcessTilesRawData = function(rawTilesData)
     local tilesDetails = {} ---@type UtilityBiomeTrees_TilesDetails
     for name, rawTileData in pairs(rawTilesData) do
-        --- Force typed with upgrade to Sumneko 3.6.x: https://github.com/sumneko/lua-language-server/issues/1677
-        BiomeTrees._AddTileDetails(tilesDetails, name, rawTileData[1]--[[@as UtilityBiomeTrees_TileType]] , rawTileData[2]--[[@as UtilityBiomeTrees_RawValueRange]] , rawTileData[3]--[[@as UtilityBiomeTrees_RawValueRange]] , rawTileData[4]--[[@as string]] )
+        BiomeTrees._AddTileDetails(tilesDetails, name, rawTileData[1], rawTileData[2], rawTileData[3], rawTileData[4])
     end
     return tilesDetails
 end

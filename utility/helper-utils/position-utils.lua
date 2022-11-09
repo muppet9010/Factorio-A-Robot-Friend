@@ -117,7 +117,7 @@ PositionUtils.ApplyBoundingBoxToPosition = function(centerPos, boundingBox, orie
                 y = checked_centerPos.y + checked_boundingBox.right_bottom.y
             }
         }
-    elseif orientation == (0.25) --[[@as RealOrientation]] or orientation == (0.5) --[[@as RealOrientation]] or orientation == (0.75) --[[@as RealOrientation]] then --- The excessive typing of `if` RealOrientation is from Sumneko 3.6.x: https://github.com/sumneko/lua-language-server/issues/1679
+    elseif orientation == 0.25 or orientation == 0.5 or orientation == 0.75 then
         local rotatedPoint1 = PositionUtils.RotatePositionAround0(orientation, checked_boundingBox.left_top)
         local rotatedPoint2 = PositionUtils.RotatePositionAround0(orientation, checked_boundingBox.right_bottom)
         local rotatedBoundingBox = PositionUtils.CalculateBoundingBoxFrom2Points(rotatedPoint1, rotatedPoint2)
