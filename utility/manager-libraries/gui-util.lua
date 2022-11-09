@@ -348,7 +348,8 @@ GuiUtil._ApplyStylingArgumentsToElement = function(element, stylingArgs)
         return
     end
     if stylingArgs.column_alignments ~= nil then
-        for k, v in pairs(stylingArgs.column_alignments) do
+        for k, v in pairs(stylingArgs.column_alignments--[[@as string[] # Column alignments are always provided in this format. ]] ) do
+            ---@cast k uint
             element.style.column_alignments[k] = v
         end
         stylingArgs.column_alignments = nil

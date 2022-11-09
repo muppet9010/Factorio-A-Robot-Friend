@@ -178,7 +178,7 @@ end
 
 --- Returns a force's alerts Factorio global table if it exists.
 ---@param forceIndex uint # the index of the LuaForce.
----@return table<uint, UtilityPlayerAlerts_ForceAlertObject>|nil forceAlerts # nil if no alerts for this force.
+---@return table<UtilityPlayerAlerts_AlertId, UtilityPlayerAlerts_ForceAlertObject>|nil forceAlerts # nil if no alerts for this force.
 PlayerAlerts._GetForceAlerts = function(forceIndex)
     if global.UTILITYPLAYERALERTS == nil or global.UTILITYPLAYERALERTS.forceAlertsByForce == nil then
         return nil
