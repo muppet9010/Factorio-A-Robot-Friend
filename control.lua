@@ -32,22 +32,23 @@ local function OnLoad()
     -- Testing Utility Temp - START
     --
     ------------------------------------------------
+    local currentTick = game.tick
     EventScheduler.RegisterScheduler()
     local testFunc = function(event)
         local x = event
     end
     EventScheduler.RegisterScheduledEventType("testFunc", testFunc)
 
-    EventScheduler.ScheduleEventOnce(game.tick + 1, "testFunc", 1)
-    EventScheduler.ScheduleEventOnce(game.tick + 2, "testFunc", 2)
-    EventScheduler.ScheduleEventOnce(game.tick + 3, "testFunc", 2)
-    EventScheduler.ScheduleEventOnce(game.tick + 5, "testFunc", 2)
-    EventScheduler.ScheduleEventOnce(game.tick + 3, "testFunc", 3)
-    EventScheduler.ScheduleEventOnce(game.tick + 4, "testFunc", 4)
+    EventScheduler.ScheduleEventOnce(currentTick + 1, "testFunc", 1, nil, currentTick)
+    EventScheduler.ScheduleEventOnce(currentTick + 2, "testFunc", 2, nil, currentTick)
+    EventScheduler.ScheduleEventOnce(currentTick + 3, "testFunc", 2, nil, currentTick)
+    EventScheduler.ScheduleEventOnce(currentTick + 5, "testFunc", 2, nil, currentTick)
+    EventScheduler.ScheduleEventOnce(currentTick + 3, "testFunc", 3, nil, currentTick)
+    EventScheduler.ScheduleEventOnce(currentTick + 4, "testFunc", 4, nil, currentTick)
 
-    local a = EventScheduler.RemoveScheduledOnceEvents("testFunc", 2, game.tick + 1)
+    local a = EventScheduler.RemoveScheduledOnceEvents("testFunc", 2, currentTick + 1)
 
-    local b = EventScheduler.RemoveScheduledOnceEvents("testFunc", 2, game.tick + 2)
+    local b = EventScheduler.RemoveScheduledOnceEvents("testFunc", 2, currentTick + 2)
 
     local b2 = EventScheduler.RemoveScheduledOnceEvents("testFunc", 2)
 

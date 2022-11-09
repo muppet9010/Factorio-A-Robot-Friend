@@ -114,9 +114,9 @@ Events.RemoveHandler = function(eventName, handlerName)
 end
 
 --- Called when needed, but not before tick 0 as they are ignored. Can either raise a custom registered event registered by Events.RegisterCustomEventName(), or one of the limited events defined in the API: https://lua-api.factorio.com/latest/LuaBootstrap.html#LuaBootstrap.raise_event.
----@param eventData EventData
+---@param eventData EventData # If the `tick` field isn't populated it will be obtained via a Factorio API call.
 Events.RaiseEvent = function(eventData)
-    eventData.tick = game.tick
+    eventData.tick = eventData.tick or game.tick --- Technically this can be provided as part of the eventData being raised, but if not we will obtain and add it.
     local eventName = eventData.name
     if type(eventName) == "number" then
         script.raise_event(eventName--[[@as uint]] , eventData)
@@ -131,9 +131,9 @@ end
 --- Called from anywhere, including OnStartup in tick 0. This won't be passed out to other mods however, only run within this mod.
 ---
 --- This calls this mod's event handler bypassing the Factorio event system.
----@param eventData EventData
+---@param eventData EventData # If the `tick` field isn't populated it will be obtained via a Factorio API call.
 Events.RaiseInternalEvent = function(eventData)
-    eventData.tick = game.tick
+    eventData.tick = eventData.tick or game.tick --- Technically this can be provided as part of the eventData being raised, but if not we will obtain and add it.
     local eventName = eventData.name
     if type(eventName) == "number" then
         Events._HandleEvent(eventData)

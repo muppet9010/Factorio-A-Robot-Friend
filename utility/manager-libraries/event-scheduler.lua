@@ -76,17 +76,17 @@ end
 ---@param eventName string # The event name used to lookup the function to call, as registered with EventScheduler.RegisterScheduledEventType().
 ---@param instanceId string|number # A unique Id to identify this scheduled event and its data for this eventName on the given tick.
 ---@param eventData? UtilityScheduledEvent_EventData # Custom table of data that will be returned to the triggered function when called as the "data" attribute of the UtilityScheduledEventCallbackObject object.
-EventScheduler.ScheduleEventOnce = function(eventTick, eventName, instanceId, eventData)
+---@param currentTick uint # The current game tick.
+EventScheduler.ScheduleEventOnce = function(eventTick, eventName, instanceId, eventData, currentTick)
     if eventName == nil or instanceId == nil then
         error("EventScheduler.ScheduleEventOnce called with missing arguments")
     end
-    local nowTick = game.tick
     if eventTick == nil then
-        eventTick = nowTick + 1
+        eventTick = currentTick + 1
     elseif eventTick == -1 then
         -- Special case for callbacks within same tick.
-        eventTick = nowTick
-    elseif eventTick <= nowTick then
+        eventTick = currentTick
+    elseif eventTick <= currentTick then
         error("EventScheduler.ScheduleEventOnce scheduled for in the past. eventName: '" .. tostring(eventName) .. "' instanceId: '" .. tostring(instanceId) .. "'")
     end ---@cast eventTick uint
     eventData = eventData or {}
