@@ -103,7 +103,7 @@ Events.RegisterCustomEventName = function(eventName)
     return eventId
 end
 
---- Called when needed
+--- Called when needed.
 ---@param eventName defines.events|string|uint # Either Factorio event, a custom modded event name our mod created, or a custom event Id from another mod.
 ---@param handlerName string # The unique handler name to remove from this eventName.
 Events.RemoveHandler = function(eventName, handlerName)
@@ -203,19 +203,20 @@ Events._RegisterEvent = function(eventName, thisFilterName, thisFilterData)
         eventId = eventName --[[@as uint]]
         if thisFilterData ~= nil then
             if TableUtils.IsTableEmpty(thisFilterData) then
-                -- filter isn't nil, but has no data, so as this won't register to any filters so just drop it.
+                -- Filter isn't nil, but has no data, so as this won't register to any filters so just drop it.
                 return nil
             end
             MOD.eventFilters[eventId] = MOD.eventFilters[eventId] or {}
             MOD.eventFilters[eventId][thisFilterName] = thisFilterData
             local currentFilter, currentHandler = script.get_event_filter(eventId), script.get_event_handler(eventId)
             if currentHandler ~= nil and currentFilter == nil then
-                -- an event is registered already and has no filter, so already fully lenient.
+                -- An event is registered already and has no filter, so already fully lenient.
                 return eventId
             else
-                -- add new filter to any existing old filter and let it be re-applied.
+                -- Add new filter to any existing old filter and let it be re-applied.
                 filterData = {} ---@type EventFilter[]
-                for _, filterTable in pairs(MOD.eventFilters[eventId]--[[@as table<any, any>[][] # Not entirely sure on this, but it makes it happy and there isn't any Type Def for event filters from Debugger.]] ) do
+                for _, filterTable in pairs(MOD.eventFilters[eventId]) do
+                    ---@cast filterTable EventFilter_Base[]
                     filterTable[1].mode = "or"
                     for _, filterEntry in pairs(filterTable) do
                         filterData[#filterData + 1] = filterEntry
