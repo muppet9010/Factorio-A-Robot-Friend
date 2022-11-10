@@ -20,8 +20,6 @@ Make simple build blueprint job with dummy tasks for getting items. To test fram
 
 Events.RaiseEvent() - input parameter doesn't match up right with what Factorio actually expects. Needs type updating. Break into 2 arguments as a breaking change, event name (id) and the data to be passed through. Also removing adding the tick to the data, as only the internal one needs to do this. Real events will get this automatically surely ?
 
-Events.RegisterHandlerEvent() should accept a uint to its eventName parameter, as for custom events ids from other mods this is what we get back.
-
 Events.RemoveHandler() should call script.on_event(EVENTID, nil) when the last handler is removed from an event so that our mod stops listening to it entirely, rather than just having no handlers triggered by the Events library. For high frequency events this could save quite a bit of UPS.
 
 
