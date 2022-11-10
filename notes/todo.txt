@@ -17,12 +17,6 @@ Make simple build blueprint job with dummy tasks for getting items. To test fram
 
 
 
-Events - rename eventName everywhere to just eventId or something that doesn't imply a string.
-
-Events.RaiseEvent() - input parameter doesn't match up right with what Factorio actually expects. Needs type updating. Break into 2 arguments as a breaking change, event name (id) and the data to be passed through. Also removing adding the tick to the data, as only the internal one needs to do this. Real events will get this automatically surely ?
-
-
-
 
 GuiUtil.AddElement() needs a warning that the elementDetails table fed in will have its and its children `names` & `style` set/updated, which breaks re-using it across multiple players. Also add an override option that will ignore checks of name and style so that tables can be re-used between players. Will need to feed this setting down in to children being created/checked.
 
