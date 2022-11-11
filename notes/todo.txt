@@ -29,8 +29,6 @@ Then we can hopefully use a single definition table for all players or just upda
 
 
 
-PositionUtils.IsBoundingBoxPopulated() comment it better to say it checks for populated and non 0 sized collision boxes. Check if you can have an entity with 0 sized collision box at 0 and also at an offset. Can probably make the check more accurate and clearer to read.
-
 Check if BiterSelection.GetBiterType() errors if evolution is unchanged across a save/load and a biter mod has been removed during the gap. If it does this should be stored in Lua global and not Factorio global. We do this for prototype-attributes for this reason. As we don't need to persist the result for the current evolution, just cache it to avoid mass near simultaneous lookups.
 
 

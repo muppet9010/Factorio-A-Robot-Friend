@@ -316,14 +316,13 @@ PositionUtils.GrowBoundingBox = function(boundingBox, growthX, growthY)
     }
 end
 
---- Checks if a bounding box is populated with valid data.
+--- Checks if a bounding box is populated with valid data. This means not nil or a 0 sized area in one or more dimensions.
 ---@param boundingBox BoundingBox
 ---@return boolean
 PositionUtils.IsBoundingBoxPopulated = function(boundingBox)
     if boundingBox == nil then
         return false
-    end
-    if boundingBox.left_top.x ~= 0 and boundingBox.left_top.y ~= 0 and boundingBox.right_bottom.x ~= 0 and boundingBox.right_bottom.y ~= 0 then
+    elseif boundingBox.right_bottom.x - boundingBox.left_top.x ~= 0 and boundingBox.right_bottom.y - boundingBox.left_top.y ~= 0 then
         return true
     else
         return false
