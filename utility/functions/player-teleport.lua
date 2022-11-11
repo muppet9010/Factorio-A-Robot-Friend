@@ -122,7 +122,7 @@ PlayerTeleport.TeleportToSpecificPosition = function(targetPlayer, targetSurface
     if targetPlayer_vehicle ~= nil and PlayerTeleport.IsTeleportableVehicle(targetPlayer_vehicle) then
         teleportSucceeded = targetPlayer_vehicle.teleport(targetPosition, targetSurface)
     else
-        if targetPlayer_vehicle ~= nil and targetPlayer_vehicle.valid then
+        if targetPlayer_vehicle ~= nil then
             -- Player is in a non teleportable vehicle, so get them out of it before teleporting the player (character).
             if targetPlayer_vehicle.get_driver() then
                 wasDriving = targetPlayer_vehicle

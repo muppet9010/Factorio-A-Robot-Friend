@@ -99,9 +99,7 @@ PlayerAlerts.RemoveCustomAlertFromForce = function(force, alertId)
     -- Remove the alert from all players.
     for _, player in pairs(force.players) do
         -- When the alerting entity becomes invalid the player alert will automatically vanish after a few seconds. So we can just skip removing it and just tidy up the state data as usual. Also no way to filter to just our alert without the entity being valid.
-        if player.valid then
-            PlayerAlerts._RemoveAlertFromPlayer(forceAlert, player)
-        end
+        PlayerAlerts._RemoveAlertFromPlayer(forceAlert, player)
     end
 
     -- Remove the alert from the force's global object.

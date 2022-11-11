@@ -192,7 +192,7 @@ LoggingUtils.PrintThingsDetails = function(thing, _tablesLogged)
         if not thing.valid then
             return {
                 object_name = thing_objectName,
-                valid = thing.valid
+                valid = false
             }
         end
 
@@ -201,7 +201,7 @@ LoggingUtils.PrintThingsDetails = function(thing, _tablesLogged)
             local thing_type = thing.type
             local entityDetails = {
                 object_name = thing_objectName,
-                valid = thing.valid,
+                valid = true,
                 type = thing_type,
                 name = thing.name,
                 unit_number = thing.unit_number,
@@ -227,7 +227,7 @@ LoggingUtils.PrintThingsDetails = function(thing, _tablesLogged)
             end
             return {
                 object_name = thing_objectName,
-                valid = thing.valid,
+                valid = true,
                 id = thing.id,
                 state = thing.state,
                 schedule = thing.schedule,
@@ -242,7 +242,7 @@ LoggingUtils.PrintThingsDetails = function(thing, _tablesLogged)
             -- Other Lua object.
             return {
                 object_name = thing_objectName,
-                valid = thing.valid
+                valid = true
             }
         end
     end

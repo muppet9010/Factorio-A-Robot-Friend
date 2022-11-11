@@ -26,10 +26,6 @@ local PlayerWeapon = {} ---@class Utility_PlayerWeapon
 ---@return boolean? weaponGiven # If the weapon item had to be given to the player, compared to them already having it and it possibly just being moved between their inventories. Returns nil for invalid situations, i.e. called on a player with no gun inventory.
 ---@return UtilityPlayerWeapon_RemovedWeaponToEnsureWeapon? removedWeaponDetails # Details on the weapon that was removed to add the new weapon. Is nil if no active weapon was set/found, i.e. weapon was found/put in to the players main inventory and not as an equipped weapon.
 PlayerWeapon.EnsureHasWeapon = function(player, weaponName, forceWeaponToWeaponInventorySlot, selectWeapon, ammoTypePlanned)
-    if player == nil or not player.valid then
-        return nil, nil
-    end
-
     ---@type UtilityPlayerWeapon_RemovedWeaponToEnsureWeapon
     local removedWeaponDetails = {
         beforeSelectedWeaponGunIndex = player.character.selected_gun_index
@@ -259,7 +255,7 @@ PlayerWeapon.TakeItemFromPlayerOrGround = function(player, itemName, itemCount)
 
     local itemsOnGround = player.surface.find_entities_filtered { position = player.position, radius = 10, name = "item-on-ground" }
     for _, itemOnGround in pairs(itemsOnGround) do
-        if itemOnGround.valid and itemOnGround.stack ~= nil and itemOnGround.stack.valid and itemOnGround.stack.name == itemName then
+        if itemOnGround.stack ~= nil and itemOnGround.stack.name == itemName then
             itemOnGround.destroy()
             removed = removed + 1
             itemCount = itemCount - 1
