@@ -28,42 +28,6 @@ Then we can hopefully use a single definition table for all players or just upda
 
 
 
-Bring a copy of the below in to Entity Utils, but made generic. Used in a few mods so far.
-
-				---@enum MovableEntityTypes
-				local MovableEntityTypes = { unit = "unit", character = "character", car = "car", tank = "tank", ["spider-vehicle"] = "spider-vehicle" }
-
-				--- Move any teleportable entities in the bounding box of an entity out of the way. Anything non movable is just killed.
-				---@param surface LuaSurface
-				---@param createdEntity LuaEntity
-				Reincarnation.DisplaceEntitiesInBoundingBox = function(surface, createdEntity)
-					for _, entity in pairs(EntityUtils.ReturnAllObjectsInArea(surface, createdEntity.bounding_box, true, nil, true, true, { createdEntity })) do
-						if global.largeReincarnationsPush then
-							local entityMoved = false
-							if MovableEntityTypes[entity.type] ~= nil then
-								local entityNewPosition = surface.find_non_colliding_position(entity.name, entity.position, 2, 0.1)
-								if entityNewPosition ~= nil then
-									entity.teleport(entityNewPosition)
-									entityMoved = true
-								end
-							end
-							if not entityMoved then
-								entity.die("neutral", createdEntity)
-							end
-						else
-							entity.die("neutral", createdEntity)
-						end
-					end
-				end
-
-EntityUtils.ReturnAllObjectsInArea() look at some of its options and if we can use different LuaSurface.find_entities_filtered() to do it better in some cases. Main ones are all killable & destructible, or ignore both.
-
-EntityUtils.ReturnAllObjectsInArea() At present onlyKillable would include things set to 0 health, which I don't think it should. Although these things should also have the destructible state set as well. Does smoke or other effects have destructible set as in Biter Reincarnation I see some things having destructible of true set, but health of nil. All current uses of the function have the same values for killable & destructible passed in, and I wonder if there's ever a use case when this wouldn't be so ?
-
-EntityUtils.ReturnAllObjectsInArea() has `IsBoundingBoxPopulated(entity.prototype.collision_box))`, can we not just use the entities value for this applied to its position from the game to reduce an API call? Also surely just a non nil value check is good enough. Also EntityUtils.KillAllObjectsInArea() passes in false for this, but everything else passes in true, so why do we do this? document the option on the functions much better.
-
-
-
 
 PositionUtils.IsBoundingBoxPopulated() comment it better to say it checks for populated and non 0 sized collision boxes. Check if you can have an entity with 0 sized collision box at 0 and also at an offset. Can probably make the check more accurate and clearer to read.
 
