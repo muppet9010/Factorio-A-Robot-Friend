@@ -20,16 +20,14 @@ Make simple build blueprint job with dummy tasks for getting items. To test fram
 
 GuiUtil.AddElement() needs a warning that the elementDetails table fed in will have its and its children `names` & `style` set/updated, which breaks re-using it across multiple players. Also add an override option that will ignore checks of name and style so that tables can be re-used between players. Will need to feed this setting down in to children being created/checked.
 
-CommandUtils - move the input argument checking functions out to their own library file and make them generic for remote or command usage.
-
 Actually can we add to the Todo list to make created GUI element details tables return to their pre submission state after generating. So we can just re-use the same table across multiple players. Just needs the util side to reset it's few special field at the end of the creation process, as that should also handle children nicely.
 Then we can hopefully use a single definition table for all players or just update some odd values for repeated instances of things.
 
 
 
 
+CommandUtils - move the input argument checking functions out to their own library file and make them generic for remote or command usage.
 
-Check if BiterSelection.GetBiterType() errors if evolution is unchanged across a save/load and a biter mod has been removed during the gap. If it does this should be stored in Lua global and not Factorio global. We do this for prototype-attributes for this reason. As we don't need to persist the result for the current evolution, just cache it to avoid mass near simultaneous lookups.
 
 
 
