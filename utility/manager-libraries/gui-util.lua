@@ -3,7 +3,6 @@
 -- Designed on the basis that the mod doesn't need to store references to the GUI Elements it creates and the structures involved with that. As they can all be obtained via the managed storage with the element name and type to improve code readability.
 
 local GuiUtil = {} ---@class Utility_GuiUtil
-local TableUtils = require("utility.helper-utils.table-utils")
 local GuiActionsClick = require("utility.manager-libraries.gui-actions-click")
 local GuiActionsChecked = require("utility.manager-libraries.gui-actions-checked")
 local LoggingUtils = require("utility.helper-utils.logging-utils")
@@ -66,7 +65,7 @@ local StyleDataStyleVersion = require("utility.lists.style-data").styleVersion
 --                                    Public Functions
 --------------------------------------------------------------------------------------------
 
---- Add Gui Elements in a manner supporting short-hand features, nested GUI structures and templating features. See the param type for detailed information on its features and usage.
+--- Add Gui Elements in a manner supporting short-hand features, nested GUI structures and templating features. See the param type for detailed information on its features and usage. The elementDetails object passed in is returned as original, so can be re-used multiple times to reduce GUI object creation UPS costs.
 ---@param elementDetails UtilityGuiUtil_ElementDetails_Add
 ---@return table<string, LuaGuiElement>? returnElements # Provided if returnElement option is TRUE. Table of UtilityGuiUtil_GuiElementName keys to LuaGuiElement values.
 GuiUtil.AddElement = function(elementDetails)
@@ -94,6 +93,9 @@ GuiUtil.AddElement = function(elementDetails)
         return nil
     end
 
+    -- Capture initial values that are overridden during processing for resetting on the elementDetails at end of processing.
+    local originalParent, originalStyle = elementDetails.parent, elementDetails.style
+
     -- Create calculated values.
     if elementDetails.descriptiveName ~= nil and elementDetails.type ~= nil then
         elementDetailsNoClass.name = GuiUtil.GenerateGuiElementName(elementDetails.descriptiveName, elementDetails.type)
@@ -108,6 +110,15 @@ GuiUtil.AddElement = function(elementDetails)
     local attributes, returnElement, storeName, styling, registerClick, registerCheckedStateChange, children = elementDetails.attributes, elementDetails.returnElement, elementDetails.storeName, elementDetails.styling, elementDetails.registerClick, elementDetails.registerCheckedStateChange, elementDetails.children
     elementDetails.attributes, elementDetails.returnElement, elementDetails.storeName, elementDetails.styling, elementDetails.registerClick, elementDetails.registerCheckedStateChange, elementDetails.children = nil, nil, nil, nil, nil, nil, nil
 
+    -- Hidden parent values are used when adding child objects.
+    if elementDetailsNoClass._hidden_parent ~= nil then
+        if elementDetails.parent ~= nil then
+            error("GuiUtil.AddElement() had a 'parent' attribute populated in a child's elementDetails.")
+        end
+        elementDetails.parent = elementDetailsNoClass._hidden_parent --[[@as LuaGuiElement]]
+        elementDetailsNoClass._hidden_parent = nil ---@type nil
+    end
+
     local element = elementDetails.parent.add(elementDetails--[[@as LuaGuiElement.add_param]] )
 
     local returnElements = {} ---@type table<string, LuaGuiElement>
@@ -119,6 +130,7 @@ GuiUtil.AddElement = function(elementDetails)
             returnElements[elementDetailsNoClass.name] = element
         end
     end
+
     if storeName ~= nil then
         if elementDetailsNoClass.name == nil then
             -- We check for `name` as its only populated if both `descriptiveName` and `type` are.
@@ -127,9 +139,11 @@ GuiUtil.AddElement = function(elementDetails)
             GuiUtil.AddElementToPlayersReferenceStorage(element.player_index, storeName, elementDetailsNoClass.name, element)
         end
     end
+
     if styling ~= nil then
         GuiUtil._ApplyStylingArgumentsToElement(element, styling)
     end
+
     if registerClick ~= nil then
         if elementDetailsNoClass.name == nil then
             -- We check for `name` as its only populated if both `descriptiveName` and `type` are.
@@ -138,6 +152,7 @@ GuiUtil.AddElement = function(elementDetails)
             GuiActionsClick.RegisterGuiForClick(elementDetailsNoClass.descriptiveName, elementDetails.type, registerClick.actionName, registerClick.data, registerClick.disabled)
         end
     end
+
     if registerCheckedStateChange ~= nil then
         if elementDetailsNoClass.name == nil then
             -- We check for `name` as its only populated if both `descriptiveName` and `type` are.
@@ -146,6 +161,7 @@ GuiUtil.AddElement = function(elementDetails)
             GuiActionsChecked.RegisterGuiForCheckedStateChange(elementDetailsNoClass.descriptiveName, elementDetails.type, registerCheckedStateChange.actionName, registerCheckedStateChange.data, registerCheckedStateChange.disabled)
         end
     end
+
     if attributes ~= nil then
         for k, v in pairs(attributes) do
             if type(v) == "function" then
@@ -155,20 +171,32 @@ GuiUtil.AddElement = function(elementDetails)
             element[k] = v
         end
     end
+
     if children ~= nil then
         for _, child in pairs(children) do
             if type(child) ~= "table" then
                 error("GuiUtil.AddElement called with 'children' not a table of children, but instead a single child.")
+            elseif child.valid --[[@as boolean?]] then
+                error("GuiUtil.AddElement called with 'children' not a table of children, but instead a Lua Object of some type, as it has `valid = true`.")
             else
-                child.parent = element
+                child._hidden_parent = element
                 local childReturnElements = GuiUtil.AddElement(child)
                 if childReturnElements ~= nil then
-                    returnElements = TableUtils.TableMergeCopies({ returnElements, childReturnElements })
+                    for childReturnElementName, childReturnElement in pairs(childReturnElements) do
+                        returnElements[childReturnElementName] = childReturnElement
+                    end
                 end
             end
         end
     end
-    if TableUtils.GetTableNonNilLength(returnElements) then
+
+    -- Reset the attributes on this object that we manipulated so it can be re-used for creating another GuiElement.
+    elementDetails.parent = originalParent
+    elementDetailsNoClass.name = nil
+    elementDetails.style = originalStyle
+    elementDetails.attributes, elementDetails.returnElement, elementDetails.storeName, elementDetails.styling, elementDetails.registerClick, elementDetails.registerCheckedStateChange, elementDetails.children = attributes, returnElement, storeName, styling, registerClick, registerCheckedStateChange, children
+
+    if next(returnElements) ~= nil then
         return returnElements
     else
         return nil
