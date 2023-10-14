@@ -1,6 +1,8 @@
 Bugs
 ====
 
+- Investigate: would using a unit and givign it explicit commands be better than walking a player around? Maybe too late in the code to really matter and wouldn't help with driving, only path following. Any learnings from Zombie Engineer?
+
 
 
 Next

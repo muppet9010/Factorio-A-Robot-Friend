@@ -35,6 +35,22 @@
         "c:\\FactorioModding\\factorio-api",
         "c:\\FactorioModding\\data",
         "c:\\FactorioModding\\data\\core\\lualib",
-        "c:\\FactorioModding\\runtime-api"
+        "c:\\FactorioModding\\runtime-api",
+        "c:/Users/mikeh/AppData/Roaming/Code/User/workspaceStorage/bc779c50d16bbda45893573c0b1e1cc5/justarandomgeek.factoriomod-debug/sumneko-3rd/factorio/library"
     ],
+    "Lua.workspace.userThirdParty": [
+        "c:\\Users\\mikeh\\AppData\\Roaming\\Code\\User\\workspaceStorage\\bc779c50d16bbda45893573c0b1e1cc5\\justarandomgeek.factoriomod-debug\\sumneko-3rd"
+    ],
+    "Lua.runtime.builtin": {
+        "math": "disable",
+        "io": "disable",
+        "os": "disable",
+        "debug": "disable",
+        "coroutine": "disable",
+        "package": "disable"
+    },
+    "Lua.runtime.special": {
+        "__object_name": "type"
+    },
+    "Lua.runtime.plugin": "c:/Users/mikeh/AppData/Roaming/Code/User/workspaceStorage/bc779c50d16bbda45893573c0b1e1cc5/justarandomgeek.factoriomod-debug/sumneko-3rd/factorio/plugin.lua",
 }
